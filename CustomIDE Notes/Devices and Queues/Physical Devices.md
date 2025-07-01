@@ -1,0 +1,1 @@
+The term physical device refers to the GPU hardware used for rendering. Vulkan requires the creation of a physical device object to know which device to use in the rendering process

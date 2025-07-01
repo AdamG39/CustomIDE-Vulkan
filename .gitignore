@@ -1,5 +1,7 @@
 # Folders to ignore
-/CustomIDE Notes
+/build
+/externals
+/.cache
 
 # Prerequisites
 *.d
