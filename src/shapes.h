@@ -1,3 +1,5 @@
+#pragma once
+
 #include <array>
 
 template <typename T>
@@ -5,7 +7,7 @@ class Vector2 {
   T x = 0;
   T y = 0;
 
-  Vector2(T X, T Y) : x(X), y(Y) {}
+  Vector2(T X, T Y);
 };
 
 template <typename T>
@@ -14,20 +16,11 @@ class Vector3 {
   T y = 0;
   T z = 0;
 
-  Vector3(T X, T Y, T Z) : x(X), y(Y), z(Z) {}
-  Vector3(const Vector2<T>& that) : x(that.X), y(that.Y) {}
-  Vector3& operator=(const Vector2<T>& that) {
-    x = that.X;
-    y = that.Y;
-    return *this;
-  }
-  Vector3(const Vector3<T>& that) : x(that.X), y(that.Y), z(that.Z) {}
-  Vector3& operator=(const Vector3<T>& that) {
-    x = that.X;
-    y = that.Y;
-    z = that.Z;
-    return *this;
-  }
+  Vector3(T X, T Y, T Z);
+  Vector3(const Vector2<T>& that);
+  Vector3& operator=(const Vector2<T>& that);
+  Vector3(const Vector3<T>& that);
+  Vector3& operator=(const Vector3<T>& that);
 };
 
 template <typename T>
@@ -36,7 +29,7 @@ class Colour {
   T g;
   T b;
 
-  Colour(T R, T G, T B) : r(R), g(G), b(B) {}
+  Colour(T R, T G, T B);
 };
 
 template <typename T, typename C>
@@ -44,7 +37,7 @@ class Vertex {
   T* location = nullptr;
   Colour<C>* colour = nullptr;
 
-  Vertex(T Loc, Colour<C> Col) : location(Loc), colour(Col) {}
+  Vertex(T Loc, Colour<C> Colour);
 };
 
 template <typename T, typename C>
