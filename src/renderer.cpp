@@ -1,10 +1,11 @@
 #include "errorHandler.h"
 #include "renderer.h"
 #include "io.h"
+#include "shapes.h"
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
-/*  ---- TODO: ----
+/*\ ---- TODO: ----
  * - Have a basic vulkan implementation to draw a flat colour for the window
  * - Draw a rectangle to represent new title bar
  * - Render quads for custom buttons with textures
@@ -13,7 +14,7 @@ const int MAX_FRAMES_IN_FLIGHT = 2;
  * - Implement window resizing
  * - Implement minimise, maximise and close buttons
  * - Dim or change colour of title bar when window is unfocused
- */
+\*/
 
 void CustomIDEApplication::Start() {
   InitGLFW();
@@ -38,8 +39,6 @@ void CustomIDEApplication::CreateWindow() {
   glfwSetWindowCloseCallback(window, CloseWindowCallBack);
 
   if (!window) ExitWithError("Failed to create window!", -1);
-
-  VkSurfaceKHR surface;
 }
 
 void CustomIDEApplication::InitVulkan() {
@@ -257,6 +256,7 @@ VkExtent2D CustomIDEApplication::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR
 }
 
 void CustomIDEApplication::PickPhysicalDevice() {
+  // Get the number of physical devices installed saved to deviceCount
   uint32_t deviceCount = 0;
   vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 
@@ -265,6 +265,7 @@ void CustomIDEApplication::PickPhysicalDevice() {
       throw std::runtime_error("failed to find GPUs with Vulkan support!");
   }
 
+  // Load a pointer to each physical device into devices
   std::vector<VkPhysicalDevice> devices(deviceCount);
   vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
@@ -678,7 +679,7 @@ void CustomIDEApplication::RecordCommandBuffer(VkCommandBuffer commandBuffer, ui
   scissor.extent = swapChainExtent;
   vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-  vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+  vkCmdDraw(commandBuffer, 12, 1, 0, 0);
 
   vkCmdEndRenderPass(commandBuffer);
 
@@ -753,7 +754,6 @@ void CustomIDEApplication::DrawFrame() {
 
   currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
-
 
 void CustomIDEApplication::MainLoop() {
   while (!glfwWindowShouldClose(window)) {

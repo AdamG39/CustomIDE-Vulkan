@@ -1,7 +1,7 @@
 #include "errorHandler.h"
 
 void ExitWithError(const char* errorText, int exitCode, int errorType) {
-  const char* errorPrefix = "";
+  const char* errorPrefix;
   switch(errorType) {
   case ERROR_GENERAL:
     errorPrefix = "[Error]: ";
@@ -13,6 +13,6 @@ void ExitWithError(const char* errorText, int exitCode, int errorType) {
     errorPrefix = "[Error]: ";
     break;
   }
-  fprintf(stderr, "%s%s\n", errorPrefix, errorText);
+  std::cerr << errorPrefix << errorText << std::endl;
   exit(exitCode);
 }
