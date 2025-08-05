@@ -1,9 +1,11 @@
 #version 450
 
-layout(location = 0) in vec3 fragColour;
+//FRAGMENT SHADER
+
+layout(location = 0) in vec4 fragColour;
 
 layout(location = 0) out vec4 outColour;
 
 void main() {
-  outColour = vec4(fragColour, 1.0);
+  outColour = fragColour;
 }

@@ -1,46 +1,25 @@
 #version 450
 
-layout(location = 0) out vec3 fragColour;
+//VERTEX SHADER
 
-vec2 positions[12] = vec2[](
-  vec2(1, -0.95),
-  vec2(1, 1),
-  vec2(-1, 1),
-  vec2(-1, -0.95),
-  vec2(1, -0.95),
-  vec2(-1, 1),
+layout(location = 0) in vec3 inPosition;
+layout(location = 1) in vec4 inColour;
 
-  vec2(-1, -1),
-  vec2(1, -1),
-  vec2(-1, -0.95),
-  vec2(1, -1),
-  vec2(1, -0.95),
-  vec2(-1, -0.95)
-);
+layout(location = 0) out vec4 fragColour;
 
-vec3 colours[12] = vec3[](
-  vec3(0.2313, 0.1098, 0.1960),
-  vec3(0.2313, 0.1098, 0.1960),
-  vec3(0.2313, 0.1098, 0.1960),
-  vec3(0.2313, 0.1098, 0.1960),
-  vec3(0.2313, 0.1098, 0.1960),
-  vec3(0.2313, 0.1098, 0.1960),
-
-  vec3(0.1012, 0.1012, 0.1137),
-  vec3(0.1012, 0.1012, 0.1137),
-  vec3(0.1012, 0.1012, 0.1137),
-  vec3(0.1012, 0.1012, 0.1137),
-  vec3(0.1012, 0.1012, 0.1137),
-  vec3(0.1012, 0.1012, 0.1137)
-);
+vec3 framebufferToScreenSpace(vec3 c) {
+  vec3 ret = vec3(((c.x / 2560) * 2) - 1, ((c.y / 1392) * 2) - 1, c.z);
+  return ret;
+}
 
 float srgbToLinear(float c) {
   return (c <= 0.04045) ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4);
 }
 
 void main() {
-  gl_Position = vec4(positions[gl_VertexIndex], 0.0, 1.0);
-  fragColour = vec3(srgbToLinear(colours[gl_VertexIndex].x),
-                    srgbToLinear(colours[gl_VertexIndex].y),
-                    srgbToLinear(colours[gl_VertexIndex].z));
+  gl_Position = vec4(framebufferToScreenSpace(inPosition), 1.0);
+  fragColour = vec4(srgbToLinear(inColour.x),
+                    srgbToLinear(inColour.y),
+                    srgbToLinear(inColour.z),
+                    inColour.w);
 }

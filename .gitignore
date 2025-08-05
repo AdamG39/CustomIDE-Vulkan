@@ -2,6 +2,7 @@
 /build
 /externals
 /.cache
+/.vscode
 
 # Prerequisites
 *.d
