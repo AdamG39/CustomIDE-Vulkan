@@ -6,7 +6,7 @@ void CloseWindowCallback(GLFWwindow* Window){
 }
 
 void MouseButtonCallback(GLFWwindow* Window, int Button, int Action, int Mods) {
-  if (Button == GLFW_MOUSE_BUTTON_LEFT && Action == GLFW_PRESS) {
+  if (Button == GLFW_MOUSE_BUTTON_LEFT && Action == GLFW_PRESS || Action == GLFW_RELEASE) {
     // Left mouse pressed
     double xPos, yPos;
     glfwGetCursorPos(Window, &xPos, &yPos);
