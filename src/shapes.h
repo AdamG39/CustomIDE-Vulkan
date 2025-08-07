@@ -236,6 +236,15 @@ public:
     m_childObjects.push_back(Element);
   }
 
+  void RemoveChildren() {
+    for (size_t i = 0; i < m_childObjects.size(); i++) {
+      if (m_childObjects[i]->GetChildCount() > 0) { 
+        m_childObjects[i]->RemoveChildren();
+      }
+    }
+    m_childObjects.clear();
+  }
+
   UIElement<T, C>* GetChildByIndex(const int Index) const {
     if (Index > m_childObjects.size()) {
       ExitWithError("Index out of range", -2);
@@ -303,19 +312,6 @@ public:
 
 private:
   std::function<void()> m_onClick;
-};
-
-template <typename T, typename C>
-class RenderableButton: public Button<T, C> {
-private:
-  Panel<T, C> m_panel;
-
-public:
-  using Callback = std::function<void()>;
-
-  RenderableButton(std::string ID, Vector2<T> Size, Vector2<T> Position, Colour<C> Colour, Callback OnClick)
-  : Button<T, C>(Size, Position, OnClick),
-    m_panel(Panel<T, C>(ID, Size, Position, Colour)){}
 };
 
 template <typename T, typename C>

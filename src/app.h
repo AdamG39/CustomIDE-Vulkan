@@ -61,8 +61,22 @@ public:
     }
 
     // TODO remove child panels as well
+
+    if (m_treeObjects[index]->GetChildCount() > 0) {
+      // Delete children
+      m_treeObjects[index]->RemoveChildren();
+    }
     
     m_treeObjects.erase(m_treeObjects.begin() + index);
+  }
+
+  void RemoveAllElements() {
+    for (size_t i = 0; i < m_treeObjects.size(); i++) {
+      if (m_treeObjects[i]->GetChildCount() > 0) {
+        m_treeObjects[i]->RemoveChildren();
+      }
+    }
+    m_treeObjects.clear();
   }
 
   UIElement<T, C>* GetElementFromIndex(int Index) {
@@ -211,6 +225,8 @@ public:
   VulkanRenderer* GetRenderer() const { return m_renderer; }
 
   UIManager<int, float>* GetUIManager() const { return m_root; }
+
+  void CreateUIElements();
 
 private:
   const uint32_t WIDTH = 1920;

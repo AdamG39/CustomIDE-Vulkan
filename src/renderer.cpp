@@ -6,14 +6,14 @@
 #include <algorithm>
 
 /*\ ---- TODO: ----
- *  X Have a basic vulkan implementation to draw a flat colour for the window
- *  X Draw a rectangle to represent new title bar
- *  - Render quads for custom buttons with textures
- *  - Ensure new title bar doesnt interfere with the rest of the windows ui
- *  - Implement window dragging
- *  - Implement window resizing
- *  - Implement minimise, maximise and close buttons
- *  - Dim or change colour of title bar when window is unfocused
+ *  [X] Have a basic vulkan implementation to draw a flat colour for the window
+ *  [X] Draw a rectangle to represent new title bar
+ *  [ ] Render quads for custom buttons with textures
+ *  [ ] Ensure new title bar doesnt interfere with the rest of the windows ui
+ *  [ ] Implement window dragging
+ *  [ ] Implement window resizing
+ *  [ ] Implement minimise, maximise and close buttons
+ *  [ ] Dim or change colour of title bar when window is unfocused
 \*/
 
 void VulkanRenderer::Start() {
@@ -29,6 +29,7 @@ void VulkanRenderer::InitGLFW(){
 
 void VulkanRenderer::CreateWindow() {
   glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
+  glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
   glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
@@ -36,6 +37,7 @@ void VulkanRenderer::CreateWindow() {
 
   glfwSetWindowCloseCallback(m_window, CloseWindowCallback);
   glfwSetMouseButtonCallback(m_window, MouseButtonCallback);
+  glfwSetFramebufferSizeCallback(m_window, FramebufferResizeCallback);
 
   if (!m_window) ExitWithError("Failed to create window!", -1);
 }
@@ -386,6 +388,18 @@ void VulkanRenderer::CreateSwapChain() {
 void VulkanRenderer::RecreateSwapChain() {
   vkDeviceWaitIdle(m_device);
 
+  for (auto framebuffer: m_swapChainFramebuffers) {
+    vkDestroyFramebuffer(m_device, framebuffer, nullptr);
+  }
+  m_swapChainFramebuffers.clear();
+
+  for (auto imageView: m_swapChainImageViews) {
+    vkDestroyImageView(m_device, imageView, nullptr);
+  }
+  m_swapChainImageViews.clear();
+
+  vkDestroySwapchainKHR(m_device, m_swapChain, nullptr);
+
   CreateSwapChain();
   CreateImageViews();
   CreateFramebuffers();
@@ -572,12 +586,17 @@ void VulkanRenderer::CreateGraphicsPipeline() {
   dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
   dynamicState.pDynamicStates = dynamicStates.data();
 
+  VkPushConstantRange pushConstantRange{};
+  pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  pushConstantRange.offset = 0;
+  pushConstantRange.size = sizeof(PushConstants);
+
   VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
   pipelineLayoutInfo.setLayoutCount = 0; // Optional
   pipelineLayoutInfo.pSetLayouts = nullptr; // Optional
-  pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
-  pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
+  pipelineLayoutInfo.pushConstantRangeCount = 1;
+  pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
 
   if (vkCreatePipelineLayout(m_device, &pipelineLayoutInfo, nullptr, &m_pipelineLayout) != VK_SUCCESS) {
     ExitWithError("Failed to create pipeline layout!", -1);
@@ -768,6 +787,15 @@ void VulkanRenderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
 
   VkBuffer vertexBuffers[] = { m_vertexBuffer };
   VkDeviceSize offsets[] = { 0 };
+
+  int framebufferWidth, framebufferHeight;
+  glfwGetFramebufferSize(m_window, &framebufferWidth, &framebufferHeight);
+
+  PushConstants pc{};
+  pc.width = static_cast<float>(framebufferWidth);
+  pc.height = static_cast<float>(framebufferHeight);
+
+  vkCmdPushConstants(commandBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants), &pc);
 
   vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
   vkCmdDraw(commandBuffer, static_cast<uint32_t>(m_vertexArray.size()), 1, 0, 0);

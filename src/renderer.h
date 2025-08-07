@@ -23,6 +23,11 @@ struct SwapChainSupportDetails {
   std::vector<VkPresentModeKHR> presentModes;
 };
 
+struct PushConstants {
+  float width;
+  float height;
+};
+
 class VulkanRenderer {
 public:
   VulkanRenderer(std::string AppName)
@@ -42,6 +47,8 @@ public:
   GLFWwindow* GetWindow() const { return m_window; }
 
   VkDevice GetDevice() const { return m_device; }
+
+  void RecreateSwapChain();
 
 private:
   const uint32_t WIDTH = 1920;
@@ -133,8 +140,6 @@ private:
 
   void CreateSwapChain();
 
-  void RecreateSwapChain();
-
   void CreateImageViews();
 
   void CreateRenderPass();
@@ -165,3 +170,10 @@ private:
 void CloseWindowCallback(GLFWwindow* window);
 
 void MouseButtonCallback(GLFWwindow* Window, int Button, int Action, int Mods);
+
+void FramebufferResizeCallback(GLFWwindow* Window, int Width, int Height);
+
+void ToggleMaximiseCallback(GLFWwindow* Window);
+
+void MinimiseCallback(GLFWwindow* Window);
+
