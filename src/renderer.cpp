@@ -38,6 +38,7 @@ void VulkanRenderer::CreateWindow() {
   glfwSetWindowCloseCallback(m_window, CloseWindowCallback);
   glfwSetMouseButtonCallback(m_window, MouseButtonCallback);
   glfwSetFramebufferSizeCallback(m_window, FramebufferResizeCallback);
+  glfwSetCursorPosCallback(m_window, CursorPositionCallback);
 
   if (!m_window) ExitWithError("Failed to create window!", -1);
 }

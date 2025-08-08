@@ -173,6 +173,8 @@ void MouseButtonCallback(GLFWwindow* Window, int Button, int Action, int Mods);
 
 void FramebufferResizeCallback(GLFWwindow* Window, int Width, int Height);
 
+void CursorPositionCallback(GLFWwindow* Window, double xpos, double ypos);
+
 void ToggleMaximiseCallback(GLFWwindow* Window);
 
 void MinimiseCallback(GLFWwindow* Window);

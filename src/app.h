@@ -3,9 +3,17 @@
 #include "shapes.h"
 #include "renderer.h"
 #include <memory>
+#include <map>
 
 #define RESULT_SUCCESS 0
 #define RESULT_FAIL 1
+
+#define RESIZE_HORIZONTAL 0
+#define RESIZE_VERITCAL 1
+
+#define CURSOR_STATE_DEFAULT 0
+#define CURSOR_STATE_HRESIZE 1
+#define CURSOR_STATE_VRESIZE 2
 
 enum class UIEventType { MOUSE_PRESS, MOUSE_RELEASE };
 
@@ -39,6 +47,10 @@ bool CursorOverlap(Vector2<float> CursorPos, Vector2<T> Size, Vector2<T> Positio
 
   return false;
 }
+
+bool CursorAtHorizonalBorder(double xpos);
+
+bool CursorAtVerticalBorder(double ypos);
 
 template <typename T, typename C>
 class UIManager {
@@ -232,6 +244,8 @@ private:
   const uint32_t WIDTH = 1920;
   const uint32_t HEIGHT = 1080;
 
+  uint32_t m_cursorState = CURSOR_STATE_DEFAULT;
+
   int m_windowWidth;
   int m_windowHeight;
 
@@ -239,8 +253,13 @@ private:
 
   UIManager<int, float>* m_root;
 
+  std::map<std::string, GLFWcursor*> m_cursorObjects;
+
   void CreateRenderer(std::string AppName);
 
   void DestroyRenderer();
-};
 
+  GLFWcursor* GetCursorObject(std::string Index);
+
+  void SetCursorState(int State);
+};
