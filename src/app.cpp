@@ -7,16 +7,19 @@ bool framebufferResized = false;
 int framebufferWidth = 0;
 int framebufferHeight = 0;
 
+bool maximisedState = true;
 bool resizeHover = false;
 bool resizing = false;
 bool resizeDirection;
+
+bool dragging = false;
 
 void CustomIDEApplication::StartApplication() {
   CreateRenderer(ApplicationName);
   framebufferWidth = m_windowWidth;
   framebufferHeight = m_windowHeight;
 
-  m_root = new UIManager<int, float>();
+  m_root = new UIManager<float, float>();
   m_root->BindRenderer(*m_renderer);
 
   CreateUIElements();
@@ -49,11 +52,7 @@ void CustomIDEApplication::MainLoop() {
       m_windowWidth = framebufferWidth;
       m_windowHeight = framebufferHeight;
 
-      // FIXME: DO NOT REMOVE AND RECREATE ALL ELEMENTS
-      // instead store if an element uses fixed or percentage size
-      // then propogate through the list and update the ones that are percentage based
-      m_root->RemoveAllElements();
-      CreateUIElements();
+      m_root->RecalculateUILayout(framebufferWidth, framebufferHeight);
     }
 
     if (resizeHover && m_cursorState == CURSOR_STATE_DEFAULT) {
@@ -72,7 +71,6 @@ void CustomIDEApplication::MainLoop() {
     }
 
     if (resizing) {
-      puts("resizing");
       double xpos, ypos;
       GLFWwindow* window = m_renderer->GetWindow();
       glfwGetCursorPos(window, &xpos, &ypos);
@@ -113,57 +111,50 @@ void CustomIDEApplication::SetCursorState(int State) {
 }
 
 void CustomIDEApplication::CreateUIElements() {
-  Panel background = Panel("Background",
-                           Vector2(m_windowWidth, m_windowHeight),
-                           Vector2(m_windowWidth / 2, m_windowHeight / 2),
+  // TODO: Implement anchoring so offsets can have more flexibility
+  Panel background = Panel(Vector2<UISize<float>>({1.0f, SizeMode::Proportional}, {1.0f, SizeMode::Proportional}),
+                           Vector2<UISize<float>>({0.0f}, {0.0f}),
                            Colour(0x3B1C32, 1.0f));
 
-  Panel titleBar = Panel("TitleBar",
-                         Vector2(m_windowWidth, 40),
-                         Vector2(m_windowWidth / 2, 20),
+  Panel titleBar = Panel(Vector2<UISize<float>>({1.0f, SizeMode::Proportional}, {40.0f}),
+                         Vector2<UISize<float>>({0.0f}, {0.0f}),
                          Colour(0x1A1A1D, 1.0f));
 
-  Panel exitButtonPanel = Panel("ExitButtonPanel",
-                    Vector2(50, 40),
-                    Vector2(m_windowWidth - 25, 20),
-                    Colour(0xFF0000, 1.0f));
+  titleBar.SetAnchor(UIAnchor(Vector2<UISize<float>>({0.0f}, {20.0f}), UIAnchorType::Top));
 
-  Panel maximiseButtonPanel = Panel("MaximiseButtonPanel",
-                    Vector2(50, 40),
-                    Vector2(m_windowWidth - 75, 20),
-                    Colour(0x00FF00, 1.0f));
+  PanelButton exitButton = PanelButton(Vector2<UISize<float>>({50.0f}, {40.0f}),
+                                       Vector2<UISize<float>>({0.0f}, {0.0f}),
+                                       Colour(0xFF0000, 1.0f),
+                                       CloseWindowCallback, m_renderer->GetWindow());
 
-  Panel minimiseButtonPanel = Panel("MinimiseButtonPanel",
-                    Vector2(50, 40),
-                    Vector2(m_windowWidth - 125, 20),
-                    Colour(0x0000FF, 1.0f));
+  exitButton.SetAnchor(UIAnchor(Vector2<UISize<float>>({-25.0f}, {20.0f}), UIAnchorType::TopRight));
 
-  Button exitButton = Button<int, float>(Vector2(50, 40),
-                                         Vector2(m_windowWidth - 25, 20),
-                                         CloseWindowCallback, m_renderer->GetWindow());
+  PanelButton maximiseButton = PanelButton(Vector2<UISize<float>>({50.0f}, {40.0f}),
+                                           Vector2<UISize<float>>({-50.0f,}, {0.0f}),
+                                           Colour(0x00FF00, 1.0f),
+                                           ToggleMaximiseCallback, m_renderer->GetWindow());
 
-  Button maximiseButton = Button<int, float>(Vector2(50, 40),
-                                             Vector2(m_windowWidth - 75, 20),
-                                             ToggleMaximiseCallback, m_renderer->GetWindow());
+  maximiseButton.SetAnchor(UIAnchor(Vector2<UISize<float>>({-25.0f}, {20.0f}), UIAnchorType::TopRight));
 
-  Button minimiseButton = Button<int, float>(Vector2(50, 40),
-                                             Vector2(m_windowWidth - 125, 20),
-                                             MinimiseCallback, m_renderer->GetWindow());
+  PanelButton minimiseButton = PanelButton(Vector2<UISize<float>>({50.0f}, {40.0f}),
+                                           Vector2<UISize<float>>({-100.0f}, {0.0f}),
+                                           Colour(0x0000FF, 1.0f),
+                                           MinimiseCallback, m_renderer->GetWindow());
 
-  exitButtonPanel.AddChild(std::make_shared<Button<int, float>>(exitButton));
-  maximiseButtonPanel.AddChild(std::make_shared<Button<int, float>>(maximiseButton));
-  minimiseButtonPanel.AddChild(std::make_shared<Button<int, float>>(minimiseButton));
+  minimiseButton.SetAnchor(UIAnchor(Vector2<UISize<float>>({-25.0f}, {20.0f}), UIAnchorType::TopRight));
 
   titleBar.GetGeometry().SetZIndex(1);
-  exitButtonPanel.GetGeometry().SetZIndex(1);
-  maximiseButtonPanel.GetGeometry().SetZIndex(1);
-  minimiseButtonPanel.GetGeometry().SetZIndex(1);
+  exitButton.GetGeometry().SetZIndex(1);
+  maximiseButton.GetGeometry().SetZIndex(1);
+  minimiseButton.GetGeometry().SetZIndex(1);
 
-  m_root->AddElement(std::make_shared<Panel<int, float>>(background));
-  m_root->AddElement(std::make_shared<Panel<int, float>>(titleBar));
-  m_root->AddElement(std::make_shared<Panel<int, float>>(exitButtonPanel));
-  m_root->AddElement(std::make_shared<Panel<int, float>>(maximiseButtonPanel));
-  m_root->AddElement(std::make_shared<Panel<int, float>>(minimiseButtonPanel));
+  m_root->AddElement(background);
+  m_root->AddElement(titleBar);
+  m_root->AddElement(exitButton);
+  m_root->AddElement(maximiseButton);
+  m_root->AddElement(minimiseButton);
+
+  m_root->RecalculateUILayout(framebufferWidth, framebufferHeight);
 }
 
 bool CursorAtHorizontalBorder(double xpos) {
@@ -183,16 +174,48 @@ void CloseWindowCallback(GLFWwindow* Window){
 }
 
 void MouseButtonCallback(GLFWwindow* Window, int Button, int Action, int Mods) {
-  if (Button == GLFW_MOUSE_BUTTON_LEFT && Action == GLFW_RELEASE && resizing) resizing = false;
-  if (resizeHover && (Button == GLFW_MOUSE_BUTTON_LEFT && Action == GLFW_PRESS)) resizing = true;
-  if (!resizeHover && (Button == GLFW_MOUSE_BUTTON_LEFT && Action == GLFW_PRESS || Action == GLFW_RELEASE)) {
-    // Left mouse pressed
-    double xPos, yPos;
-    glfwGetCursorPos(Window, &xPos, &yPos);
-    if (CustomIDEApplication::s_instance) {
-      CustomIDEApplication::s_instance->GetUIManager()->AddEvent(std::make_shared<UIMouseEvent>(
-                                                    UIMouseEvent(Vector2((float)xPos, (float)yPos),
-                                                                 Button, Action, Mods)));
+  if (Button != GLFW_MOUSE_BUTTON_LEFT) return;
+
+  if (Action == GLFW_RELEASE) {
+    if (resizing) {
+      resizing = false;
+      return;
+    }
+
+    if (dragging) {
+      dragging = false;
+      return;
+    }
+
+    if (!resizeHover) {
+      // Left mouse pressed
+      double xPos, yPos;
+      glfwGetCursorPos(Window, &xPos, &yPos);
+      if (CustomIDEApplication::s_instance) {
+        CustomIDEApplication::s_instance->GetUIManager()->AddEvent(std::make_shared<UIMouseEvent>(
+                                                      UIMouseEvent(Vector2((float)xPos, (float)yPos),
+                                                                   Button, Action, Mods)));
+        return;
+      }
+    }
+  }
+
+  else if (Action == GLFW_PRESS) {
+    if (resizeHover) {
+      resizing = true;
+      return;
+    }
+
+    if (!resizeHover) {
+      // Left mouse pressed
+      double xPos, yPos;
+      glfwGetCursorPos(Window, &xPos, &yPos);
+      if (CustomIDEApplication::s_instance) {
+        CustomIDEApplication::s_instance->GetUIManager()->AddEvent(std::make_shared<UIMouseEvent>(
+                                                      UIMouseEvent(Vector2((float)xPos, (float)yPos),
+                                                                   Button, Action, Mods)));
+        return;
+      }
     }
   }
 }
@@ -208,6 +231,7 @@ void CursorPositionCallback(GLFWwindow* Window, double xpos, double ypos) {
   // Change cursor to horizonal/vertical resizers
   // Start resizing if at the border and left click is pressed
   // Stop resizing if left click is released
+  if (maximisedState) return; // If maximised then resizing doesnt make sense so just return
   if (CursorAtHorizontalBorder(xpos)) {
     resizeHover = true;
     resizeDirection = RESIZE_HORIZONTAL;
@@ -223,9 +247,11 @@ void ToggleMaximiseCallback(GLFWwindow* Window) {
   if (glfwGetWindowAttrib(Window, GLFW_MAXIMIZED)) {
     // Un-maximise window if already maximised
     glfwRestoreWindow(Window);
+    maximisedState = false;
   } else {
-    // Maximise window is already un-maximised
+    // Maximise window if already un-maximised
     glfwMaximizeWindow(Window);
+    maximisedState = true;
   }
 }
 

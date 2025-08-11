@@ -55,8 +55,9 @@ bool CursorAtVerticalBorder(double ypos);
 template <typename T, typename C>
 class UIManager {
 public:
-  void AddElement(std::shared_ptr<UIElement<T, C>> Element) {
-    m_treeObjects.push_back(Element);
+  template <typename Ty>
+  void AddElement(Ty&& Element) {
+    m_treeObjects.push_back(std::make_shared<std::decay_t<Ty>>(std::forward<Ty>(Element)));
   }
 
   void RemoveElement(UIElement<T, C>* Element) {
@@ -71,8 +72,6 @@ public:
     if (index == -1) {
       ExitWithError("Attempted to remove panel from tree when panel doesnt exist", -2);
     }
-
-    // TODO remove child panels as well
 
     if (m_treeObjects[index]->GetChildCount() > 0) {
       // Delete children
@@ -97,23 +96,6 @@ public:
     }
 
     return m_treeObjects[Index].get();
-  }
-
-  UIElement<T, C>* GetElementFromName(std::string Name) {
-    int index = -1;
-
-    for (size_t i = 0; i < m_treeObjects.size(); i++) {
-      if (Name == m_treeObjects[i]->Label) {
-        index = i;
-        break;
-      }
-    }
-
-    if (index == -1) {
-      ExitWithError("No element found with that label", -2);
-    }
-
-    return GetPanelFromIndex(index);
   }
 
   void RenderAll() {
@@ -144,8 +126,10 @@ public:
     auto verts = TriVectorToSortedVertexVector(tris);
 
     // Pass the list of vertices to the vertex buffer converting if nessessary
-    m_renderer->FillVertexBuffer(
-        ConvertVertexVector<int, float, float, float>(TriVectorToSortedVertexVector(tris)));
+    /*m_renderer->FillVertexBuffer(
+        ConvertVertexVector<int, float, float, float>(TriVectorToSortedVertexVector(tris)));*/
+
+    m_renderer->FillVertexBuffer(TriVectorToSortedVertexVector(tris));
   }
 
   void AddEvent(std::shared_ptr<UIEvent> Event) { 
@@ -178,6 +162,12 @@ public:
     m_renderer = &Renderer;
   }
 
+  void RecalculateUILayout(int framebufferWidth, int framebufferHeight) {
+    for (size_t i = 0; i < m_treeObjects.size(); i++) {
+      m_treeObjects[i]->RecalculateGeometry(framebufferWidth, framebufferHeight);
+    }
+  }
+
 private:
   std::vector<std::shared_ptr<UIElement<T, C>>> m_treeObjects;
 
@@ -185,14 +175,14 @@ private:
 
   VulkanRenderer* m_renderer = nullptr;
 
-  std::vector<std::shared_ptr<UIElement<int, float>>> GetTreeElements() {
-    std::vector<std::shared_ptr<UIElement<int, float>>> ret;
+  std::vector<std::shared_ptr<UIElement<float, float>>> GetTreeElements() {
+    std::vector<std::shared_ptr<UIElement<float, float>>> ret;
     
     for (size_t i = 0; i < m_treeObjects.size(); i++) {
       ret.push_back(m_treeObjects[i]);
       if (m_treeObjects[i]->GetChildCount() == 0) continue;
 
-      std::vector<std::shared_ptr<UIElement<int, float>>> temp = m_treeObjects[i]->GetChildren();
+      std::vector<std::shared_ptr<UIElement<float, float>>> temp = m_treeObjects[i]->GetChildren();
       for (size_t j = 0; j < temp.size(); j++) {
         ret.push_back(temp[j]);
       }
@@ -202,16 +192,19 @@ private:
   }
 
   int HandleMouseEvent(std::shared_ptr<UIMouseEvent> Event) {
+    std::vector<std::shared_ptr<UIElement<float, float>>> treeObjects = GetTreeElements();
     switch (Event->Type) {
       case UIEventType::MOUSE_RELEASE:
+        
+        break;
       case UIEventType::MOUSE_PRESS:
-        std::vector<std::shared_ptr<UIElement<int, float>>> treeObjects = GetTreeElements();
         for (size_t i = 0; i < treeObjects.size(); i++) {
           if (treeObjects[i]->GetType() != UIType::Button) continue;
 
-          auto button = std::dynamic_pointer_cast<Button<int, float>>(treeObjects[i]);
-          if (CursorOverlap(Event->CursorPos, button->GetSize(), button->GetPositon())) button->OnClick();
+          auto button = std::dynamic_pointer_cast<Button<float, float>>(treeObjects[i]);
+          if (CursorOverlap(Event->CursorPos, button->GetSize(), button->GetPosition())) button->OnClick();
         }
+        break;
     }
     return RESULT_SUCCESS;
   }
@@ -236,7 +229,7 @@ public:
 
   VulkanRenderer* GetRenderer() const { return m_renderer; }
 
-  UIManager<int, float>* GetUIManager() const { return m_root; }
+  UIManager<float, float>* GetUIManager() const { return m_root; }
 
   void CreateUIElements();
 
@@ -251,7 +244,7 @@ private:
 
   VulkanRenderer* m_renderer;
 
-  UIManager<int, float>* m_root;
+  UIManager<float, float>* m_root;
 
   std::map<std::string, GLFWcursor*> m_cursorObjects;
 

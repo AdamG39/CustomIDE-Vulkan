@@ -1,7 +1,6 @@
 #pragma once
 
 #include <array>
-#include <string>
 #include <vector>
 #include <memory>
 #include <algorithm>
@@ -14,9 +13,16 @@ enum class UIType { Base, Panel, Button };
 
 template <typename T>
 struct Vector2 {
-  T x, y;
+  T x{};
+  T y{};
 
-  Vector2() : x(0), y(0) {}
+  Vector2() = default;
+
+  template <typename U1, typename U2,
+            typename = std::enable_if_t<std::is_convertible_v<T, U1> &&
+                                        std::is_convertible_v<T, U2>>>
+  Vector2(U1&& X, U2&& Y)
+  : x(std::forward<U1>(X)), y(std::forward<U2>(Y)) {}
 
   template<typename U>
   Vector2(const Vector2<U>& That)
@@ -59,6 +65,36 @@ struct Colour {
     a(static_cast<T>(That.a)) {}
 
   Colour(T R, T G, T B, T A) : r(R), g(G), b(B), a(A) {}
+};
+
+enum class SizeMode { Fixed, Proportional };
+
+template <typename T>
+struct UISize {
+  T Value{};
+  SizeMode Mode{SizeMode::Fixed};
+
+  UISize() = default;
+
+  UISize(T Value, SizeMode Mode = SizeMode::Fixed)
+  : Value(Value), Mode(Mode) {}
+
+  template<typename U>
+  UISize(const UISize<U>& That)
+  : Value(static_cast<T>(That.Value)), Mode(That.Mode) {}
+};
+
+enum class UIAnchorType { Center, Top, Bottom, Left, Right, TopLeft, TopRight, BottomLeft, BottomRight };
+
+template <typename T>
+struct UIAnchor {
+  Vector2<UISize<T>> Offset;
+  UIAnchorType Type = UIAnchorType::Center;
+
+  UIAnchor() = default;
+
+  UIAnchor(Vector2<UISize<T>> Offset, UIAnchorType Type = UIAnchorType::Center)
+  : Offset(Offset), Type(Type) {}
 };
 
 template <typename T, typename C>
@@ -199,6 +235,10 @@ public:
 template <typename T, typename C>
 class UIElement {
 protected:
+  Vector2<UISize<T>> m_size;
+  Vector2<UISize<T>> m_position;
+  UIAnchor<T> m_anchor;
+
   UIType m_type = UIType::Base;
   bool m_visible = false;
   Rect<T, C> m_geometry;
@@ -207,8 +247,9 @@ protected:
   UIElement<T, C>* m_parent = nullptr;
 
 public:
-  UIElement(Vector2<T> Size, Vector2<T> Position)
-  : m_geometry(Rect<T, C>(Size, Position)) {}
+  UIElement(Vector2<UISize<T>> Size, Vector2<UISize<T>> Position)
+  : m_geometry(Vector2(Size.x.Value, Size.y.Value), Vector2(Position.x.Value, Position.y.Value)),
+    m_size(Size), m_position(Position) {}
 
   virtual ~UIElement() {
     delete m_parent;
@@ -220,11 +261,21 @@ public:
 
   Vector2<T> GetSize() const { return m_geometry.GetSize(); }
 
-  void SetSize(const Vector2<T> NewSize) { m_geometry.SetSize(NewSize); }
+  virtual void SetSize(const Vector2<UISize<T>> NewSize) {
+    m_geometry.SetSize(Vector2(NewSize.x.Value, NewSize.y.Value));
+    m_size = NewSize;
+  }
 
-  Vector2<T> GetPositon() const { return m_geometry.GetPosition(); }
+  Vector2<T> GetPosition() const { return m_geometry.GetPosition(); }
 
-  void SetPosition(const Vector2<T> NewPosition) { m_geometry.SetPosition(NewPosition); }
+  virtual void SetPosition(const Vector2<UISize<T>> NewPosition) {
+    m_geometry.SetPosition(Vector2(NewPosition.x.Value, NewPosition.y.Value));
+    m_position = NewPosition;
+  }
+
+  virtual void SetAnchor(const UIAnchor<T> AnchorValue) {
+    m_anchor = AnchorValue;
+  }
 
   bool IsVisible() const { return m_visible; }
 
@@ -253,9 +304,9 @@ public:
     return m_childObjects[Index];
   }
 
-  std::vector<std::shared_ptr<UIElement<T, C>>> GetChildren() const { return m_childObjects; }
+  virtual std::vector<std::shared_ptr<UIElement<T, C>>> GetChildren() const { return m_childObjects; }
 
-  size_t GetChildCount() const { return m_childObjects.size(); }
+  virtual size_t GetChildCount() const { return m_childObjects.size(); }
 
   std::vector<Rect<T, C>> GetTotalGeometries() const {
     std::vector<Rect<T, C>> geometries;
@@ -274,44 +325,162 @@ public:
     return geometries;
   }
 
+  void AdjustPositionRelativeToAnchor(Vector2<T>& Position, int framebufferWidth, int framebufferHeight) {
+    switch (m_anchor.Type) {
+      case UIAnchorType::Center:
+        Position.x += (T)(framebufferWidth / 2);
+        Position.y += (T)(framebufferHeight / 2);
+        break;
+      case UIAnchorType::Top:
+        Position.x += (T)(framebufferWidth / 2);
+        break;
+      case UIAnchorType::Left:
+        Position.y += (T)(framebufferHeight / 2);
+        break;
+      case UIAnchorType::Right:
+        Position.x += (T)(framebufferWidth);
+        Position.y += (T)(framebufferHeight / 2);
+        break;
+      case UIAnchorType::Bottom:
+        Position.x += (T)(framebufferWidth / 2);
+        Position.y += (T)(framebufferHeight);
+        break;
+      case UIAnchorType::TopLeft:         
+        // Already relative to 0, 0 so no changes needed
+        break;
+      case UIAnchorType::TopRight:
+        Position.x += (T)(framebufferWidth);
+        break;
+      case UIAnchorType::BottomLeft:
+        Position.y += (T)(framebufferHeight);
+        break;
+      case UIAnchorType::BottomRight:
+        Position.x += (T)(framebufferWidth);
+        Position.y += (T)(framebufferHeight);
+        break;
+    }
+
+    if (m_anchor.Offset.x.Mode == SizeMode::Proportional) {
+      Position.x += (T)(framebufferWidth * m_anchor.Offset.x.Value);
+    } else { Position.x += (T)(m_anchor.Offset.x.Value); }
+
+    if (m_anchor.Offset.y.Mode == SizeMode::Proportional) {
+      Position.y += (T)(framebufferHeight * m_anchor.Offset.y.Value);
+    } else { Position.y += (T)(m_anchor.Offset.y.Value); }
+  }
+
+  virtual void RecalculateGeometry(int framebufferWidth, int framebufferHeight) {
+    Vector2<T> newSize;
+    Vector2<T> newPosition;
+    if (m_size.x.Mode == SizeMode::Proportional) {
+      newSize.x = (T)(framebufferWidth * m_size.x.Value);
+    } else { newSize.x = m_size.x.Value; }
+
+    if (m_size.y.Mode == SizeMode::Proportional) {
+      newSize.y = (T)(framebufferHeight * m_size.y.Value);
+    } else { newSize.y = m_size.y.Value; }
+
+    AdjustPositionRelativeToAnchor(newPosition, framebufferWidth, framebufferHeight);
+
+    if (m_position.x.Mode == SizeMode::Proportional) {
+      newSize.x += (T)(framebufferWidth * m_size.x.Value);
+    } else { newPosition.x += m_position.x.Value; }
+
+    if (m_position.y.Mode == SizeMode::Proportional) {
+      newSize.y += (T)(framebufferHeight * m_size.y.Value);
+    } else { newPosition.y += m_position.y.Value; }
+
+    m_geometry.SetSize(newSize);
+    m_geometry.SetPosition(newPosition);
+  }
+
   UIType GetType() const { return m_type; }
 };
 
 template <typename T, typename C>
 class Panel : public UIElement<T, C> {
 public:
-  std::string ID;
-
-  Panel(std::string ID, Vector2<T> Size, Vector2<T> Position, Colour<C> Colour)
-  : UIElement<T, C>(Size, Position),
-    ID(ID)
+  Panel(Vector2<UISize<T>> Size, Vector2<UISize<T>> Position, Colour<C> Colour)
+  : UIElement<T, C>(Size, Position)
     { SetColour(Colour); UIElement<T, C>::SetVisibility(true); UIElement<T, C>::m_type = UIType::Panel; }
 
   Colour<C> GetColour() const { return UIElement<T, C>::m_geometry.GetColour(); }
 
   void SetColour(const Colour<C> NewColour) { UIElement<T, C>::m_geometry.SetColour(NewColour); }
+
+  UIAnchor<T> GetAnchor() const { return UIElement<T, C>::m_anchor; }
 };
 
 template <typename T, typename C>
 class Button : public UIElement<T, C> {
 public:
   template <typename Func, typename... Args>
-  Button(Vector2<T> Size, Vector2<T> Position, Func&& Function, Args&&... Arguments)
+  Button(Vector2<UISize<T>> Size, Vector2<UISize<T>> Position, Func&& Function, Args&&... Arguments)
   : UIElement<T, C>(Size, Position)
     { 
       UIElement<T, C>::m_type = UIType::Button; 
       
-      m_onClick = std::bind(std::forward<Func>(Function), std::forward<Args>(Arguments)...);
+      m_onClick = std::bind(std::forward<Func>(Function),
+                            std::decay_t<Args>(Arguments)...
+                           );
     }
 
   void OnClick() {
-    if (m_onClick) {
-      m_onClick();
-    }
+    if (m_onClick) m_onClick();
   }
 
 private:
   std::function<void()> m_onClick;
+};
+
+template <typename T, typename C>
+class PanelButton : public Panel<T, C> {
+public:
+  template <typename Func, typename... Args>
+  PanelButton(Vector2<UISize<T>> Size, Vector2<UISize<T>> Position,
+              Colour<C> Colour, Func&& Function, Args&&... Arguments)
+  : Panel<T, C>(Size, Position, Colour),
+    m_button(Size, Position, std::forward<Func>(Function), std::forward<Args>(Arguments)...)
+    {
+      UIElement<T, C>::m_type = UIType::Panel; 
+    }
+
+  void OnClick() {
+    m_button.OnClick();
+  }
+
+  void SetSize(const Vector2<UISize<T>> NewSize) override {
+    m_button.SetSize(NewSize);
+    Panel<T, C>::SetSize(NewSize);
+  }
+
+  void SetPosition(const Vector2<UISize<T>> NewPosition) override {
+    m_button.SetPosition(NewPosition);
+    Panel<T, C>::SetPosition(NewPosition);
+  }
+
+  void SetAnchor(const UIAnchor<T> AnchorValue) override {
+    m_button.SetAnchor(AnchorValue);
+    Panel<T, C>::SetAnchor(AnchorValue);
+  }
+
+  size_t GetChildCount() const override {
+    return Panel<T, C>::GetChildCount() + 1; // Add one for the sorted button object
+  }
+
+  void RecalculateGeometry(int framebufferWidth, int framebufferHeight) override {
+    m_button.RecalculateGeometry(framebufferWidth, framebufferHeight);
+    Panel<T, C>::RecalculateGeometry(framebufferWidth, framebufferHeight);
+  }
+
+  std::vector<std::shared_ptr<UIElement<T, C>>> GetChildren() const override {
+    auto ret = UIElement<T, C>::GetChildren();
+    ret.push_back(std::make_shared<Button<T, C>>(m_button));
+    return ret;
+  }
+
+private:
+  Button<T, C> m_button;
 };
 
 template <typename T, typename C>
