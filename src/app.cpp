@@ -1,5 +1,6 @@
 #include "app.h"
 #include <GLFW/glfw3.h>
+#include <algorithm>
 
 const uint32_t BORDER_THICKNESS = 5;
 
@@ -12,8 +13,6 @@ bool resizeHover = false;
 bool resizing = false;
 bool resizeDirection;
 
-bool dragging = false;
-
 void CustomIDEApplication::StartApplication() {
   CreateRenderer(ApplicationName);
   framebufferWidth = m_windowWidth;
@@ -21,6 +20,7 @@ void CustomIDEApplication::StartApplication() {
 
   m_root = new UIManager<float, float>();
   m_root->BindRenderer(*m_renderer);
+  m_root->WindowFlags ^= WINDOW_FLAG_MAXIMISED;
 
   CreateUIElements();
 
@@ -74,11 +74,24 @@ void CustomIDEApplication::MainLoop() {
       double xpos, ypos;
       GLFWwindow* window = m_renderer->GetWindow();
       glfwGetCursorPos(window, &xpos, &ypos);
+      int x = (xpos < MIN_WIDTH) ? MIN_WIDTH : static_cast<int>(xpos);
+      int y = (ypos < MIN_HEIGHT) ? MIN_HEIGHT : static_cast<int>(ypos);
       if (resizeDirection == RESIZE_HORIZONTAL) {
-        glfwSetWindowSize(window, static_cast<int>(xpos), m_windowHeight);
+        glfwSetWindowSize(window, x, m_windowHeight);
       } else {
-        glfwSetWindowSize(window, m_windowWidth, static_cast<int>(ypos));
+        glfwSetWindowSize(window, m_windowWidth, y);
       }
+    }
+
+    if ((m_root->EventFlags & EVENT_FLAG_DRAGGING) != 0) {
+      double xpos, ypos;
+      GLFWwindow* window = m_renderer->GetWindow();
+      glfwGetCursorPos(window, &xpos, &ypos);
+      int newXPos, newYPos;
+      glfwGetWindowPos(window, &newXPos, &newYPos);
+      newXPos += (int)xpos - m_root->MousePressPosition.x;
+      newYPos += (int)ypos - m_root->MousePressPosition.y;
+      glfwSetWindowPos(window, newXPos, newYPos);
     }
 
     m_renderer->DrawFrame();
@@ -111,7 +124,6 @@ void CustomIDEApplication::SetCursorState(int State) {
 }
 
 void CustomIDEApplication::CreateUIElements() {
-  // TODO: Implement anchoring so offsets can have more flexibility
   Panel background = Panel(Vector2<UISize<float>>({1.0f, SizeMode::Proportional}, {1.0f, SizeMode::Proportional}),
                            Vector2<UISize<float>>({0.0f}, {0.0f}),
                            Colour(0x3B1C32, 1.0f));
@@ -182,11 +194,6 @@ void MouseButtonCallback(GLFWwindow* Window, int Button, int Action, int Mods) {
       return;
     }
 
-    if (dragging) {
-      dragging = false;
-      return;
-    }
-
     if (!resizeHover) {
       // Left mouse pressed
       double xPos, yPos;
@@ -248,10 +255,16 @@ void ToggleMaximiseCallback(GLFWwindow* Window) {
     // Un-maximise window if already maximised
     glfwRestoreWindow(Window);
     maximisedState = false;
+    if (CustomIDEApplication::s_instance) {
+      CustomIDEApplication::s_instance->GetUIManager()->AddEvent(std::make_shared<UIEvent>(UIEvent(UIEventType::WINDOW_RESTORE)));
+    }
   } else {
     // Maximise window if already un-maximised
     glfwMaximizeWindow(Window);
     maximisedState = true;
+    if (CustomIDEApplication::s_instance) {
+      CustomIDEApplication::s_instance->GetUIManager()->AddEvent(std::make_shared<UIEvent>(UIEvent(UIEventType::WINDOW_MAXIMISE)));
+    }
   }
 }
 

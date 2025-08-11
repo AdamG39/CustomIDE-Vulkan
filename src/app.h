@@ -15,7 +15,11 @@
 #define CURSOR_STATE_HRESIZE 1
 #define CURSOR_STATE_VRESIZE 2
 
-enum class UIEventType { MOUSE_PRESS, MOUSE_RELEASE };
+#define EVENT_FLAG_DRAGGING 0x00000001
+
+#define WINDOW_FLAG_MAXIMISED 0x00000001
+
+enum class UIEventType { MOUSE_PRESS, MOUSE_RELEASE, WINDOW_MAXIMISE, WINDOW_RESTORE };
 
 struct UIEvent {
   UIEventType Type;
@@ -55,6 +59,10 @@ bool CursorAtVerticalBorder(double ypos);
 template <typename T, typename C>
 class UIManager {
 public:
+  uint32_t EventFlags = 0;
+  uint32_t WindowFlags = 0;
+  Vector2<double> MousePressPosition;
+
   template <typename Ty>
   void AddElement(Ty&& Element) {
     m_treeObjects.push_back(std::make_shared<std::decay_t<Ty>>(std::forward<Ty>(Element)));
@@ -150,6 +158,14 @@ public:
           HandleMouseEvent(std::dynamic_pointer_cast<UIMouseEvent>(m_events[i]));
           result++;
           break;
+        case UIEventType::WINDOW_MAXIMISE:
+          WindowFlags ^= WINDOW_FLAG_MAXIMISED;
+          result++;
+          break;
+        case UIEventType::WINDOW_RESTORE:
+          WindowFlags -= WINDOW_FLAG_MAXIMISED;
+          result++;
+          break;
       }
     }
 
@@ -193,18 +209,31 @@ private:
 
   int HandleMouseEvent(std::shared_ptr<UIMouseEvent> Event) {
     std::vector<std::shared_ptr<UIElement<float, float>>> treeObjects = GetTreeElements();
+    bool eventSuccessful = false;
     switch (Event->Type) {
       case UIEventType::MOUSE_RELEASE:
-        
+        if ((EventFlags & EVENT_FLAG_DRAGGING) != 0) EventFlags -= EVENT_FLAG_DRAGGING;
         break;
       case UIEventType::MOUSE_PRESS:
         for (size_t i = 0; i < treeObjects.size(); i++) {
           if (treeObjects[i]->GetType() != UIType::Button) continue;
 
           auto button = std::dynamic_pointer_cast<Button<float, float>>(treeObjects[i]);
-          if (CursorOverlap(Event->CursorPos, button->GetSize(), button->GetPosition())) button->OnClick();
+          if (CursorOverlap(Event->CursorPos, button->GetSize(), button->GetPosition())) { 
+            button->OnClick();
+            eventSuccessful = true;
+            break;
+          }
+        }
+        if (eventSuccessful || WindowFlags & WINDOW_FLAG_MAXIMISED) break;
+        if (CursorOverlap(Event->CursorPos, treeObjects[1]->GetSize(), treeObjects[1]->GetPosition())) {
+          EventFlags ^= EVENT_FLAG_DRAGGING;
+          MousePressPosition = Event->CursorPos;
         }
         break;
+      case UIEventType::WINDOW_MAXIMISE:
+      case UIEventType::WINDOW_RESTORE:
+        return -1;
     }
     return RESULT_SUCCESS;
   }
@@ -234,8 +263,8 @@ public:
   void CreateUIElements();
 
 private:
-  const uint32_t WIDTH = 1920;
-  const uint32_t HEIGHT = 1080;
+  const int MIN_WIDTH = 800;
+  const int MIN_HEIGHT = 600;
 
   uint32_t m_cursorState = CURSOR_STATE_DEFAULT;
 

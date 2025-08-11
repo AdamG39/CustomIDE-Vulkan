@@ -240,7 +240,8 @@ VkExtent2D VulkanRenderer::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capa
   if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
     return capabilities.currentExtent;
   } else {
-    int width, height;
+    int width = 0;
+    int height = 0;
     glfwGetFramebufferSize(m_window, &width, &height);
 
     VkExtent2D actualExtent = {
@@ -387,6 +388,7 @@ void VulkanRenderer::CreateSwapChain() {
 }
 
 void VulkanRenderer::RecreateSwapChain() {
+  if (glfwWindowShouldClose(m_window)) { return; }
   vkDeviceWaitIdle(m_device);
 
   for (auto framebuffer: m_swapChainFramebuffers) {
@@ -833,8 +835,15 @@ void VulkanRenderer::DrawFrame() {
   vkWaitForFences(m_device, 1, &m_inFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
   vkResetFences(m_device, 1, &m_inFlightFences[m_currentFrame]);
 
-  uint32_t imageIndex;
-  vkAcquireNextImageKHR(m_device, m_swapChain, UINT64_MAX, m_imageAvailableSemaphores[m_currentFrame], VK_NULL_HANDLE, &imageIndex);
+  uint32_t imageIndex = 0;
+  VkResult result = vkAcquireNextImageKHR(m_device, m_swapChain, UINT64_MAX, 
+                                          m_imageAvailableSemaphores[m_currentFrame], VK_NULL_HANDLE, &imageIndex);
+
+  if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+    puts("renderer recreating swapchain");
+    RecreateSwapChain();
+    return;
+  }
 
   vkResetCommandBuffer(m_commandBuffers[m_currentFrame], 0);
 
@@ -879,7 +888,12 @@ void VulkanRenderer::DrawFrame() {
   presentInfo.pSwapchains = swapChains;
   presentInfo.pImageIndices = &imageIndex;
 
-  vkQueuePresentKHR(m_presentQueue, &presentInfo);
+  result = vkQueuePresentKHR(m_presentQueue, &presentInfo);
+
+  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+    puts("renderer recreating swapchain after frame presentation");
+    RecreateSwapChain();
+  }
 
   m_vertexArray.clear();
 
