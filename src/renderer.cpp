@@ -5,17 +5,6 @@
 #include <set>
 #include <algorithm>
 
-/*\ ---- TODO: ----
- *  [X] Have a basic vulkan implementation to draw a flat colour for the window
- *  [X] Draw a rectangle to represent new title bar
- *  [ ] Render quads for custom buttons with textures
- *  [ ] Ensure new title bar doesnt interfere with the rest of the windows ui
- *  [ ] Implement window dragging
- *  [ ] Implement window resizing
- *  [ ] Implement minimise, maximise and close buttons
- *  [ ] Dim or change colour of title bar when window is unfocused
-\*/
-
 void VulkanRenderer::Start() {
   InitGLFW();
   InitVulkan();
@@ -766,9 +755,8 @@ void VulkanRenderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
   renderPassInfo.framebuffer = m_swapChainFramebuffers[imageIndex];
   renderPassInfo.renderArea.offset = {0, 0};
   renderPassInfo.renderArea.extent = m_swapChainExtent;
-  VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
   renderPassInfo.clearValueCount = 1;
-  renderPassInfo.pClearValues = &clearColor;
+  renderPassInfo.pClearValues = &m_clearColour;
 
   vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -840,7 +828,6 @@ void VulkanRenderer::DrawFrame() {
                                           m_imageAvailableSemaphores[m_currentFrame], VK_NULL_HANDLE, &imageIndex);
 
   if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-    puts("renderer recreating swapchain");
     RecreateSwapChain();
     return;
   }
@@ -891,7 +878,6 @@ void VulkanRenderer::DrawFrame() {
   result = vkQueuePresentKHR(m_presentQueue, &presentInfo);
 
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
-    puts("renderer recreating swapchain after frame presentation");
     RecreateSwapChain();
   }
 

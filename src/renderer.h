@@ -30,10 +30,11 @@ struct PushConstants {
 
 class VulkanRenderer {
 public:
-  VulkanRenderer(std::string AppName)
+  VulkanRenderer(std::string AppName, Colour<float> ClearColour)
   : m_appName(AppName)
   {
     Start();
+    SetClearColour(ClearColour);
   }
 
   ~VulkanRenderer() {
@@ -49,6 +50,10 @@ public:
   VkDevice GetDevice() const { return m_device; }
 
   void RecreateSwapChain();
+
+  void SetClearColour(const Colour<float> ClearColour) {
+    m_clearColour = {{{ClearColour.r, ClearColour.g, ClearColour.b, ClearColour.a}}};
+  }
 
 private:
   const uint32_t WIDTH = 1920;
@@ -89,6 +94,7 @@ private:
   std::vector<VkFramebuffer> m_swapChainFramebuffers;
 
   VkRenderPass m_renderPass;
+  VkClearValue m_clearColour;
   VkPipelineLayout m_pipelineLayout;
   VkPipeline m_graphicsPipeline;
 

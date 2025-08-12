@@ -65,6 +65,14 @@ struct Colour {
     a(static_cast<T>(That.a)) {}
 
   Colour(T R, T G, T B, T A) : r(R), g(G), b(B), a(A) {}
+
+  Colour<float> ConvertSRGBToLinear() const {
+    return Colour<float>(
+        (r < 0.04045f) ? r * 0.773993808f : pow(r * 0.9478672986f + 0.0521327014f, 2.4f),
+        (g < 0.04045f) ? g * 0.773993808f : pow(g * 0.9478672986f + 0.0521327014f, 2.4f),
+        (b < 0.04045f) ? b * 0.773993808f : pow(b * 0.9478672986f + 0.0521327014f, 2.4f),
+        (a < 0.04045f) ? a * 0.773993808f : pow(a * 0.9478672986f + 0.0521327014f, 2.4f));
+  }
 };
 
 enum class SizeMode { Fixed, Proportional };
@@ -361,33 +369,33 @@ public:
     }
 
     if (m_anchor.Offset.x.Mode == SizeMode::Proportional) {
-      Position.x += (T)(framebufferWidth * m_anchor.Offset.x.Value);
-    } else { Position.x += (T)(m_anchor.Offset.x.Value); }
+      Position.x += static_cast<T>(framebufferWidth) * m_anchor.Offset.x.Value;
+    } else { Position.x += m_anchor.Offset.x.Value; }
 
     if (m_anchor.Offset.y.Mode == SizeMode::Proportional) {
-      Position.y += (T)(framebufferHeight * m_anchor.Offset.y.Value);
-    } else { Position.y += (T)(m_anchor.Offset.y.Value); }
+      Position.y += static_cast<T>(framebufferHeight) * m_anchor.Offset.y.Value;
+    } else { Position.y += m_anchor.Offset.y.Value; }
   }
 
   virtual void RecalculateGeometry(int framebufferWidth, int framebufferHeight) {
     Vector2<T> newSize;
     Vector2<T> newPosition;
     if (m_size.x.Mode == SizeMode::Proportional) {
-      newSize.x = (T)(framebufferWidth * m_size.x.Value);
+      newSize.x = static_cast<T>(framebufferWidth) * m_size.x.Value;
     } else { newSize.x = m_size.x.Value; }
 
     if (m_size.y.Mode == SizeMode::Proportional) {
-      newSize.y = (T)(framebufferHeight * m_size.y.Value);
+      newSize.y = static_cast<T>(framebufferHeight) * m_size.y.Value;
     } else { newSize.y = m_size.y.Value; }
 
     AdjustPositionRelativeToAnchor(newPosition, framebufferWidth, framebufferHeight);
 
     if (m_position.x.Mode == SizeMode::Proportional) {
-      newSize.x += (T)(framebufferWidth * m_size.x.Value);
+      newSize.x += static_cast<T>(framebufferWidth) * m_size.x.Value;
     } else { newPosition.x += m_position.x.Value; }
 
     if (m_position.y.Mode == SizeMode::Proportional) {
-      newSize.y += (T)(framebufferHeight * m_size.y.Value);
+      newSize.y += static_cast<T>(framebufferHeight) * m_size.y.Value;
     } else { newPosition.y += m_position.y.Value; }
 
     m_geometry.SetSize(newSize);

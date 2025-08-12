@@ -1,8 +1,19 @@
 #include "app.h"
 #include <GLFW/glfw3.h>
-#include <algorithm>
 
-const uint32_t BORDER_THICKNESS = 5;
+/*\ ---- TODO: ----
+ *  [X] Have a basic vulkan implementation to draw a flat colour for the window
+ *  [X] Draw a rectangle to represent new title bar
+ *  [-] Render quads for custom buttons with textures
+ *  [X] Ensure new title bar doesnt interfere with the rest of the windows ui
+ *  [X] Implement window dragging
+ *  [X] Implement window resizing
+ *  [X] Implement minimise, maximise and close buttons
+ *  [ ] Dim or change colour of title bar when window is unfocused
+\*/
+
+const Colour<float> DEFAULT_BACKGROUND_COLOUR = Colour(0x3B1C32, 1.0f);
+const int32_t BORDER_THICKNESS = 10;
 
 bool framebufferResized = false;
 int framebufferWidth = 0;
@@ -11,7 +22,8 @@ int framebufferHeight = 0;
 bool maximisedState = true;
 bool resizeHover = false;
 bool resizing = false;
-bool resizeDirection;
+
+ResizeSide resizeSide;
 
 void CustomIDEApplication::StartApplication() {
   CreateRenderer(ApplicationName);
@@ -41,58 +53,11 @@ void CustomIDEApplication::MainLoop() {
 
     m_root->RenderAll();
 
-    if (framebufferResized) {
-      framebufferResized = false;
-      while (framebufferWidth == 0 || framebufferHeight == 0) {
-        glfwWaitEvents();
-        glfwGetFramebufferSize(m_renderer->GetWindow(), &framebufferWidth, &framebufferHeight);
-      }
-      m_renderer->RecreateSwapChain();
+    HandleResizing();
 
-      m_windowWidth = framebufferWidth;
-      m_windowHeight = framebufferHeight;
+    UpdateCursorState();
 
-      m_root->RecalculateUILayout(framebufferWidth, framebufferHeight);
-    }
-
-    if (resizeHover && m_cursorState == CURSOR_STATE_DEFAULT) {
-      if (resizeDirection == RESIZE_HORIZONTAL) {
-        SetCursorState(CURSOR_STATE_HRESIZE);
-        glfwSetCursor(m_renderer->GetWindow(), GetCursorObject("HRESIZE"));
-      } else {
-        SetCursorState(CURSOR_STATE_VRESIZE);
-        glfwSetCursor(m_renderer->GetWindow(), GetCursorObject("VRESIZE"));
-      }
-    }
-
-    if (!resizeHover && m_cursorState != CURSOR_STATE_DEFAULT) {
-      SetCursorState(CURSOR_STATE_DEFAULT);
-      glfwSetCursor(m_renderer->GetWindow(), GetCursorObject("DEFAULT"));
-    }
-
-    if (resizing) {
-      double xpos, ypos;
-      GLFWwindow* window = m_renderer->GetWindow();
-      glfwGetCursorPos(window, &xpos, &ypos);
-      int x = (xpos < MIN_WIDTH) ? MIN_WIDTH : static_cast<int>(xpos);
-      int y = (ypos < MIN_HEIGHT) ? MIN_HEIGHT : static_cast<int>(ypos);
-      if (resizeDirection == RESIZE_HORIZONTAL) {
-        glfwSetWindowSize(window, x, m_windowHeight);
-      } else {
-        glfwSetWindowSize(window, m_windowWidth, y);
-      }
-    }
-
-    if ((m_root->EventFlags & EVENT_FLAG_DRAGGING) != 0) {
-      double xpos, ypos;
-      GLFWwindow* window = m_renderer->GetWindow();
-      glfwGetCursorPos(window, &xpos, &ypos);
-      int newXPos, newYPos;
-      glfwGetWindowPos(window, &newXPos, &newYPos);
-      newXPos += (int)xpos - m_root->MousePressPosition.x;
-      newYPos += (int)ypos - m_root->MousePressPosition.y;
-      glfwSetWindowPos(window, newXPos, newYPos);
-    }
+    HandleDragging();
 
     m_renderer->DrawFrame();
   }
@@ -106,7 +71,7 @@ void CustomIDEApplication::EndApplication() {
 }
 
 void CustomIDEApplication::CreateRenderer(std::string AppName) {
-  m_renderer = new VulkanRenderer(AppName);
+  m_renderer = new VulkanRenderer(AppName, DEFAULT_BACKGROUND_COLOUR.ConvertSRGBToLinear());
 
   glfwGetFramebufferSize(m_renderer->GetWindow(), &m_windowWidth, &m_windowHeight);
 };
@@ -121,6 +86,88 @@ GLFWcursor* CustomIDEApplication::GetCursorObject(std::string Index) {
 
 void CustomIDEApplication::SetCursorState(int State) {
   m_cursorState = State;
+}
+
+void CustomIDEApplication::HandleResizing() {
+  if (resizing) {
+    double xpos, ypos;
+    int xwin, ywin;
+    int xsize, ysize;
+    GLFWwindow* window = m_renderer->GetWindow();
+    glfwGetCursorPos(window, &xpos, &ypos);
+    glfwGetWindowPos(window, &xwin, &ywin);
+    glfwGetWindowSize(window, &xsize, &ysize);
+    int x = (xpos < MIN_WIDTH) ? MIN_WIDTH : static_cast<int>(xpos);
+    int y = (ypos < MIN_HEIGHT) ? MIN_HEIGHT : static_cast<int>(ypos);
+    switch (resizeSide) {
+      case ResizeSide::Left:
+        // Resize to still be same width
+        x = ((xsize - static_cast<int>(xpos)) < MIN_WIDTH) ? MIN_WIDTH : xsize - static_cast<int>(xpos);
+        if (x > MIN_WIDTH) glfwSetWindowPos(window, xwin + static_cast<int>(xpos), ywin);
+        glfwSetWindowSize(window, x, ysize);
+        break;
+      case ResizeSide::Right:
+        glfwSetWindowSize(window, x, m_windowHeight);
+        break;
+      case ResizeSide::Top:
+        y = ((ysize - static_cast<int>(ypos)) < MIN_HEIGHT) ? MIN_HEIGHT : ysize - static_cast<int>(ypos);
+        if (y > MIN_HEIGHT) glfwSetWindowPos(window, xwin, ywin + static_cast<int>(ypos));
+        glfwSetWindowSize(window, xsize, y);
+        break;
+      case ResizeSide::Bottom:
+        glfwSetWindowSize(window, m_windowWidth, y);
+        break;
+    }
+  }
+
+  if (framebufferResized) {
+    framebufferResized = false;
+    while (framebufferWidth == 0 || framebufferHeight == 0) {
+      glfwWaitEvents();
+      glfwGetFramebufferSize(m_renderer->GetWindow(), &framebufferWidth, &framebufferHeight);
+    }
+    m_renderer->RecreateSwapChain();
+
+    m_windowWidth = framebufferWidth;
+    m_windowHeight = framebufferHeight;
+
+    m_root->RecalculateUILayout(framebufferWidth, framebufferHeight);
+  }
+}
+
+void CustomIDEApplication::UpdateCursorState() {
+  if (resizeHover && m_cursorState == CURSOR_STATE_DEFAULT) {
+    switch (resizeSide) {
+      case ResizeSide::Left:
+      case ResizeSide::Right:
+        SetCursorState(CURSOR_STATE_HRESIZE);
+        glfwSetCursor(m_renderer->GetWindow(), GetCursorObject("HRESIZE"));
+        break;
+      case ResizeSide::Top:
+      case ResizeSide::Bottom:
+        SetCursorState(CURSOR_STATE_VRESIZE);
+        glfwSetCursor(m_renderer->GetWindow(), GetCursorObject("VRESIZE"));
+        break;
+    }
+  }
+
+  if (!resizeHover && m_cursorState != CURSOR_STATE_DEFAULT) {
+    SetCursorState(CURSOR_STATE_DEFAULT);
+    glfwSetCursor(m_renderer->GetWindow(), GetCursorObject("DEFAULT"));
+  }
+}
+
+void CustomIDEApplication::HandleDragging() {
+  if ((m_root->EventFlags & EVENT_FLAG_DRAGGING) != 0) {
+    double xpos, ypos;
+    GLFWwindow* window = m_renderer->GetWindow();
+    glfwGetCursorPos(window, &xpos, &ypos);
+    int newXPos, newYPos;
+    glfwGetWindowPos(window, &newXPos, &newYPos);
+    newXPos += (int)xpos - m_root->MousePressPosition.x;
+    newYPos += (int)ypos - m_root->MousePressPosition.y;
+    glfwSetWindowPos(window, newXPos, newYPos);
+  }
 }
 
 void CustomIDEApplication::CreateUIElements() {
@@ -169,16 +216,24 @@ void CustomIDEApplication::CreateUIElements() {
   m_root->RecalculateUILayout(framebufferWidth, framebufferHeight);
 }
 
-bool CursorAtHorizontalBorder(double xpos) {
-  return (xpos >= -BORDER_THICKNESS && xpos <= BORDER_THICKNESS ||
-          xpos >= framebufferWidth - BORDER_THICKNESS && xpos <= framebufferWidth + BORDER_THICKNESS)
-    ? true : false;
+bool CursorAtHorizontalBorder(double xpos, ResizeSide* side) {
+  if (xpos >= -BORDER_THICKNESS && xpos <= BORDER_THICKNESS) {
+    *side = ResizeSide::Left;
+    return true;
+  } else if(xpos >= framebufferWidth - BORDER_THICKNESS && xpos <= framebufferWidth + BORDER_THICKNESS) {
+    *side = ResizeSide::Right;
+    return true;
+  } else return false;
 }
 
-bool CursorAtVerticalBorder(double ypos) {
-  return (ypos >= -BORDER_THICKNESS && ypos <= BORDER_THICKNESS ||
-          ypos >= framebufferHeight - BORDER_THICKNESS && ypos <= framebufferHeight + BORDER_THICKNESS)
-    ? true : false;
+bool CursorAtVerticalBorder(double ypos, ResizeSide* side) {
+  if (ypos >= -BORDER_THICKNESS && ypos <= BORDER_THICKNESS) {
+    *side = ResizeSide::Top;
+    return true;
+  } else if (ypos >= framebufferHeight - BORDER_THICKNESS && ypos <= framebufferHeight + BORDER_THICKNESS) {
+    *side = ResizeSide::Bottom;
+    return true;
+  } else return false;
 }
 
 void CloseWindowCallback(GLFWwindow* Window){
@@ -210,7 +265,14 @@ void MouseButtonCallback(GLFWwindow* Window, int Button, int Action, int Mods) {
   else if (Action == GLFW_PRESS) {
     if (resizeHover) {
       resizing = true;
-      return;
+      double xPos, yPos;
+      glfwGetCursorPos(Window, &xPos, &yPos);
+      if (CustomIDEApplication::s_instance) {
+        auto event = UIMouseEvent(Vector2((float)xPos, (float)yPos), Button, Action, Mods);
+        event.SetEventType(UIEventType::WINDOW_RESIZE);
+        CustomIDEApplication::s_instance->GetUIManager()->AddEvent(std::make_shared<UIMouseEvent>(event));
+        return;
+      }
     }
 
     if (!resizeHover) {
@@ -239,12 +301,10 @@ void CursorPositionCallback(GLFWwindow* Window, double xpos, double ypos) {
   // Start resizing if at the border and left click is pressed
   // Stop resizing if left click is released
   if (maximisedState) return; // If maximised then resizing doesnt make sense so just return
-  if (CursorAtHorizontalBorder(xpos)) {
+  if (CursorAtHorizontalBorder(xpos, &resizeSide)) {
     resizeHover = true;
-    resizeDirection = RESIZE_HORIZONTAL;
-  } else if (CursorAtVerticalBorder(ypos)) {
+  } else if (CursorAtVerticalBorder(ypos, &resizeSide)) {
     resizeHover = true;
-    resizeDirection = RESIZE_VERITCAL;
   } else {
     resizeHover = false;
   }

@@ -8,9 +8,6 @@
 #define RESULT_SUCCESS 0
 #define RESULT_FAIL 1
 
-#define RESIZE_HORIZONTAL 0
-#define RESIZE_VERITCAL 1
-
 #define CURSOR_STATE_DEFAULT 0
 #define CURSOR_STATE_HRESIZE 1
 #define CURSOR_STATE_VRESIZE 2
@@ -19,7 +16,9 @@
 
 #define WINDOW_FLAG_MAXIMISED 0x00000001
 
-enum class UIEventType { MOUSE_PRESS, MOUSE_RELEASE, WINDOW_MAXIMISE, WINDOW_RESTORE };
+enum class UIEventType { MOUSE_PRESS, MOUSE_RELEASE, WINDOW_MAXIMISE, WINDOW_RESTORE, WINDOW_RESIZE };
+
+enum class ResizeSide { Top, Left, Right, Bottom };
 
 struct UIEvent {
   UIEventType Type;
@@ -39,6 +38,10 @@ struct UIMouseEvent : public UIEvent {
     CursorPos(CursorPos),
     Button(Button),
     Mods(Mods) {}
+
+  void SetEventType(const UIEventType& Type) {
+    UIEvent::Type = Type;
+  }
 };
 
 template <typename T>
@@ -52,9 +55,9 @@ bool CursorOverlap(Vector2<float> CursorPos, Vector2<T> Size, Vector2<T> Positio
   return false;
 }
 
-bool CursorAtHorizonalBorder(double xpos);
+bool CursorAtHorizonalBorder(double xpos, ResizeSide* side);
 
-bool CursorAtVerticalBorder(double ypos);
+bool CursorAtVerticalBorder(double ypos, ResizeSide* side);
 
 template <typename T, typename C>
 class UIManager {
@@ -166,6 +169,10 @@ public:
           WindowFlags -= WINDOW_FLAG_MAXIMISED;
           result++;
           break;
+        case UIEventType::WINDOW_RESIZE:
+          HandleMouseEvent(std::dynamic_pointer_cast<UIMouseEvent>(m_events[i]));
+          result++;
+          break;
       }
     }
 
@@ -231,8 +238,7 @@ private:
           MousePressPosition = Event->CursorPos;
         }
         break;
-      case UIEventType::WINDOW_MAXIMISE:
-      case UIEventType::WINDOW_RESTORE:
+      default:
         return -1;
     }
     return RESULT_SUCCESS;
@@ -266,6 +272,8 @@ private:
   const int MIN_WIDTH = 800;
   const int MIN_HEIGHT = 600;
 
+  const GLFWimage WINDOW_ICON = GLFWimage();
+
   uint32_t m_cursorState = CURSOR_STATE_DEFAULT;
 
   int m_windowWidth;
@@ -284,4 +292,10 @@ private:
   GLFWcursor* GetCursorObject(std::string Index);
 
   void SetCursorState(int State);
+
+  void HandleResizing();
+
+  void UpdateCursorState();
+
+  void HandleDragging();
 };
