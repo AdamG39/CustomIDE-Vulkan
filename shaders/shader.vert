@@ -2,14 +2,17 @@
 
 //VERTEX SHADER
 
+layout(push_constant) uniform PushConstants {
+  vec2 extent;
+} pc;
+
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec4 inColour;
 
 layout(location = 0) out vec4 fragColour;
 
 vec3 framebufferToScreenSpace(vec3 c) {
-  vec3 ret = vec3(((c.x / 2560) * 2) - 1, ((c.y / 1392) * 2) - 1, c.z);
-  return ret;
+  return vec3(((c.x / pc.extent.x) * 2.0) - 1.0, ((c.y / pc.extent.y) * 2.0) - 1.0, c.z);
 }
 
 float srgbToLinear(float c) {

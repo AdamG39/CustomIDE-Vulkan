@@ -5,17 +5,6 @@
 #include <set>
 #include <algorithm>
 
-/*\ ---- TODO: ----
- *  X Have a basic vulkan implementation to draw a flat colour for the window
- *  X Draw a rectangle to represent new title bar
- *  - Render quads for custom buttons with textures
- *  - Ensure new title bar doesnt interfere with the rest of the windows ui
- *  - Implement window dragging
- *  - Implement window resizing
- *  - Implement minimise, maximise and close buttons
- *  - Dim or change colour of title bar when window is unfocused
-\*/
-
 void VulkanRenderer::Start() {
   InitGLFW();
   InitVulkan();
@@ -29,6 +18,7 @@ void VulkanRenderer::InitGLFW(){
 
 void VulkanRenderer::CreateWindow() {
   glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
+  glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
   glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
@@ -36,6 +26,8 @@ void VulkanRenderer::CreateWindow() {
 
   glfwSetWindowCloseCallback(m_window, CloseWindowCallback);
   glfwSetMouseButtonCallback(m_window, MouseButtonCallback);
+  glfwSetFramebufferSizeCallback(m_window, FramebufferResizeCallback);
+  glfwSetCursorPosCallback(m_window, CursorPositionCallback);
 
   if (!m_window) ExitWithError("Failed to create window!", -1);
 }
@@ -237,7 +229,8 @@ VkExtent2D VulkanRenderer::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capa
   if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
     return capabilities.currentExtent;
   } else {
-    int width, height;
+    int width = 0;
+    int height = 0;
     glfwGetFramebufferSize(m_window, &width, &height);
 
     VkExtent2D actualExtent = {
@@ -332,7 +325,7 @@ void VulkanRenderer::CreateSwapChain() {
   VkPresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.presentModes);
   VkExtent2D extent = ChooseSwapExtent(swapChainSupport.capabilities);
 
-  uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
+  uint32_t imageCount = swapChainSupport.capabilities.minImageCount;
 
   if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
     imageCount = swapChainSupport.capabilities.maxImageCount;
@@ -384,7 +377,20 @@ void VulkanRenderer::CreateSwapChain() {
 }
 
 void VulkanRenderer::RecreateSwapChain() {
+  if (glfwWindowShouldClose(m_window)) { return; }
   vkDeviceWaitIdle(m_device);
+
+  for (auto framebuffer: m_swapChainFramebuffers) {
+    vkDestroyFramebuffer(m_device, framebuffer, nullptr);
+  }
+  m_swapChainFramebuffers.clear();
+
+  for (auto imageView: m_swapChainImageViews) {
+    vkDestroyImageView(m_device, imageView, nullptr);
+  }
+  m_swapChainImageViews.clear();
+
+  vkDestroySwapchainKHR(m_device, m_swapChain, nullptr);
 
   CreateSwapChain();
   CreateImageViews();
@@ -572,12 +578,17 @@ void VulkanRenderer::CreateGraphicsPipeline() {
   dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
   dynamicState.pDynamicStates = dynamicStates.data();
 
+  VkPushConstantRange pushConstantRange{};
+  pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  pushConstantRange.offset = 0;
+  pushConstantRange.size = sizeof(PushConstants);
+
   VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
   pipelineLayoutInfo.setLayoutCount = 0; // Optional
   pipelineLayoutInfo.pSetLayouts = nullptr; // Optional
-  pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
-  pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
+  pipelineLayoutInfo.pushConstantRangeCount = 1;
+  pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
 
   if (vkCreatePipelineLayout(m_device, &pipelineLayoutInfo, nullptr, &m_pipelineLayout) != VK_SUCCESS) {
     ExitWithError("Failed to create pipeline layout!", -1);
@@ -744,9 +755,8 @@ void VulkanRenderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
   renderPassInfo.framebuffer = m_swapChainFramebuffers[imageIndex];
   renderPassInfo.renderArea.offset = {0, 0};
   renderPassInfo.renderArea.extent = m_swapChainExtent;
-  VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
   renderPassInfo.clearValueCount = 1;
-  renderPassInfo.pClearValues = &clearColor;
+  renderPassInfo.pClearValues = &m_clearColour;
 
   vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -768,6 +778,15 @@ void VulkanRenderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
 
   VkBuffer vertexBuffers[] = { m_vertexBuffer };
   VkDeviceSize offsets[] = { 0 };
+
+  int framebufferWidth, framebufferHeight;
+  glfwGetFramebufferSize(m_window, &framebufferWidth, &framebufferHeight);
+
+  PushConstants pc{};
+  pc.width = static_cast<float>(framebufferWidth);
+  pc.height = static_cast<float>(framebufferHeight);
+
+  vkCmdPushConstants(commandBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants), &pc);
 
   vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
   vkCmdDraw(commandBuffer, static_cast<uint32_t>(m_vertexArray.size()), 1, 0, 0);
@@ -804,8 +823,14 @@ void VulkanRenderer::DrawFrame() {
   vkWaitForFences(m_device, 1, &m_inFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
   vkResetFences(m_device, 1, &m_inFlightFences[m_currentFrame]);
 
-  uint32_t imageIndex;
-  vkAcquireNextImageKHR(m_device, m_swapChain, UINT64_MAX, m_imageAvailableSemaphores[m_currentFrame], VK_NULL_HANDLE, &imageIndex);
+  uint32_t imageIndex = 0;
+  VkResult result = vkAcquireNextImageKHR(m_device, m_swapChain, UINT64_MAX, 
+                                          m_imageAvailableSemaphores[m_currentFrame], VK_NULL_HANDLE, &imageIndex);
+
+  if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+    RecreateSwapChain();
+    return;
+  }
 
   vkResetCommandBuffer(m_commandBuffers[m_currentFrame], 0);
 
@@ -850,7 +875,11 @@ void VulkanRenderer::DrawFrame() {
   presentInfo.pSwapchains = swapChains;
   presentInfo.pImageIndices = &imageIndex;
 
-  vkQueuePresentKHR(m_presentQueue, &presentInfo);
+  result = vkQueuePresentKHR(m_presentQueue, &presentInfo);
+
+  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+    RecreateSwapChain();
+  }
 
   m_vertexArray.clear();
 

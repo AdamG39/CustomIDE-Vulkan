@@ -3,11 +3,22 @@
 #include "shapes.h"
 #include "renderer.h"
 #include <memory>
+#include <map>
 
 #define RESULT_SUCCESS 0
 #define RESULT_FAIL 1
 
-enum class UIEventType { MOUSE_PRESS, MOUSE_RELEASE };
+#define CURSOR_STATE_DEFAULT 0
+#define CURSOR_STATE_HRESIZE 1
+#define CURSOR_STATE_VRESIZE 2
+
+#define EVENT_FLAG_DRAGGING 0x00000001
+
+#define WINDOW_FLAG_MAXIMISED 0x00000001
+
+enum class UIEventType { MOUSE_PRESS, MOUSE_RELEASE, WINDOW_MAXIMISE, WINDOW_RESTORE, WINDOW_RESIZE };
+
+enum class ResizeSide { Top, Left, Right, Bottom };
 
 struct UIEvent {
   UIEventType Type;
@@ -27,6 +38,10 @@ struct UIMouseEvent : public UIEvent {
     CursorPos(CursorPos),
     Button(Button),
     Mods(Mods) {}
+
+  void SetEventType(const UIEventType& Type) {
+    UIEvent::Type = Type;
+  }
 };
 
 template <typename T>
@@ -40,11 +55,20 @@ bool CursorOverlap(Vector2<float> CursorPos, Vector2<T> Size, Vector2<T> Positio
   return false;
 }
 
+bool CursorAtHorizonalBorder(double xpos, ResizeSide* side);
+
+bool CursorAtVerticalBorder(double ypos, ResizeSide* side);
+
 template <typename T, typename C>
 class UIManager {
 public:
-  void AddElement(std::shared_ptr<UIElement<T, C>> Element) {
-    m_treeObjects.push_back(Element);
+  uint32_t EventFlags = 0;
+  uint32_t WindowFlags = 0;
+  Vector2<double> MousePressPosition;
+
+  template <typename Ty>
+  void AddElement(Ty&& Element) {
+    m_treeObjects.push_back(std::make_shared<std::decay_t<Ty>>(std::forward<Ty>(Element)));
   }
 
   void RemoveElement(UIElement<T, C>* Element) {
@@ -60,9 +84,21 @@ public:
       ExitWithError("Attempted to remove panel from tree when panel doesnt exist", -2);
     }
 
-    // TODO remove child panels as well
+    if (m_treeObjects[index]->GetChildCount() > 0) {
+      // Delete children
+      m_treeObjects[index]->RemoveChildren();
+    }
     
     m_treeObjects.erase(m_treeObjects.begin() + index);
+  }
+
+  void RemoveAllElements() {
+    for (size_t i = 0; i < m_treeObjects.size(); i++) {
+      if (m_treeObjects[i]->GetChildCount() > 0) {
+        m_treeObjects[i]->RemoveChildren();
+      }
+    }
+    m_treeObjects.clear();
   }
 
   UIElement<T, C>* GetElementFromIndex(int Index) {
@@ -71,23 +107,6 @@ public:
     }
 
     return m_treeObjects[Index].get();
-  }
-
-  UIElement<T, C>* GetElementFromName(std::string Name) {
-    int index = -1;
-
-    for (size_t i = 0; i < m_treeObjects.size(); i++) {
-      if (Name == m_treeObjects[i]->Label) {
-        index = i;
-        break;
-      }
-    }
-
-    if (index == -1) {
-      ExitWithError("No element found with that label", -2);
-    }
-
-    return GetPanelFromIndex(index);
   }
 
   void RenderAll() {
@@ -118,8 +137,10 @@ public:
     auto verts = TriVectorToSortedVertexVector(tris);
 
     // Pass the list of vertices to the vertex buffer converting if nessessary
-    m_renderer->FillVertexBuffer(
-        ConvertVertexVector<int, float, float, float>(TriVectorToSortedVertexVector(tris)));
+    /*m_renderer->FillVertexBuffer(
+        ConvertVertexVector<int, float, float, float>(TriVectorToSortedVertexVector(tris)));*/
+
+    m_renderer->FillVertexBuffer(TriVectorToSortedVertexVector(tris));
   }
 
   void AddEvent(std::shared_ptr<UIEvent> Event) { 
@@ -140,6 +161,18 @@ public:
           HandleMouseEvent(std::dynamic_pointer_cast<UIMouseEvent>(m_events[i]));
           result++;
           break;
+        case UIEventType::WINDOW_MAXIMISE:
+          WindowFlags ^= WINDOW_FLAG_MAXIMISED;
+          result++;
+          break;
+        case UIEventType::WINDOW_RESTORE:
+          WindowFlags -= WINDOW_FLAG_MAXIMISED;
+          result++;
+          break;
+        case UIEventType::WINDOW_RESIZE:
+          HandleMouseEvent(std::dynamic_pointer_cast<UIMouseEvent>(m_events[i]));
+          result++;
+          break;
       }
     }
 
@@ -152,6 +185,12 @@ public:
     m_renderer = &Renderer;
   }
 
+  void RecalculateUILayout(int framebufferWidth, int framebufferHeight) {
+    for (size_t i = 0; i < m_treeObjects.size(); i++) {
+      m_treeObjects[i]->RecalculateGeometry(framebufferWidth, framebufferHeight);
+    }
+  }
+
 private:
   std::vector<std::shared_ptr<UIElement<T, C>>> m_treeObjects;
 
@@ -159,14 +198,14 @@ private:
 
   VulkanRenderer* m_renderer = nullptr;
 
-  std::vector<std::shared_ptr<UIElement<int, float>>> GetTreeElements() {
-    std::vector<std::shared_ptr<UIElement<int, float>>> ret;
+  std::vector<std::shared_ptr<UIElement<float, float>>> GetTreeElements() {
+    std::vector<std::shared_ptr<UIElement<float, float>>> ret;
     
     for (size_t i = 0; i < m_treeObjects.size(); i++) {
       ret.push_back(m_treeObjects[i]);
       if (m_treeObjects[i]->GetChildCount() == 0) continue;
 
-      std::vector<std::shared_ptr<UIElement<int, float>>> temp = m_treeObjects[i]->GetChildren();
+      std::vector<std::shared_ptr<UIElement<float, float>>> temp = m_treeObjects[i]->GetChildren();
       for (size_t j = 0; j < temp.size(); j++) {
         ret.push_back(temp[j]);
       }
@@ -176,16 +215,31 @@ private:
   }
 
   int HandleMouseEvent(std::shared_ptr<UIMouseEvent> Event) {
+    std::vector<std::shared_ptr<UIElement<float, float>>> treeObjects = GetTreeElements();
+    bool eventSuccessful = false;
     switch (Event->Type) {
       case UIEventType::MOUSE_RELEASE:
+        if ((EventFlags & EVENT_FLAG_DRAGGING) != 0) EventFlags -= EVENT_FLAG_DRAGGING;
+        break;
       case UIEventType::MOUSE_PRESS:
-        std::vector<std::shared_ptr<UIElement<int, float>>> treeObjects = GetTreeElements();
         for (size_t i = 0; i < treeObjects.size(); i++) {
           if (treeObjects[i]->GetType() != UIType::Button) continue;
 
-          auto button = std::dynamic_pointer_cast<Button<int, float>>(treeObjects[i]);
-          if (CursorOverlap(Event->CursorPos, button->GetSize(), button->GetPositon())) button->OnClick();
+          auto button = std::dynamic_pointer_cast<Button<float, float>>(treeObjects[i]);
+          if (CursorOverlap(Event->CursorPos, button->GetSize(), button->GetPosition())) { 
+            button->OnClick();
+            eventSuccessful = true;
+            break;
+          }
         }
+        if (eventSuccessful || WindowFlags & WINDOW_FLAG_MAXIMISED) break;
+        if (CursorOverlap(Event->CursorPos, treeObjects[1]->GetSize(), treeObjects[1]->GetPosition())) {
+          EventFlags ^= EVENT_FLAG_DRAGGING;
+          MousePressPosition = Event->CursorPos;
+        }
+        break;
+      default:
+        return -1;
     }
     return RESULT_SUCCESS;
   }
@@ -210,21 +264,38 @@ public:
 
   VulkanRenderer* GetRenderer() const { return m_renderer; }
 
-  UIManager<int, float>* GetUIManager() const { return m_root; }
+  UIManager<float, float>* GetUIManager() const { return m_root; }
+
+  void CreateUIElements();
 
 private:
-  const uint32_t WIDTH = 1920;
-  const uint32_t HEIGHT = 1080;
+  const int MIN_WIDTH = 800;
+  const int MIN_HEIGHT = 600;
+
+  const GLFWimage WINDOW_ICON = GLFWimage();
+
+  uint32_t m_cursorState = CURSOR_STATE_DEFAULT;
 
   int m_windowWidth;
   int m_windowHeight;
 
   VulkanRenderer* m_renderer;
 
-  UIManager<int, float>* m_root;
+  UIManager<float, float>* m_root;
+
+  std::map<std::string, GLFWcursor*> m_cursorObjects;
 
   void CreateRenderer(std::string AppName);
 
   void DestroyRenderer();
-};
 
+  GLFWcursor* GetCursorObject(std::string Index);
+
+  void SetCursorState(int State);
+
+  void HandleResizing();
+
+  void UpdateCursorState();
+
+  void HandleDragging();
+};

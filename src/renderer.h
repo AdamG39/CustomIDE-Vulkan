@@ -23,12 +23,18 @@ struct SwapChainSupportDetails {
   std::vector<VkPresentModeKHR> presentModes;
 };
 
+struct PushConstants {
+  float width;
+  float height;
+};
+
 class VulkanRenderer {
 public:
-  VulkanRenderer(std::string AppName)
+  VulkanRenderer(std::string AppName, Colour<float> ClearColour)
   : m_appName(AppName)
   {
     Start();
+    SetClearColour(ClearColour);
   }
 
   ~VulkanRenderer() {
@@ -42,6 +48,12 @@ public:
   GLFWwindow* GetWindow() const { return m_window; }
 
   VkDevice GetDevice() const { return m_device; }
+
+  void RecreateSwapChain();
+
+  void SetClearColour(const Colour<float> ClearColour) {
+    m_clearColour = {{{ClearColour.r, ClearColour.g, ClearColour.b, ClearColour.a}}};
+  }
 
 private:
   const uint32_t WIDTH = 1920;
@@ -82,6 +94,7 @@ private:
   std::vector<VkFramebuffer> m_swapChainFramebuffers;
 
   VkRenderPass m_renderPass;
+  VkClearValue m_clearColour;
   VkPipelineLayout m_pipelineLayout;
   VkPipeline m_graphicsPipeline;
 
@@ -133,8 +146,6 @@ private:
 
   void CreateSwapChain();
 
-  void RecreateSwapChain();
-
   void CreateImageViews();
 
   void CreateRenderPass();
@@ -165,3 +176,12 @@ private:
 void CloseWindowCallback(GLFWwindow* window);
 
 void MouseButtonCallback(GLFWwindow* Window, int Button, int Action, int Mods);
+
+void FramebufferResizeCallback(GLFWwindow* Window, int Width, int Height);
+
+void CursorPositionCallback(GLFWwindow* Window, double xpos, double ypos);
+
+void ToggleMaximiseCallback(GLFWwindow* Window);
+
+void MinimiseCallback(GLFWwindow* Window);
+
