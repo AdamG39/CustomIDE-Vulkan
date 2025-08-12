@@ -4,6 +4,9 @@
 /.cache
 /.vscode
 
+# Compiled Shader files
+*.spv
+
 # Prerequisites
 *.d
 
