@@ -162,17 +162,30 @@ std::shared_ptr<Image> ParseBMPData(const std::vector<char>& Data, BITMAPINFOHEA
   returnPtr->height = BitMapInfo.height / 2;
   returnPtr->pixels = (uint8_t*)calloc(pixelArraySize, sizeof(uint8_t));
 
+  /*
+  // FIXME: Currently returns images y-flipped
+  // TODO: Convert from left->right bottom->top to left->right top->bottom
   if (BitMapInfo.height > 0) {
-    // TODO: Convert from left->right bottom->top to left->right top->bottom
-  } else {  
-    for (uint32_t i = 0; i < pixelArraySize; i += 4) {
+    printf("%u %u\n", );
+    for (uint32_t h = ((uint32_t)BitMapInfo.height / 2u) - 1u; h >= 0u; h--) {
+      for (uint32_t w = 0; w < rowSize; w += sizeof(uint32_t)) {
+        uint32_t tempOffset = Offset + w + (h * ((uint32_t)BitMapInfo.height / 2u) * sizeof(uint32_t));
+        printf("w: %u, h: %u, offset: %u\n", w, h, tempOffset - Offset);
+        returnPtr->pixels[w] = Data[tempOffset + 2];
+        returnPtr->pixels[w + 1] = Data[tempOffset + 1];
+        returnPtr->pixels[w + 2] = Data[tempOffset];
+        returnPtr->pixels[w + 3] = Data[tempOffset + 3];
+      }
+    }
+  } else {*/
+    for (uint32_t i = 0; i < pixelArraySize; i += sizeof(uint32_t)) {
       uint32_t tempOffset = Offset + i;
       returnPtr->pixels[i] = Data[tempOffset + 2];
       returnPtr->pixels[i + 1] = Data[tempOffset + 1];
       returnPtr->pixels[i + 2] = Data[tempOffset];
       returnPtr->pixels[i + 3] = Data[tempOffset + 3];
     }
-  }
+  //}
 
   return returnPtr;
 }

@@ -31,7 +31,19 @@ bool resizing = false;
 ResizeSide resizeSide;
 
 void CustomIDEApplication::StartApplication() {
+  std::vector<std::shared_ptr<Image>> loadedImages;
+  ReadImageFile("../CustomIDE icon.ico", loadedImages);
+  std::vector<GLFWimage> appIcon;
+  appIcon.reserve(loadedImages.size());
+  for (size_t i = 0; i < loadedImages.size(); i++) {
+    GLFWimage image = GLFWimage();
+    image.width = loadedImages[i]->width;
+    image.height = loadedImages[i]->height;
+    image.pixels = loadedImages[i]->pixels;
+    appIcon.push_back(image);
+  }
   CreateRenderer(ApplicationName);
+  glfwSetWindowIcon(m_renderer->GetWindow(), appIcon.size(), appIcon.data());
   framebufferWidth = m_windowWidth;
   framebufferHeight = m_windowHeight;
 
