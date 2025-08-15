@@ -1,4 +1,5 @@
 #include "app.h"
+#include "io.h"
 #include <GLFW/glfw3.h>
 
 /*\ ---- TODO: ----
@@ -10,6 +11,10 @@
  *  [X] Implement window resizing
  *  [X] Implement minimise, maximise and close buttons
  *  [ ] Dim or change colour of title bar when window is unfocused
+ *  [ ] Update button class to contain additional functions such as OnHover, OnRelease etc
+ *  [ ] Create a dropdown UI element
+ *  [ ] Allow for text rendering
+ *  [ ] Create a text field UI element
 \*/
 
 const Colour<float> DEFAULT_BACKGROUND_COLOUR = Colour(0x3B1C32, 1.0f);
