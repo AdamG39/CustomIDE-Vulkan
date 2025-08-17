@@ -1,4 +1,4 @@
-#include "app.h"
+#include "app.hpp"
 
 CustomIDEApplication* CustomIDEApplication::s_instance = nullptr;
 

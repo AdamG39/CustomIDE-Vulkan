@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CUSTOM_SHAPES_H
+#define CUSTOM_SHAPES_H
 
 #include <array>
 #include <vector>
@@ -7,7 +8,7 @@
 #include <type_traits>
 #include <functional>
 #include <utility>
-#include "errorHandler.h"
+#include "errorHandler.hpp"
 
 enum class UIType { Base, Panel, Button };
 
@@ -520,4 +521,6 @@ std::vector<Vertex<T2, C2>> ConvertVertexVector(const std::vector<Vertex<T1, C1>
 
   return result;
 }
+
+#endif
 

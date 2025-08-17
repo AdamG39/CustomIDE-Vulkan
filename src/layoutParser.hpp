@@ -1,7 +1,8 @@
-#pragma once
+#ifndef CUSTOM_LAYOUT_PARSER_H
+#define CUSTOM_LAYOUT_PARSER_H
 
 #include <string>
-#include "app.h"
+#include "app.hpp"
 
 template <typename K, typename V>
 struct KeyValuePair {
@@ -29,3 +30,6 @@ private:
     
   }
 };
+
+#endif
+

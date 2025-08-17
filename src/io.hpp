@@ -1,4 +1,6 @@
-#pragma once
+#ifndef CUSTOM_IO_H
+#define CUSTOM_IO_H
+
 #include <vector>
 #include <memory>
 #include <string>
@@ -105,3 +107,6 @@ void InflateDecoder(const std::vector<char>& Data, uint8_t* Output);
 void ParseICOData(const std::vector<char>& Data, std::vector<std::shared_ptr<Image>>& OutImages);
 
 std::shared_ptr<Image> ParseBMPData(const std::vector<char>& Data, BITMAPINFOHEADER BitMapInfo, uint32_t Offset);
+
+#endif
+

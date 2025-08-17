@@ -1,4 +1,5 @@
-#include "errorHandler.h"
+#include "errorHandler.hpp"
+#include <iostream>
 
 void ExitWithError(const char* errorText, int exitCode, int errorType) {
   const char* errorPrefix;

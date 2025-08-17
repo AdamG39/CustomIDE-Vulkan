@@ -1,5 +1,5 @@
-#include "errorHandler.h"
-#include "io.h"
+#include "errorHandler.hpp"
+#include "io.hpp"
 #include <fstream>
 #include <cmath>
 

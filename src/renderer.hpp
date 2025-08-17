@@ -1,10 +1,12 @@
-#pragma once
+#ifndef CUSTOM_VULKAN_RENDERER_H
+#define CUSTOM_VULKAN_RENDERER_H
+
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
 #include <string>
 #include <vector>
 #include <optional>
-#include "shapes.h"
+#include "shapes.hpp"
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -184,4 +186,6 @@ void CursorPositionCallback(GLFWwindow* Window, double xpos, double ypos);
 void ToggleMaximiseCallback(GLFWwindow* Window);
 
 void MinimiseCallback(GLFWwindow* Window);
+
+#endif
 

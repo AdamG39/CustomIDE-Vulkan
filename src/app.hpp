@@ -1,7 +1,8 @@
-#pragma once
+#ifndef CUSTOM_APP_H
+#define CUSTOM_APP_H
 
-#include "shapes.h"
-#include "renderer.h"
+#include "shapes.hpp"
+#include "renderer.hpp"
 #include <memory>
 #include <map>
 
@@ -299,3 +300,6 @@ private:
 
   void HandleDragging();
 };
+
+#endif
+

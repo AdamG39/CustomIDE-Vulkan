@@ -1,5 +1,5 @@
-#include "app.h"
-#include "io.h"
+#include "app.hpp"
+#include "io.hpp"
 #include <GLFW/glfw3.h>
 
 /*\ ---- TODO: ----
