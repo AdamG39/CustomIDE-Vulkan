@@ -1,6 +1,6 @@
 #include "app.hpp"
-#include "io.hpp"
-#include "errorHandler.hpp"
+#include "io/io.hpp"
+#include "helpers/errors/errors.hpp"
 #include <GLFW/glfw3.h>
 
 /*\ ---- TODO: ----
@@ -145,8 +145,6 @@ void CustomIDEApplication::HandleResizing() {
 
     m_windowWidth = framebufferWidth;
     m_windowHeight = framebufferHeight;
-
-    vkDeviceWaitIdle(m_renderer->GetDevice());
 
     m_root->RecalculateUILayout(framebufferWidth, framebufferHeight);
   }

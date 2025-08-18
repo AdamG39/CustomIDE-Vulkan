@@ -1,6 +1,6 @@
-#include "errorHandler.hpp"
+#include "../helpers/errors/errors.hpp"
 #include "renderer.hpp"
-#include "io.hpp"
+#include "../io/io.hpp"
 #include "shapes.hpp"
 #include <set>
 #include <algorithm>

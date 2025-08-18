@@ -5,8 +5,8 @@
 #include <memory>
 #include <algorithm>
 #include <functional>
-#include "../errorHandler.hpp"
-#include "../shapes.hpp"
+#include "../helpers/errors/errors.hpp"
+#include "../renderer/shapes.hpp"
 
 enum class UIType { Base, Panel, Button, PanelButton };
 
