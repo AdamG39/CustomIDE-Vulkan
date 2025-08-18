@@ -1,13 +1,16 @@
 #ifndef CUSTOM_APP_H
 #define CUSTOM_APP_H
 
-#include "shapes.hpp"
-#include "renderer.hpp"
+#include "uilib/ui.hpp"
+#include "renderer/renderer.hpp"
 #include <memory>
 #include <map>
 
+#define BORDER_THICKNESS                  10
+#define MAXIMISE_DISTANCE_FROM_SCREEN_TOP 5
+
 #define RESULT_SUCCESS 0
-#define RESULT_FAIL 1
+#define RESULT_FAIL    1
 
 #define CURSOR_STATE_DEFAULT 0
 #define CURSOR_STATE_HRESIZE 1
@@ -149,8 +152,6 @@ public:
   }
 
   void HandleEvents() {
-    // Loop through m_events handling them respectively
-    
     if (m_events.size() == 0) { return; }
 
     int result = 0;
@@ -188,7 +189,7 @@ public:
 
   void RecalculateUILayout(int framebufferWidth, int framebufferHeight) {
     for (size_t i = 0; i < m_treeObjects.size(); i++) {
-      m_treeObjects[i]->RecalculateGeometry(framebufferWidth, framebufferHeight);
+      m_treeObjects[i]->RecalculateElementDimensions(framebufferWidth, framebufferHeight);
     }
   }
 
@@ -220,21 +221,36 @@ private:
     bool eventSuccessful = false;
     switch (Event->Type) {
       case UIEventType::MOUSE_RELEASE:
-        if ((EventFlags & EVENT_FLAG_DRAGGING) != 0) EventFlags -= EVENT_FLAG_DRAGGING;
+        if (EventFlags & EVENT_FLAG_DRAGGING) { 
+          EventFlags ^= EVENT_FLAG_DRAGGING;
+          int winPosX, winPosY;
+          glfwGetWindowPos(m_renderer->GetWindow(), &winPosX, &winPosY);
+          if (Event->CursorPos.y + (float)winPosY <= MAXIMISE_DISTANCE_FROM_SCREEN_TOP)
+            ToggleMaximiseCallback(m_renderer->GetWindow());
+        }
         break;
       case UIEventType::MOUSE_PRESS:
         for (size_t i = 0; i < treeObjects.size(); i++) {
-          if (treeObjects[i]->GetType() != UIType::Button) continue;
+          if (treeObjects[i]->GetType() != UIType::Button &&
+              treeObjects[i]->GetType() != UIType::PanelButton) continue;
 
-          auto button = std::dynamic_pointer_cast<Button<float, float>>(treeObjects[i]);
-          if (CursorOverlap(Event->CursorPos, button->GetSize(), button->GetPosition())) { 
+          std::shared_ptr<Button<float, float>> button;
+          if (treeObjects[i]->GetType() == UIType::PanelButton) {
+            auto temp = std::dynamic_pointer_cast<PanelButton<float, float>>(treeObjects[i]);
+            button = std::make_shared<Button<float, float>>(temp->GetButton());
+          } else {
+            button = std::dynamic_pointer_cast<Button<float, float>>(treeObjects[i]);
+          }
+          if (CursorOverlap(Event->CursorPos, button->GetPixelSize(), button->GetPixelPosition())) { 
             button->OnClick();
             eventSuccessful = true;
             break;
           }
         }
         if (eventSuccessful || WindowFlags & WINDOW_FLAG_MAXIMISED) break;
-        if (CursorOverlap(Event->CursorPos, treeObjects[1]->GetSize(), treeObjects[1]->GetPosition())) {
+        if (CursorOverlap(Event->CursorPos, treeObjects[1]->GetPixelSize(), treeObjects[1]->GetPixelPosition())) {
+          // FIXME: Places the window at 0, 0 when unmaximised so cursor doesnt line up
+          //if (WindowFlags & WINDOW_FLAG_MAXIMISED) ToggleMaximiseCallback(m_renderer->GetWindow());
           EventFlags ^= EVENT_FLAG_DRAGGING;
           MousePressPosition = Event->CursorPos;
         }

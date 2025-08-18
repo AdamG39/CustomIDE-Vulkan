@@ -10,7 +10,7 @@ find_package(Vulkan REQUIRED)
 add_subdirectory(externals/glfw)
 include_directories(externals/glfw/include)
 
-file(GLOB SRC_FILES "src/*.cpp")
+file(GLOB_RECURSE SRC_FILES "src/*.cpp")
 
 add_executable(CustomIDE ${SRC_FILES})
 

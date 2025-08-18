@@ -4,6 +4,10 @@
 /.cache
 /.vscode
 
+# Clang diagnostic files
+.clangd
+compile_commands.json
+
 # Compiled Shader files
 *.spv
 

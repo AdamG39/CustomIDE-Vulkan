@@ -1,4 +1,4 @@
-#include "errorHandler.hpp"
+#include "../helpers/errors/errors.hpp"
 #include "io.hpp"
 #include <fstream>
 #include <cmath>

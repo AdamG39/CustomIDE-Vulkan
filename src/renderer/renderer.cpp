@@ -1,7 +1,7 @@
-#include "errorHandler.hpp"
+#include "../helpers/errors/errors.hpp"
 #include "renderer.hpp"
-#include "io.hpp"
-#include "shapes.h"
+#include "../io/io.hpp"
+#include "shapes.hpp"
 #include <set>
 #include <algorithm>
 
@@ -49,7 +49,7 @@ void VulkanRenderer::InitVulkan() {
 
 void VulkanRenderer::CreateInstance() {
   if (m_enableValidationLayers && !CheckValidationLayerSupport()) {
-    throw std::runtime_error("validation layers requested, but not available!");
+    ExitWithError("Validation layers requested, but not available!", -1);
   }
 
   VkApplicationInfo appInfo{};
@@ -86,7 +86,7 @@ void VulkanRenderer::CreateInstance() {
 
 void VulkanRenderer::CreateSurface() {
   if (glfwCreateWindowSurface(m_instance, m_window, nullptr, &m_surface) != VK_SUCCESS) {
-    throw std::runtime_error("Failed to create window surface!");
+    ExitWithError("Failed to create window surface!", -1);
   }
 }
 
@@ -254,7 +254,7 @@ void VulkanRenderer::PickPhysicalDevice() {
 
   // If no GPU's are found that support Vulkan throw error
   if (deviceCount == 0) {
-      throw std::runtime_error("failed to find GPUs with Vulkan support!");
+      ExitWithError("Failed to find GPUs with Vulkan support!", -1);
   }
 
   // Load a pointer to each physical device into devices
@@ -271,7 +271,7 @@ void VulkanRenderer::PickPhysicalDevice() {
 
   // Throw error if no suitable GPU is found
   if (m_physicalDevice == VK_NULL_HANDLE) {
-    throw std::runtime_error("Failed to find a suitable GPU!");
+    ExitWithError("Failed to find a suitable GPU!", -1);
   }
 }
 
@@ -311,7 +311,7 @@ void VulkanRenderer::CreateLogicalDevice() {
   }
 
   if (vkCreateDevice(m_physicalDevice, &createInfo, nullptr, &m_device) != VK_SUCCESS) {
-    throw std::runtime_error("Failed to create logical device!");
+    ExitWithError("Failed to create logical device!", -1);
   }
 
   vkGetDeviceQueue(m_device, indicies.graphicsFamily.value(), 0, &m_graphicsQueue);
@@ -365,7 +365,7 @@ void VulkanRenderer::CreateSwapChain() {
   createInfo.oldSwapchain = VK_NULL_HANDLE;
 
   if (vkCreateSwapchainKHR(m_device, &createInfo, nullptr, &m_swapChain) != VK_SUCCESS) {
-    throw std::runtime_error("Failed to create swap chain!");
+    ExitWithError("Failed to create swap chain!", -1);
   }
 
   vkGetSwapchainImagesKHR(m_device, m_swapChain, &imageCount, nullptr);
@@ -419,7 +419,7 @@ void VulkanRenderer::CreateImageViews() {
     createInfo.subresourceRange.layerCount = 1;
 
     if (vkCreateImageView(m_device, &createInfo, nullptr, &m_swapChainImageViews[i]) != VK_SUCCESS) {
-      throw std::runtime_error("Failed to create image views!");
+      ExitWithError("Failed to create image views!", -1);
     }
   }
 }
