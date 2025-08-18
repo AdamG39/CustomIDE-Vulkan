@@ -6,8 +6,11 @@
 #include <memory>
 #include <map>
 
+#define BORDER_THICKNESS                  10
+#define MAXIMISE_DISTANCE_FROM_SCREEN_TOP 5
+
 #define RESULT_SUCCESS 0
-#define RESULT_FAIL 1
+#define RESULT_FAIL    1
 
 #define CURSOR_STATE_DEFAULT 0
 #define CURSOR_STATE_HRESIZE 1
@@ -149,8 +152,6 @@ public:
   }
 
   void HandleEvents() {
-    // Loop through m_events handling them respectively
-    
     if (m_events.size() == 0) { return; }
 
     int result = 0;
@@ -220,7 +221,13 @@ private:
     bool eventSuccessful = false;
     switch (Event->Type) {
       case UIEventType::MOUSE_RELEASE:
-        if ((EventFlags & EVENT_FLAG_DRAGGING) != 0) EventFlags -= EVENT_FLAG_DRAGGING;
+        if (EventFlags & EVENT_FLAG_DRAGGING) { 
+          EventFlags ^= EVENT_FLAG_DRAGGING;
+          int winPosX, winPosY;
+          glfwGetWindowPos(m_renderer->GetWindow(), &winPosX, &winPosY);
+          if (Event->CursorPos.y + (float)winPosY <= MAXIMISE_DISTANCE_FROM_SCREEN_TOP)
+            ToggleMaximiseCallback(m_renderer->GetWindow());
+        }
         break;
       case UIEventType::MOUSE_PRESS:
         for (size_t i = 0; i < treeObjects.size(); i++) {
@@ -240,8 +247,10 @@ private:
             break;
           }
         }
-        if (eventSuccessful || WindowFlags & WINDOW_FLAG_MAXIMISED) break;
+        if (eventSuccessful) break;
         if (CursorOverlap(Event->CursorPos, treeObjects[1]->GetPixelSize(), treeObjects[1]->GetPixelPosition())) {
+          // FIXME: Places the window at 0, 0 when unmaximised so cursor doesnt line up
+          //if (WindowFlags & WINDOW_FLAG_MAXIMISED) ToggleMaximiseCallback(m_renderer->GetWindow());
           EventFlags ^= EVENT_FLAG_DRAGGING;
           MousePressPosition = Event->CursorPos;
         }

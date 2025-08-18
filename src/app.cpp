@@ -18,8 +18,6 @@
  *  [ ] Create a text field UI element
 \*/
 
-const int32_t BORDER_THICKNESS = 10;
-
 bool framebufferResized = false;
 int framebufferWidth = 0;
 int framebufferHeight = 0;
@@ -147,6 +145,8 @@ void CustomIDEApplication::HandleResizing() {
 
     m_windowWidth = framebufferWidth;
     m_windowHeight = framebufferHeight;
+
+    vkDeviceWaitIdle(m_renderer->GetDevice());
 
     m_root->RecalculateUILayout(framebufferWidth, framebufferHeight);
   }
