@@ -1,7 +1,7 @@
 #ifndef CUSTOM_APP_H
 #define CUSTOM_APP_H
 
-#include "shapes.hpp"
+#include "uilib/ui.hpp"
 #include "renderer.hpp"
 #include <memory>
 #include <map>
@@ -188,7 +188,7 @@ public:
 
   void RecalculateUILayout(int framebufferWidth, int framebufferHeight) {
     for (size_t i = 0; i < m_treeObjects.size(); i++) {
-      m_treeObjects[i]->RecalculateGeometry(framebufferWidth, framebufferHeight);
+      m_treeObjects[i]->RecalculateElementDimensions(framebufferWidth, framebufferHeight);
     }
   }
 
@@ -224,17 +224,24 @@ private:
         break;
       case UIEventType::MOUSE_PRESS:
         for (size_t i = 0; i < treeObjects.size(); i++) {
-          if (treeObjects[i]->GetType() != UIType::Button) continue;
+          if (treeObjects[i]->GetType() != UIType::Button &&
+              treeObjects[i]->GetType() != UIType::PanelButton) continue;
 
-          auto button = std::dynamic_pointer_cast<Button<float, float>>(treeObjects[i]);
-          if (CursorOverlap(Event->CursorPos, button->GetSize(), button->GetPosition())) { 
+          std::shared_ptr<Button<float, float>> button;
+          if (treeObjects[i]->GetType() == UIType::PanelButton) {
+            auto temp = std::dynamic_pointer_cast<PanelButton<float, float>>(treeObjects[i]);
+            button = std::make_shared<Button<float, float>>(temp->GetButton());
+          } else {
+            button = std::dynamic_pointer_cast<Button<float, float>>(treeObjects[i]);
+          }
+          if (CursorOverlap(Event->CursorPos, button->GetPixelSize(), button->GetPixelPosition())) { 
             button->OnClick();
             eventSuccessful = true;
             break;
           }
         }
         if (eventSuccessful || WindowFlags & WINDOW_FLAG_MAXIMISED) break;
-        if (CursorOverlap(Event->CursorPos, treeObjects[1]->GetSize(), treeObjects[1]->GetPosition())) {
+        if (CursorOverlap(Event->CursorPos, treeObjects[1]->GetPixelSize(), treeObjects[1]->GetPixelPosition())) {
           EventFlags ^= EVENT_FLAG_DRAGGING;
           MousePressPosition = Event->CursorPos;
         }
