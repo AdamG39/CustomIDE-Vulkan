@@ -247,7 +247,7 @@ private:
             break;
           }
         }
-        if (eventSuccessful) break;
+        if (eventSuccessful || WindowFlags & WINDOW_FLAG_MAXIMISED) break;
         if (CursorOverlap(Event->CursorPos, treeObjects[1]->GetPixelSize(), treeObjects[1]->GetPixelPosition())) {
           // FIXME: Places the window at 0, 0 when unmaximised so cursor doesnt line up
           //if (WindowFlags & WINDOW_FLAG_MAXIMISED) ToggleMaximiseCallback(m_renderer->GetWindow());
