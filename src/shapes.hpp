@@ -5,6 +5,18 @@
 #include <type_traits>
 #include <utility>
 
+// Standard colours
+#define COLOUR_CLEAR  Colour(0x000000, 0.0f)
+#define COLOUR_BLACK  Colour(0x000000, 1.0f)
+#define COLOUR_WHITE  Colour(0xFFFFFF, 1.0f)
+#define COLOUR_RED    Colour(0xFF0000, 1.0f)
+#define COLOUR_GREEN  Colour(0x00FF00, 1.0f)
+#define COLOUR_BLUE   Colour(0x0000FF, 1.0f)
+
+// Theme colours
+  // Dark Theme
+    #define THEME_DARK_COLOUR_0 Colour(0x3B1C32, 1.0f)
+    #define THEME_DARK_COLOUR_1 Colour(0x1A1A1D, 1.0f)
 
 template <typename T>
 struct Vector2 {
@@ -117,25 +129,25 @@ private:
   std::array<Vertex<T, C>, 4> m_vertices;
 
 public:
-  Rect(Vector3<T> TopLeft, Vector3<T> BotRight, Colour<C> Col = Colour<C>())
+  Rect(Vector3<T> TopLeft, Vector3<T> BotRight, Colour<C> RectColour = COLOUR_BLACK, int zIndex = 0)
   : m_position(Vector2<T>((BotRight.x - TopLeft.x) / 2, (BotRight.y - TopLeft.y) / 2)),
     m_size(Vector2<T>(BotRight.x - TopLeft.x, BotRight.y - TopLeft.y)),
-    m_colour(Col),
+    m_colour(RectColour),
     m_zIndex(0),
-    m_vertices{ Vertex<T, C>(TopLeft, Col),
-                Vertex<T, C>(BotRight.x, TopLeft.y, Col), 
-                Vertex<T, C>(TopLeft.x, BotRight.y, Col), 
-                Vertex<T, C>(BotRight, Col) } {}
+    m_vertices{ Vertex<T, C>(TopLeft, RectColour),
+                Vertex<T, C>(BotRight.x, TopLeft.y, RectColour), 
+                Vertex<T, C>(TopLeft.x, BotRight.y, RectColour), 
+                Vertex<T, C>(BotRight, RectColour) } {}
 
-  Rect(Vector2<T> Size, Vector2<T> Position, Colour<C> Col = Colour<C>())
+  Rect(Vector2<T> Size, Vector2<T> Position, Colour<C> RectColour = COLOUR_BLACK, int zIndex = 0)
   : m_position(Position),
     m_size(Size),
-    m_colour(Col),
-    m_zIndex(0),
-    m_vertices{ Vertex<T, C>(Vector2<T>(Position.x - (Size.x / 2), Position.y - (Size.y / 2)), Col),
-                Vertex<T, C>(Vector2<T>(Position.x + (Size.x / 2), Position.y - (Size.y / 2)), Col),
-                Vertex<T, C>(Vector2<T>(Position.x - (Size.x / 2), Position.y + (Size.y / 2)), Col),
-                Vertex<T, C>(Vector2<T>(Position.x + (Size.x / 2), Position.y + (Size.y / 2)), Col) } {}
+    m_colour(RectColour),
+    m_zIndex(zIndex),
+    m_vertices{ Vertex<T, C>(Vector2<T>(Position.x - (Size.x / 2), Position.y - (Size.y / 2)), RectColour),
+                Vertex<T, C>(Vector2<T>(Position.x + (Size.x / 2), Position.y - (Size.y / 2)), RectColour),
+                Vertex<T, C>(Vector2<T>(Position.x - (Size.x / 2), Position.y + (Size.y / 2)), RectColour),
+                Vertex<T, C>(Vector2<T>(Position.x + (Size.x / 2), Position.y + (Size.y / 2)), RectColour) } {}
 
   std::array<Vertex<T, C>, 6> GetVertices() const {
     std::array<Vertex<T, C>, 6> vertices;

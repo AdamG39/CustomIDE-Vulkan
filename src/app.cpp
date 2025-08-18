@@ -1,5 +1,6 @@
 #include "app.hpp"
 #include "io.hpp"
+#include "errorHandler.hpp"
 #include <GLFW/glfw3.h>
 
 /*\ ---- TODO: ----
@@ -17,7 +18,6 @@
  *  [ ] Create a text field UI element
 \*/
 
-const Colour<float> DEFAULT_BACKGROUND_COLOUR = Colour(0x3B1C32, 1.0f);
 const int32_t BORDER_THICKNESS = 10;
 
 bool framebufferResized = false;
@@ -88,7 +88,7 @@ void CustomIDEApplication::EndApplication() {
 }
 
 void CustomIDEApplication::CreateRenderer(std::string AppName) {
-  m_renderer = new VulkanRenderer(AppName, DEFAULT_BACKGROUND_COLOUR.ConvertSRGBToLinear());
+  m_renderer = new VulkanRenderer(AppName, THEME_DARK_COLOUR_0.ConvertSRGBToLinear());
 
   glfwGetFramebufferSize(m_renderer->GetWindow(), &m_windowWidth, &m_windowHeight);
 };
@@ -190,39 +190,39 @@ void CustomIDEApplication::HandleDragging() {
 void CustomIDEApplication::CreateUIElements() {
   Panel background = Panel(Vector2<UISize<float>>({1.0f, SizeMode::Proportional}, {1.0f, SizeMode::Proportional}),
                            Vector2<UISize<float>>({0.0f}, {0.0f}),
-                           Colour(0x3B1C32, 1.0f));
+                           THEME_DARK_COLOUR_0);
 
   Panel titleBar = Panel(Vector2<UISize<float>>({1.0f, SizeMode::Proportional}, {40.0f}),
                          Vector2<UISize<float>>({0.0f}, {0.0f}),
-                         Colour(0x1A1A1D, 1.0f));
+                         THEME_DARK_COLOUR_1);
 
   titleBar.SetAnchor(UIAnchor(Vector2<UISize<float>>({0.0f}, {20.0f}), UIAnchorType::Top));
 
   PanelButton exitButton = PanelButton(Vector2<UISize<float>>({50.0f}, {40.0f}),
                                        Vector2<UISize<float>>({0.0f}, {0.0f}),
-                                       Colour(0xFF0000, 1.0f),
+                                       COLOUR_RED,
                                        CloseWindowCallback, m_renderer->GetWindow());
 
   exitButton.SetAnchor(UIAnchor(Vector2<UISize<float>>({-25.0f}, {20.0f}), UIAnchorType::TopRight));
 
   PanelButton maximiseButton = PanelButton(Vector2<UISize<float>>({50.0f}, {40.0f}),
                                            Vector2<UISize<float>>({-50.0f,}, {0.0f}),
-                                           Colour(0x00FF00, 1.0f),
+                                           COLOUR_GREEN,
                                            ToggleMaximiseCallback, m_renderer->GetWindow());
 
   maximiseButton.SetAnchor(UIAnchor(Vector2<UISize<float>>({-25.0f}, {20.0f}), UIAnchorType::TopRight));
 
   PanelButton minimiseButton = PanelButton(Vector2<UISize<float>>({50.0f}, {40.0f}),
                                            Vector2<UISize<float>>({-100.0f}, {0.0f}),
-                                           Colour(0x0000FF, 1.0f),
+                                           COLOUR_BLUE,
                                            MinimiseCallback, m_renderer->GetWindow());
 
   minimiseButton.SetAnchor(UIAnchor(Vector2<UISize<float>>({-25.0f}, {20.0f}), UIAnchorType::TopRight));
 
-  titleBar.GetGeometry().SetZIndex(1);
-  exitButton.GetGeometry().SetZIndex(1);
-  maximiseButton.GetGeometry().SetZIndex(1);
-  minimiseButton.GetGeometry().SetZIndex(1);
+  titleBar.SetZIndex(1);
+  exitButton.SetZIndex(1);
+  maximiseButton.SetZIndex(1);
+  minimiseButton.SetZIndex(1);
 
   m_root->AddElement(background);
   m_root->AddElement(titleBar);
