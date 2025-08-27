@@ -7,9 +7,11 @@
 
 // Image file magic numbers
 #define PNG_MAGIC_NUMBER_BYTE_AMOUNT 8
+#define BMP_MAGIC_NUMBER_BYTE_AMOUNT 2
 #define ICO_MAGIC_NUMBER_BYTE_AMOUNT 4
 
 const uint8_t PNG_MAGIC_NUMBERS[] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+const uint8_t BMP_MAGIC_NUMBERS[] = { 0x42, 0x4D };
 const uint8_t ICO_MAGIC_NUMBERS[] = { 0x00, 0x00, 0x01, 0x00 };
 
 // PNG Specific macros

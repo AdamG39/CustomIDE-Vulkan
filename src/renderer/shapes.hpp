@@ -86,8 +86,9 @@ template <typename T, typename C>
 struct Vertex {
   Vector3<T> position;
   Colour<C> colour;
+  Vector2<T> textureCoords;
 
-  Vertex() : position(), colour() {}
+  Vertex() : position(), colour(), textureCoords() {}
   
   Vertex(const Vector2<T>& Position, const Colour<C>& Colour)
   : position(Vector3(Position)), colour(Colour) {}
