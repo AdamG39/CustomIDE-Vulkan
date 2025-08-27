@@ -7,6 +7,8 @@
 #include <vector>
 #include <optional>
 #include "shapes.hpp"
+#include "texture.hpp"
+#include "buffer.hpp"
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -95,6 +97,11 @@ private:
   std::vector<VkImageView> m_swapChainImageViews;
   std::vector<VkFramebuffer> m_swapChainFramebuffers;
 
+  VulkanTexture m_texture;
+
+  VkDescriptorPool m_descriptorPool;
+  VkDescriptorSetLayout m_descriptorSetLayout = VK_NULL_HANDLE;
+  std::vector<VkDescriptorSet> m_descriptorSets;
   VkRenderPass m_renderPass;
   VkClearValue m_clearColour;
   VkPipelineLayout m_pipelineLayout;
@@ -154,6 +161,16 @@ private:
 
   VkShaderModule CreateShaderModule(const std::vector<char>& code);
 
+  void CreateDescriptorSets(VulkanTexture* pTexture, int NumImages);
+
+  void CreateDescriptorPool(int NumImages);
+
+  void CreateDescriptorSetLayout(VulkanTexture* pTexture);
+
+  void AllocateDescriptorSets(int NumImages);
+
+  void UpdateDescriptorSets(VulkanTexture* pTexture, int NumImages);
+
   void CreateGraphicsPipeline();
 
   void CreateFramebuffers();
@@ -173,7 +190,41 @@ private:
   void CreateSyncObjects();
 
   void Cleanup();
+
+  VulkanBuffer CreateBuffer(VkDeviceSize Size, VkBufferUsageFlags Usage, VkMemoryPropertyFlags Properties);
+
+  void CreateTexture(const char* pFilename, VulkanTexture& Texture);
+
+  void CreateTextureImageFromData(VulkanTexture& Texture, const void* pPixels,
+                                  uint32_t ImageWidth, uint32_t ImageHeight, VkFormat TextureFormat);
+
+  void CreateTextureImage(VulkanTexture& Texture, uint32_t ImageWidth, uint32_t ImageHeight, VkFormat TextureFormat,
+                          VkImageUsageFlags UsageFlags, VkMemoryPropertyFlags PropertyFlags);
+
+  void UpdateTextureImage(VulkanTexture& Texture, uint32_t ImageWidth, uint32_t ImageHeight,
+                          VkFormat TextureFormat, const void* pPixels);
+
+  int GetBytesPerTextureFormat(VkFormat TextureFormat);
+
+  uint32_t GetMemoryTypeIndex(uint32_t MemoryTypeBitsMask, VkMemoryPropertyFlags RequiredMemoryPropertyFlags);
+
+  void TransitionImageLayout(VkImage& Image, VkFormat Format, VkImageLayout OldLayout, VkImageLayout NewLayout);
+
+  void ImageMemoryBarrier(VkCommandBuffer CmdBuf, VkImage Image, VkFormat Format,
+                       VkImageLayout OldLayout, VkImageLayout NewLayout);
+
+  void CopyBufferToImage(VkImage Destination, VkBuffer Source, uint32_t ImageWidth, uint32_t ImageHeight);
+
+  void BeginCommandBuffer(VkCommandBuffer CommandBuffer, VkCommandBufferUsageFlags UsageFlags);
+
+  void SubmitCopyCommand();
 };
+
+VkImageView CreateImageView(VkDevice, VkImage Image, VkFormat Format,
+                            VkImageAspectFlags AspectFlags);
+
+VkSampler CreateTextureSampler(VkDevice Device, VkFilter MinFilter, VkFilter MaxFilter, 
+                               VkSamplerAddressMode AddressMode);
 
 void CloseWindowCallback(GLFWwindow* window);
 

@@ -186,6 +186,7 @@ void CustomIDEApplication::HandleDragging() {
 }
 
 void CustomIDEApplication::CreateUIElements() {
+  /*
   Panel background = Panel(Vector2<UISize<float>>({1.0f, SizeMode::Proportional}, {1.0f, SizeMode::Proportional}),
                            Vector2<UISize<float>>({0.0f}, {0.0f}),
                            THEME_DARK_COLOUR_0);
@@ -226,7 +227,17 @@ void CustomIDEApplication::CreateUIElements() {
   m_root->AddElement(titleBar);
   m_root->AddElement(exitButton);
   m_root->AddElement(maximiseButton);
-  m_root->AddElement(minimiseButton);
+  m_root->AddElement(minimiseButton);*/
+
+  Panel textureTest = Panel(Vector2<UISize<float>>({400.f}, {400.f}),
+                            Vector2<UISize<float>>({0.f}, {0.f}),
+                            THEME_DARK_COLOUR_0);
+
+  textureTest.SetAnchor(UIAnchor(Vector2<UISize<float>>({0.f}, {0.f}), UIAnchorType::Center));
+
+  textureTest.SetZIndex(1);
+
+  m_root->AddElement(textureTest);
 
   m_root->RecalculateUILayout(framebufferWidth, framebufferHeight);
 }
