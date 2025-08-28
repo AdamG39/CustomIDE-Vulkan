@@ -3,34 +3,14 @@
 
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
-#include <string>
-#include <vector>
-#include <optional>
+#include "vulkanCore.hpp"
 #include "shapes.hpp"
 #include "texture.hpp"
 #include "buffer.hpp"
+#include <string>
+#include <vector>
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
-
-struct QueueFamilyIndicies {
-  std::optional<uint32_t> graphicsFamily;
-  std::optional<uint32_t> presentFamily;
-
-  bool IsComplete() {
-    return graphicsFamily.has_value() && presentFamily.has_value();
-  }
-};
-
-struct SwapChainSupportDetails {
-  VkSurfaceCapabilitiesKHR capabilities;
-  std::vector<VkSurfaceFormatKHR> formats;
-  std::vector<VkPresentModeKHR> presentModes;
-};
-
-struct PushConstants {
-  float width;
-  float height;
-};
 
 class VulkanRenderer {
 public:
@@ -133,22 +113,6 @@ private:
 
   void CreateSurface();
 
-  bool CheckValidationLayerSupport();
-
-  bool IsDeviceSuitable(VkPhysicalDevice device);
-
-  bool CheckDeviceExtensionSupport(VkPhysicalDevice device);
-
-  QueueFamilyIndicies FindQueueFamilies(VkPhysicalDevice device);
-
-  SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device);
-
-  VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
-
-  VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
-
-  VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
-
   void PickPhysicalDevice();
 
   void CreateLogicalDevice();
@@ -219,24 +183,6 @@ private:
 
   void SubmitCopyCommand();
 };
-
-VkImageView CreateImageView(VkDevice, VkImage Image, VkFormat Format,
-                            VkImageAspectFlags AspectFlags);
-
-VkSampler CreateTextureSampler(VkDevice Device, VkFilter MinFilter, VkFilter MaxFilter, 
-                               VkSamplerAddressMode AddressMode);
-
-void CloseWindowCallback(GLFWwindow* window);
-
-void MouseButtonCallback(GLFWwindow* Window, int Button, int Action, int Mods);
-
-void FramebufferResizeCallback(GLFWwindow* Window, int Width, int Height);
-
-void CursorPositionCallback(GLFWwindow* Window, double xpos, double ypos);
-
-void ToggleMaximiseCallback(GLFWwindow* Window);
-
-void MinimiseCallback(GLFWwindow* Window);
 
 #endif
 
