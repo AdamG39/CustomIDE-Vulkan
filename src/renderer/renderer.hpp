@@ -141,8 +141,6 @@ private:
   void CreateSyncObjects();
 
   void Cleanup();
-
-  VulkanBuffer CreateBuffer(VkDeviceSize Size, VkBufferUsageFlags Usage, VkMemoryPropertyFlags Properties);
 };
 
 #endif

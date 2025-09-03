@@ -2,6 +2,7 @@
 #include "renderer.hpp"
 #include "vulkanCore.hpp"
 #include "shapes.hpp"
+#include "texture.hpp"
 #include "../io/io.hpp"
 #include <set>
 

@@ -15,5 +15,12 @@ struct VulkanBuffer {
   void Destroy(VkDevice Device);
 };
 
+VulkanBuffer CreateBuffer(const VkDeviceSize& Size, const VkBufferUsageFlags& Usage,
+                          const VkMemoryPropertyFlags& Properties, const VkDevice& Device,
+                          const VkPhysicalDevice& PhysicalDevice);
+
+uint32_t GetMemoryTypeIndex(uint32_t MemoryTypeBitsMask, const VkMemoryPropertyFlags& RequiredMemoryPropertyFlags,
+                            const VkPhysicalDevice& PhysicalDevice);
+
 #endif
 
