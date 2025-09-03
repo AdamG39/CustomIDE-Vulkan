@@ -4,6 +4,7 @@
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
 #include "vulkanCore.hpp"
+#include "swapChain.hpp"
 #include "shapes.hpp"
 #include "texture.hpp"
 #include "buffer.hpp"
@@ -70,12 +71,7 @@ private:
   VkQueue m_graphicsQueue;
   VkQueue m_presentQueue;
 
-  VkSwapchainKHR m_swapChain;
-  std::vector<VkImage> m_swapChainImages;
-  VkFormat m_swapChainImageFormat;
-  VkExtent2D m_swapChainExtent;
-  std::vector<VkImageView> m_swapChainImageViews;
-  std::vector<VkFramebuffer> m_swapChainFramebuffers;
+  SwapChain* m_swapchain = nullptr;
 
   VulkanTexture m_texture;
 
@@ -117,13 +113,10 @@ private:
 
   void CreateLogicalDevice();
 
-  void CreateSwapChain();
-
-  void CreateImageViews();
-
   void CreateRenderPass();
 
   VkShaderModule CreateShaderModule(const std::vector<char>& code);
+  void InitSwapChain();
 
   void CreateDescriptorSets(VulkanTexture* pTexture, int NumImages);
 
@@ -136,8 +129,6 @@ private:
   void UpdateDescriptorSets(VulkanTexture* pTexture, int NumImages);
 
   void CreateGraphicsPipeline();
-
-  void CreateFramebuffers();
 
   void CreateCommandPool();
 
