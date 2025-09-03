@@ -47,11 +47,20 @@ VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& Capabilities, GLFWwi
 void PickPhysicalDevice(VkInstance Instance, VkPhysicalDevice& PhysicalDevice, VkSurfaceKHR Surface,
                         std::vector<const char*>& DeviceExtensions) ;
 
+void BeginCommandBuffer(VkCommandBuffer CommandBuffer, VkCommandBufferUsageFlags UsageFlags);
+
+void SubmitCopyCommand(const VkCommandBuffer* CommandBuffers, uint32_t CommandBufferIndex,
+                       const VkQueue& GraphicsQueue);
+
 VkImageView CreateImageView(VkDevice, VkImage Image, VkFormat Format,
                             VkImageAspectFlags AspectFlags);
 
-VkSampler CreateTextureSampler(VkDevice Device, VkFilter MinFilter, VkFilter MaxFilter, 
-                               VkSamplerAddressMode AddressMode);
+VkSampler CreateTextureSampler(const VkDevice& Device, const VkFilter& MinFilter, const VkFilter& MaxFilter, 
+                               const VkSamplerAddressMode& AddressMode);
+
+VkRenderPass CreateRenderPass(const VkFormat& SwapChainFormat, const VkDevice& Device);
+
+VkShaderModule CreateShaderModule(const char* pCodeData, size_t CodeSize, const VkDevice& Device);
 
 void CloseWindowCallback(GLFWwindow* window);
 

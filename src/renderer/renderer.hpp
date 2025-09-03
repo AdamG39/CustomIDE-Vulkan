@@ -3,7 +3,6 @@
 
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
-#include "vulkanCore.hpp"
 #include "swapChain.hpp"
 #include "shapes.hpp"
 #include "texture.hpp"
@@ -113,9 +112,6 @@ private:
 
   void CreateLogicalDevice();
 
-  void CreateRenderPass();
-
-  VkShaderModule CreateShaderModule(const std::vector<char>& code);
   void InitSwapChain();
 
   void CreateDescriptorSets(VulkanTexture* pTexture, int NumImages);
@@ -147,11 +143,6 @@ private:
   void Cleanup();
 
   VulkanBuffer CreateBuffer(VkDeviceSize Size, VkBufferUsageFlags Usage, VkMemoryPropertyFlags Properties);
-
-
-  void BeginCommandBuffer(VkCommandBuffer CommandBuffer, VkCommandBufferUsageFlags UsageFlags);
-
-  void SubmitCopyCommand();
 };
 
 #endif

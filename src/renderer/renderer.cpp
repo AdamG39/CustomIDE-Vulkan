@@ -1,5 +1,6 @@
 #include "../helpers/errors/errors.hpp"
 #include "renderer.hpp"
+#include "vulkanCore.hpp"
 #include "shapes.hpp"
 #include "../io/io.hpp"
 #include <set>
@@ -38,7 +39,6 @@ void VulkanRenderer::InitVulkan() {
   CreateLogicalDevice();
   InitSwapChain();
   CreateGraphicsPipeline();
-  CreateFramebuffers();
   CreateCommandPool();
   CreateCommandBuffers();
   CreateSyncObjects();
@@ -273,15 +273,16 @@ void VulkanRenderer::UpdateDescriptorSets(VulkanTexture* pTexture, int NumImages
 }
 
 void VulkanRenderer::CreateGraphicsPipeline() {
-  CreateTexture("../assets/textures/test.bmp", m_texture);
+  CreateTexture("../assets/textures/test.bmp", m_texture, m_device, m_physicalDevice, m_commandBuffers.data(),
+                m_currentFrame, m_graphicsQueue);
 
   CreateDescriptorSets(&m_texture, MAX_FRAMES_IN_FLIGHT);
 
   auto vertShaderCode = ReadBinaryFile("../shaders/vert.spv");
   auto fragShaderCode = ReadBinaryFile("../shaders/frag.spv");
 
-  VkShaderModule vertShaderModule = CreateShaderModule(vertShaderCode);
-  VkShaderModule fragShaderModule = CreateShaderModule(fragShaderCode);
+  VkShaderModule vertShaderModule = CreateShaderModule(vertShaderCode.data(), vertShaderCode.size(), m_device);
+  VkShaderModule fragShaderModule = CreateShaderModule(fragShaderCode.data(), fragShaderCode.size(), m_device);
 
   VkPipelineShaderStageCreateInfo shaderStages[2] = {
     {
@@ -418,7 +419,7 @@ void VulkanRenderer::CreateGraphicsPipeline() {
 }
 
 void VulkanRenderer::CreateCommandPool() {
-  QueueFamilyIndicies queueFamilyIndicies = FindQueueFamilies(m_physicalDevice);
+  QueueFamilyIndicies queueFamilyIndicies = FindQueueFamilies(m_physicalDevice, m_surface);
 
   VkCommandPoolCreateInfo poolInfo{};
   poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -688,136 +689,5 @@ void VulkanRenderer::Cleanup() {
   vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
   vkDestroyInstance(m_instance, nullptr);
   glfwTerminate();
-}
-
-VulkanBuffer VulkanRenderer::CreateBuffer(VkDeviceSize Size, VkBufferUsageFlags Usage, VkMemoryPropertyFlags Properties) {
-  VkBufferCreateInfo bufferInfo = {
-    .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-    .size = Size,
-    .usage = Usage,
-    .sharingMode = VK_SHARING_MODE_EXCLUSIVE
-  };
-
-  VulkanBuffer buffer;
-
-  if (vkCreateBuffer(m_device, &bufferInfo, nullptr, &buffer.buffer) != VK_SUCCESS)
-    ExitWithError("Failed to create buffer", -18);
-
-  VkMemoryRequirements memoryRequirements = { 0 };
-  vkGetBufferMemoryRequirements(m_device, buffer.buffer, &memoryRequirements);
-
-  buffer.allocationSize = memoryRequirements.size;
-
-  uint32_t memoryTypeIndex = GetMemoryTypeIndex(memoryRequirements.memoryTypeBits, Properties);
-
-  VkMemoryAllocateInfo memoryAllocateInfo = {
-    .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-    .pNext = nullptr,
-    .allocationSize = memoryRequirements.size,
-    .memoryTypeIndex = memoryTypeIndex
-  };
-
-  if (vkAllocateMemory(m_device, &memoryAllocateInfo, nullptr, &buffer.memory) != VK_SUCCESS)
-    ExitWithError("Failed to allocate memory for image", -14);
-
-  if (vkBindBufferMemory(m_device, buffer.buffer, buffer.memory, 0) != VK_SUCCESS)
-    ExitWithError("Failed to bind image memory", -15);
-
-  return buffer;
-}
-
-
-void VulkanRenderer::BeginCommandBuffer(VkCommandBuffer CommandBuffer, VkCommandBufferUsageFlags UsageFlags)
-{
-	VkCommandBufferBeginInfo beginInfo = {
-		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-		.pNext = NULL,
-		.flags = UsageFlags,
-		.pInheritanceInfo = NULL
-	};
-
-  if (vkBeginCommandBuffer(CommandBuffer, &beginInfo) != VK_SUCCESS)
-    ExitWithError("Failed to start command buffer", -19);
-}
-
-void VulkanRenderer::SubmitCopyCommand() {
-  vkEndCommandBuffer(m_commandBuffers[m_currentFrame]);
-
-  VkSubmitInfo submitInfo = {
-		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-		.pNext = NULL,
-		.waitSemaphoreCount = 0,
-		.pWaitSemaphores = VK_NULL_HANDLE,
-		.pWaitDstStageMask = VK_NULL_HANDLE,
-		.commandBufferCount = 1,
-		.pCommandBuffers = &m_commandBuffers[m_currentFrame],
-		.signalSemaphoreCount = 0,
-		.pSignalSemaphores = VK_NULL_HANDLE
-	};
-
-	if (vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, NULL) != VK_SUCCESS)
-    ExitWithError("Failed to submit queue", 1);
-
-  vkQueueWaitIdle(m_graphicsQueue);
-}
-
-VkImageView CreateImageView(VkDevice Device, VkImage Image, VkFormat Format,
-                     VkImageAspectFlags AspectFlags) {
-  VkImageViewCreateInfo viewInfo =
-	{
-		.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-		.pNext = NULL,
-		.flags = 0,
-		.image = Image,
-		.viewType = VK_IMAGE_VIEW_TYPE_2D,
-		.format = Format,
-		.components = {
-			.r = VK_COMPONENT_SWIZZLE_IDENTITY,
-			.g = VK_COMPONENT_SWIZZLE_IDENTITY,
-			.b = VK_COMPONENT_SWIZZLE_IDENTITY,
-			.a = VK_COMPONENT_SWIZZLE_IDENTITY
-		},
-		.subresourceRange = {
-			.aspectMask = AspectFlags,
-			.baseMipLevel = 0,
-			.levelCount = 1,
-			.baseArrayLayer = 0,
-			.layerCount = 1
-		}
-	};
-
-	VkImageView ImageView;
-	if (vkCreateImageView(Device, &viewInfo, NULL, &ImageView) != VK_SUCCESS)
-    ExitWithError("Failed to create image view", 1);
-	return ImageView;
-}
-
-VkSampler CreateTextureSampler(VkDevice Device, VkFilter MinFilter, VkFilter MaxFilter, 
-                               VkSamplerAddressMode AddressMode) {
-  VkSamplerCreateInfo samplerInfo = {
-		.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-		.pNext = nullptr,
-		.flags = 0,
-		.magFilter = MinFilter,
-		.minFilter = MaxFilter,
-		.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
-		.addressModeU = AddressMode,
-		.addressModeV = AddressMode,
-		.addressModeW = AddressMode,
-		.mipLodBias = 0.0f,
-		.anisotropyEnable = VK_FALSE,
-		.maxAnisotropy = 1,
-		.compareEnable = VK_FALSE,
-		.compareOp = VK_COMPARE_OP_ALWAYS,
-		.minLod = 0.0f,
-		.maxLod = 0.0f,
-		.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
-		.unnormalizedCoordinates = VK_FALSE
-	};
-
-	VkSampler Sampler;
-	if (vkCreateSampler(Device, &samplerInfo, VK_NULL_HANDLE, &Sampler) != VK_SUCCESS)
-    ExitWithError("Failed to create sampler", 1);
-	return Sampler;
 }
 

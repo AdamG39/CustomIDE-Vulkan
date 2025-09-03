@@ -1,4 +1,7 @@
 #include "vulkanCore.hpp"
+#include "../helpers/errors/errors.hpp"
+#include "../io/io.hpp"
+#include "texture.hpp"
 #include <set>
 #include <string>
 #include <algorithm>
@@ -164,3 +167,157 @@ VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& Capabilities, GLFWwi
     return actualExtent;
   }
 }
+
+void BeginCommandBuffer(VkCommandBuffer CommandBuffer, VkCommandBufferUsageFlags UsageFlags) {
+	VkCommandBufferBeginInfo beginInfo = {
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+		.pNext = NULL,
+		.flags = UsageFlags,
+		.pInheritanceInfo = NULL
+	};
+
+  if (vkBeginCommandBuffer(CommandBuffer, &beginInfo) != VK_SUCCESS)
+    ExitWithError("Failed to start command buffer", -19);
+}
+
+void SubmitCopyCommand(const VkCommandBuffer* CommandBuffers, uint32_t CommandBufferIndex,
+                       const VkQueue& GraphicsQueue) {
+  vkEndCommandBuffer(CommandBuffers[CommandBufferIndex]);
+
+  VkSubmitInfo submitInfo = {
+		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+		.pNext = NULL,
+		.waitSemaphoreCount = 0,
+		.pWaitSemaphores = VK_NULL_HANDLE,
+		.pWaitDstStageMask = VK_NULL_HANDLE,
+		.commandBufferCount = 1,
+		.pCommandBuffers = &CommandBuffers[CommandBufferIndex],
+		.signalSemaphoreCount = 0,
+		.pSignalSemaphores = VK_NULL_HANDLE
+	};
+
+	if (vkQueueSubmit(GraphicsQueue, 1, &submitInfo, NULL) != VK_SUCCESS)
+    ExitWithError("Failed to submit queue", 1);
+
+  vkQueueWaitIdle(GraphicsQueue);
+}
+
+VkImageView CreateImageView(VkDevice Device, VkImage Image, VkFormat Format,
+                            VkImageAspectFlags AspectFlags) {
+  VkImageViewCreateInfo viewInfo = {
+		.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+		.pNext = NULL,
+		.flags = 0,
+		.image = Image,
+		.viewType = VK_IMAGE_VIEW_TYPE_2D,
+		.format = Format,
+		.components = {
+			.r = VK_COMPONENT_SWIZZLE_IDENTITY,
+			.g = VK_COMPONENT_SWIZZLE_IDENTITY,
+			.b = VK_COMPONENT_SWIZZLE_IDENTITY,
+			.a = VK_COMPONENT_SWIZZLE_IDENTITY
+		},
+		.subresourceRange = {
+			.aspectMask = AspectFlags,
+			.baseMipLevel = 0,
+			.levelCount = 1,
+			.baseArrayLayer = 0,
+			.layerCount = 1
+		}
+	};
+
+	VkImageView ImageView;
+	if (vkCreateImageView(Device, &viewInfo, NULL, &ImageView) != VK_SUCCESS)
+    ExitWithError("Failed to create image view", 1);
+	return ImageView;
+}
+
+VkSampler CreateTextureSampler(const VkDevice& Device, const VkFilter& MinFilter,
+                               const VkFilter& MaxFilter, const VkSamplerAddressMode& AddressMode) {
+  VkSamplerCreateInfo samplerInfo = {
+		.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.magFilter = MinFilter,
+		.minFilter = MaxFilter,
+		.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+		.addressModeU = AddressMode,
+		.addressModeV = AddressMode,
+		.addressModeW = AddressMode,
+		.mipLodBias = 0.0f,
+		.anisotropyEnable = VK_FALSE,
+		.maxAnisotropy = 1,
+		.compareEnable = VK_FALSE,
+		.compareOp = VK_COMPARE_OP_ALWAYS,
+		.minLod = 0.0f,
+		.maxLod = 0.0f,
+		.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+		.unnormalizedCoordinates = VK_FALSE
+	};
+
+	VkSampler Sampler;
+	if (vkCreateSampler(Device, &samplerInfo, VK_NULL_HANDLE, &Sampler) != VK_SUCCESS)
+    ExitWithError("Failed to create sampler", 1);
+	return Sampler;
+}
+
+VkRenderPass CreateRenderPass(const VkFormat& SwapChainFormat, const VkDevice& Device) {
+  VkAttachmentDescription colourAttachment{};
+  colourAttachment.format = SwapChainFormat;
+  colourAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+  colourAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  colourAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  colourAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  colourAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  colourAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  colourAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+  VkAttachmentReference colourAttachmentRef{};
+  colourAttachmentRef.attachment = 0;
+  colourAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+  VkSubpassDescription subpass{};
+  subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  subpass.colorAttachmentCount = 1;
+  subpass.pColorAttachments = &colourAttachmentRef;
+
+  VkSubpassDependency dependency{};
+  dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+  dependency.dstSubpass = 0;
+  dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.srcAccessMask = 0;
+  dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+  VkRenderPassCreateInfo renderPassInfo{};
+  renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+  renderPassInfo.attachmentCount = 1;
+  renderPassInfo.pAttachments = &colourAttachment;
+  renderPassInfo.subpassCount = 1;
+  renderPassInfo.pSubpasses = &subpass;
+  renderPassInfo.dependencyCount = 1;
+  renderPassInfo.pDependencies = &dependency;
+
+  VkRenderPass renderPass;
+
+  if (vkCreateRenderPass(Device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
+    ExitWithError("Failed to create render pass!", -1);
+  }
+
+  return renderPass;
+}
+
+VkShaderModule CreateShaderModule(const char* pCodeData, size_t CodeSize, const VkDevice& Device) {
+  VkShaderModuleCreateInfo createInfo{};
+  createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+  createInfo.codeSize = CodeSize;
+  createInfo.pCode = reinterpret_cast<const uint32_t*>(pCodeData);
+
+  VkShaderModule shaderModule;
+  if (vkCreateShaderModule(Device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
+    ExitWithError("Failed to create shader module", -1);
+  }
+
+  return shaderModule;
+}
+
