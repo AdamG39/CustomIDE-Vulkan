@@ -157,27 +157,6 @@ private:
 
   VulkanBuffer CreateBuffer(VkDeviceSize Size, VkBufferUsageFlags Usage, VkMemoryPropertyFlags Properties);
 
-  void CreateTexture(const char* pFilename, VulkanTexture& Texture);
-
-  void CreateTextureImageFromData(VulkanTexture& Texture, const void* pPixels,
-                                  uint32_t ImageWidth, uint32_t ImageHeight, VkFormat TextureFormat);
-
-  void CreateTextureImage(VulkanTexture& Texture, uint32_t ImageWidth, uint32_t ImageHeight, VkFormat TextureFormat,
-                          VkImageUsageFlags UsageFlags, VkMemoryPropertyFlags PropertyFlags);
-
-  void UpdateTextureImage(VulkanTexture& Texture, uint32_t ImageWidth, uint32_t ImageHeight,
-                          VkFormat TextureFormat, const void* pPixels);
-
-  int GetBytesPerTextureFormat(VkFormat TextureFormat);
-
-  uint32_t GetMemoryTypeIndex(uint32_t MemoryTypeBitsMask, VkMemoryPropertyFlags RequiredMemoryPropertyFlags);
-
-  void TransitionImageLayout(VkImage& Image, VkFormat Format, VkImageLayout OldLayout, VkImageLayout NewLayout);
-
-  void ImageMemoryBarrier(VkCommandBuffer CmdBuf, VkImage Image, VkFormat Format,
-                       VkImageLayout OldLayout, VkImageLayout NewLayout);
-
-  void CopyBufferToImage(VkImage Destination, VkBuffer Source, uint32_t ImageWidth, uint32_t ImageHeight);
 
   void BeginCommandBuffer(VkCommandBuffer CommandBuffer, VkCommandBufferUsageFlags UsageFlags);
 
