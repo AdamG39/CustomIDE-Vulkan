@@ -33,6 +33,7 @@ const uint8_t ICO_MAGIC_NUMBERS[] = { 0x00, 0x00, 0x01, 0x00 };
 #define ICO_COMPRESSION_MEDTHOD_BI_CMYKRLE8         12
 #define ICO_COMPRESSION_MEDTHOD_BI_CMYKRLE4         13
 
+typedef uint32_t Pixel;
 
 int16_t s16(int8_t byte0, int8_t byte1);
 int32_t s32(int8_t byte0, int8_t byte1, int8_t byte2, int8_t byte3);
@@ -55,6 +56,14 @@ struct ICONDIRENTRY {
   uint16_t bitsPerPixel;
   uint32_t imageSize;
   uint32_t dataOffset;
+};
+
+struct BITMAPFILEHEADER {
+  uint16_t magicNumbers = 0x424D;
+  uint32_t size;
+  uint16_t reserved0;
+  uint16_t reserved1;
+  uint32_t offset;
 };
 
 struct BITMAPINFOHEADER {

@@ -141,8 +141,6 @@ public:
     auto verts = TriVectorToSortedVertexVector(tris);
 
     // Pass the list of vertices to the vertex buffer converting if nessessary
-    /*m_renderer->FillVertexBuffer(
-        ConvertVertexVector<int, float, float, float>(TriVectorToSortedVertexVector(tris)));*/
 
     m_renderer->FillVertexBuffer(TriVectorToSortedVertexVector(tris));
   }

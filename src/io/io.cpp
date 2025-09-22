@@ -31,6 +31,8 @@ bool CompareByteValues(const std::vector<char>& Obj1, const uint8_t* Obj2, size_
   return true;
 }
 
+// TODO: Change to return an array of shared pointers (pointer to pointers)
+// and have return type be the amount of images returned
 bool ReadImageFile(const std::string &filename, std::vector<std::shared_ptr<Image>>& OutImages) {
   std::vector<char> buffer = ReadBinaryFile(filename);
 
@@ -41,12 +43,37 @@ bool ReadImageFile(const std::string &filename, std::vector<std::shared_ptr<Imag
     return true;
   }
 
+  if (CompareByteValues(buffer, BMP_MAGIC_NUMBERS, BMP_MAGIC_NUMBER_BYTE_AMOUNT)) {
+    BITMAPFILEHEADER header = {
+      .size = u32LE(buffer[2], buffer[3], buffer[4], buffer[5]),
+      .reserved0 = u16LE(buffer[6], buffer[7]),
+      .reserved1 = u16LE(buffer[8], buffer[9]),
+      .offset = u32LE(buffer[10], buffer[11], buffer[12], buffer[13])
+    };
+    BITMAPINFOHEADER info = {
+      .headerSize = u32LE(buffer[14], buffer[15], buffer[16], buffer[17]),
+      .width = s32LE(buffer[18], buffer[19], buffer[20], buffer[21]),
+      .height = s32LE(buffer[22], buffer[23], buffer[24], buffer[25]),
+      .colourPlanes = u16LE(buffer[26], buffer[27]),
+      .bitsPerPixel = u16LE(buffer[28], buffer[29]),
+      .compressionMethod = u32LE(buffer[30], buffer[31], buffer[32], buffer[33]),
+      .imageSize = u32LE(buffer[34], buffer[35], buffer[36], buffer[37]),
+      .hResolution = s32LE(buffer[38], buffer[39], buffer[40], buffer[41]),
+      .vResolution = s32LE(buffer[42], buffer[43], buffer[44], buffer[45]),
+      .colours = u32LE(buffer[46], buffer[47], buffer[48], buffer[49]),
+      .importantColours = u32LE(buffer[50], buffer[51], buffer[52], buffer[53])
+    };
+    OutImages.push_back(ParseBMPData(buffer, info, header.offset));
+    return true;
+  }
+
   if (CompareByteValues(buffer, ICO_MAGIC_NUMBERS, ICO_MAGIC_NUMBER_BYTE_AMOUNT)) {
     ParseICOData(buffer, OutImages);
     return true;
   }
 
-  return false; // Only here to suit the compiler
+  printf("[Warning]: File format not supported");
+  return false;
 }
 
 std::shared_ptr<Image> ParsePNGData(const std::vector<char>& Data, uint32_t Offset) {
@@ -126,27 +153,28 @@ void ParseICOData(const std::vector<char>& Data, std::vector<std::shared_ptr<Ima
         //OutImages.push_back(ParsePNGData(Data, entry.dataOffset));
       } else ExitWithError("Not a valid image format", -10);
     } else {
-      BITMAPINFOHEADER bitmapInfoHeader{};
-      bitmapInfoHeader.headerSize = s32LE(Data[entry.dataOffset], Data[entry.dataOffset + 1],
-                                          Data[entry.dataOffset + 2], Data[entry.dataOffset + 3]);
-      bitmapInfoHeader.width = s32LE(Data[entry.dataOffset + 4], Data[entry.dataOffset + 5],
-                                     Data[entry.dataOffset + 6], Data[entry.dataOffset + 7]);
-      bitmapInfoHeader.height = s32LE(Data[entry.dataOffset + 8], Data[entry.dataOffset + 9],
-                                      Data[entry.dataOffset + 10], Data[entry.dataOffset + 11]);
-      bitmapInfoHeader.colourPlanes = u16LE(Data[entry.dataOffset + 12], Data[entry.dataOffset + 13]);
-      bitmapInfoHeader.bitsPerPixel = u16LE(Data[entry.dataOffset + 14], Data[entry.dataOffset + 15]);
-      bitmapInfoHeader.compressionMethod = u32LE(Data[entry.dataOffset + 16], Data[entry.dataOffset + 17],
-                                                 Data[entry.dataOffset + 18], Data[entry.dataOffset + 19]);
-      bitmapInfoHeader.imageSize = u32LE(Data[entry.dataOffset + 20], Data[entry.dataOffset + 21],
-                                         Data[entry.dataOffset + 22], Data[entry.dataOffset + 23]);
-      bitmapInfoHeader.hResolution = u32LE(Data[entry.dataOffset + 24], Data[entry.dataOffset + 25],
-                                           Data[entry.dataOffset + 26], Data[entry.dataOffset + 27]);
-      bitmapInfoHeader.vResolution = u32LE(Data[entry.dataOffset + 28], Data[entry.dataOffset + 29],
-                                           Data[entry.dataOffset + 30], Data[entry.dataOffset + 31]);
-      bitmapInfoHeader.colours = u32LE(Data[entry.dataOffset + 32], Data[entry.dataOffset + 33],
-                                       Data[entry.dataOffset + 34], Data[entry.dataOffset + 35]);
-      bitmapInfoHeader.importantColours = u32LE(Data[entry.dataOffset + 36], Data[entry.dataOffset + 37],
-                                                Data[entry.dataOffset + 38], Data[entry.dataOffset + 39]);
+      BITMAPINFOHEADER bitmapInfoHeader{
+        .headerSize = u32LE(Data[entry.dataOffset], Data[entry.dataOffset + 1],
+                            Data[entry.dataOffset + 2], Data[entry.dataOffset + 3]),
+        .width = s32LE(Data[entry.dataOffset + 4], Data[entry.dataOffset + 5],
+                       Data[entry.dataOffset + 6], Data[entry.dataOffset + 7]),
+        .height = abs(s32LE(Data[entry.dataOffset + 8], Data[entry.dataOffset + 9],
+                      Data[entry.dataOffset + 10], Data[entry.dataOffset + 11]) / 2),
+        .colourPlanes = u16LE(Data[entry.dataOffset + 12], Data[entry.dataOffset + 13]),
+        .bitsPerPixel = u16LE(Data[entry.dataOffset + 14], Data[entry.dataOffset + 15]),
+        .compressionMethod = u32LE(Data[entry.dataOffset + 16], Data[entry.dataOffset + 17],
+                                   Data[entry.dataOffset + 18], Data[entry.dataOffset + 19]),
+        .imageSize = u32LE(Data[entry.dataOffset + 20], Data[entry.dataOffset + 21],
+                           Data[entry.dataOffset + 22], Data[entry.dataOffset + 23]),
+        .hResolution = s32LE(Data[entry.dataOffset + 24], Data[entry.dataOffset + 25],
+                             Data[entry.dataOffset + 26], Data[entry.dataOffset + 27]),
+        .vResolution = s32LE(Data[entry.dataOffset + 28], Data[entry.dataOffset + 29],
+                             Data[entry.dataOffset + 30], Data[entry.dataOffset + 31]),
+        .colours = u32LE(Data[entry.dataOffset + 32], Data[entry.dataOffset + 33],
+                         Data[entry.dataOffset + 34], Data[entry.dataOffset + 35]),
+        .importantColours = u32LE(Data[entry.dataOffset + 36], Data[entry.dataOffset + 37],
+                                  Data[entry.dataOffset + 38], Data[entry.dataOffset + 39])
+      };
 
       OutImages.push_back(ParseBMPData(Data, bitmapInfoHeader, entry.dataOffset + bitmapInfoHeader.headerSize));
     }
@@ -154,38 +182,47 @@ void ParseICOData(const std::vector<char>& Data, std::vector<std::shared_ptr<Ima
 }
 
 std::shared_ptr<Image> ParseBMPData(const std::vector<char>& Data, BITMAPINFOHEADER BitMapInfo, uint32_t Offset) {
-  uint32_t rowSize = ceil((BitMapInfo.bitsPerPixel * BitMapInfo.width) / 32) * 4;
-  uint32_t pixelArraySize = rowSize * (abs(BitMapInfo.height) / 2);
-  //uint32_t bitMaskSize = BitMapInfo.imageSize - pixelArraySize;
+  uint32_t rowSize = ceil((BitMapInfo.bitsPerPixel * BitMapInfo.width) / 32.f) * 4;
+  uint32_t pixelArraySize = rowSize * BitMapInfo.height;
   std::shared_ptr<Image> returnPtr = std::make_shared<Image>();
   returnPtr->width = BitMapInfo.width;
-  returnPtr->height = BitMapInfo.height / 2;
-  returnPtr->pixels = (uint8_t*)calloc(pixelArraySize, sizeof(uint8_t));
+  returnPtr->height = BitMapInfo.height;
 
-  /*
-  // FIXME: Currently returns images y-flipped
-  // TODO: Convert from left->right bottom->top to left->right top->bottom
+  uint8_t* pixelArray = new uint8_t[BitMapInfo.width * BitMapInfo.height * sizeof(Pixel)];
+
+  returnPtr->pixels = pixelArray;
+
   if (BitMapInfo.height > 0) {
-    printf("%u %u\n", );
-    for (uint32_t h = ((uint32_t)BitMapInfo.height / 2u) - 1u; h >= 0u; h--) {
-      for (uint32_t w = 0; w < rowSize; w += sizeof(uint32_t)) {
-        uint32_t tempOffset = Offset + w + (h * ((uint32_t)BitMapInfo.height / 2u) * sizeof(uint32_t));
-        printf("w: %u, h: %u, offset: %u\n", w, h, tempOffset - Offset);
-        returnPtr->pixels[w] = Data[tempOffset + 2];
-        returnPtr->pixels[w + 1] = Data[tempOffset + 1];
-        returnPtr->pixels[w + 2] = Data[tempOffset];
-        returnPtr->pixels[w + 3] = Data[tempOffset + 3];
+    for (uint32_t row = (uint32_t)(BitMapInfo.height - 1); row > 0; row--) {
+      uint32_t rowOffset = Offset + (rowSize * row);
+      for (uint32_t pixel = 0; pixel < rowSize; pixel += (BitMapInfo.bitsPerPixel / 8)) {
+        uint32_t tempOffset = pixel + rowOffset;
+        if (pixel >= (BitMapInfo.bitsPerPixel / 8) * BitMapInfo.width) break;
+        pixelArray[0] = Data[tempOffset + 2];
+        pixelArray[1] = Data[tempOffset + 1];
+        pixelArray[2] = Data[tempOffset];
+        if (BitMapInfo.bitsPerPixel == 32)
+          pixelArray[3] = Data[tempOffset + 3];
+        else
+          pixelArray[3] = 0xFF;
+
+        pixelArray += 4;
       }
     }
-  } else {*/
-    for (uint32_t i = 0; i < pixelArraySize; i += sizeof(uint32_t)) {
+  } else {
+    for (uint32_t i = 0; i < pixelArraySize; i += (BitMapInfo.bitsPerPixel / 8)) {
       uint32_t tempOffset = Offset + i;
-      returnPtr->pixels[i] = Data[tempOffset + 2];
-      returnPtr->pixels[i + 1] = Data[tempOffset + 1];
-      returnPtr->pixels[i + 2] = Data[tempOffset];
-      returnPtr->pixels[i + 3] = Data[tempOffset + 3];
+      pixelArray[0] = Data[tempOffset + 2];
+      pixelArray[1] = Data[tempOffset + 1];
+      pixelArray[2] = Data[tempOffset];
+      if (BitMapInfo.bitsPerPixel == 32)
+        pixelArray[3] = Data[tempOffset + 3];
+      else
+        pixelArray[3] = 0xFF;
+
+      pixelArray += 4;
     }
-  //}
+  }
 
   return returnPtr;
 }
