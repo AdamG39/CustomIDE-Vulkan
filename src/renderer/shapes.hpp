@@ -86,7 +86,7 @@ template <typename T, typename C>
 struct Vertex {
   Vector3<T> position;
   Colour<C> colour;
-  Vector2<T> textureCoords;
+  Vector2<T> textureCoords = {-1, -1};
 
   Vertex() : position(), colour(), textureCoords() {}
   
@@ -99,6 +99,10 @@ struct Vertex {
   template <typename Ut, typename Uc, typename = std::enable_if_t<!std::is_same_v<T, Ut> || !std::is_same_v<C, Uc>>>
   Vertex(const Vertex<Ut, Uc>& That)
   : position(That.position), colour(That.colour) {}
+
+  void SetTextureCoords(const Vector2<T>& TextureCoords) {
+    textureCoords = TextureCoords;
+  }
 };
 
 template <typename T, typename C>

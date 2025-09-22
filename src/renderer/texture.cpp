@@ -42,7 +42,6 @@ void CreateTexture(const char* pFilename, VulkanTexture& Texture,
   Texture.sampler = CreateTextureSampler(Device, minFilter, maxFilter, addressMode);
 }
 
-
 void CreateTextureImageFromData(VulkanTexture& Texture, const void* pPixels, uint32_t ImageWidth,
                                 uint32_t ImageHeight, const VkFormat& TextureFormat,
                                 const VkDevice& Device, const VkPhysicalDevice& PhysicalDevice,
@@ -50,7 +49,9 @@ void CreateTextureImageFromData(VulkanTexture& Texture, const void* pPixels, uin
                                 const VkQueue& GraphicsQueue) {
   VkImageUsageFlagBits usage = (VkImageUsageFlagBits)(VK_IMAGE_USAGE_TRANSFER_DST_BIT |
                                                       VK_IMAGE_USAGE_SAMPLED_BIT);
+
   VkMemoryPropertyFlagBits propertyFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+
   CreateTextureImage(Texture, ImageWidth, ImageHeight, TextureFormat, usage, propertyFlags, Device, PhysicalDevice);
 
   UpdateTextureImage(Texture, ImageWidth, ImageHeight, TextureFormat, pPixels,

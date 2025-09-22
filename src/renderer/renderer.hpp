@@ -6,7 +6,6 @@
 #include "swapChain.hpp"
 #include "shapes.hpp"
 #include "texture.hpp"
-#include "buffer.hpp"
 #include <string>
 #include <vector>
 
@@ -17,8 +16,8 @@ public:
   VulkanRenderer(std::string AppName, Colour<float> ClearColour)
   : m_appName(AppName)
   {
-    Start();
     SetClearColour(ClearColour);
+    Start();
   }
 
   ~VulkanRenderer() {

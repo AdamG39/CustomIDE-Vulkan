@@ -6,6 +6,8 @@
 #include "../io/io.hpp"
 #include <set>
 
+#define APP_VERSION VK_MAKE_VERSION(0, 1, 0)
+
 void VulkanRenderer::Start() {
   InitGLFW();
   InitVulkan();
@@ -39,9 +41,9 @@ void VulkanRenderer::InitVulkan() {
   PickPhysicalDevice();
   CreateLogicalDevice();
   InitSwapChain();
-  CreateGraphicsPipeline();
   CreateCommandPool();
   CreateCommandBuffers();
+  CreateGraphicsPipeline();
   CreateSyncObjects();
 }
 
@@ -53,7 +55,7 @@ void VulkanRenderer::CreateInstance() {
   VkApplicationInfo appInfo{
     .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
     .pApplicationName = "CustomIDE",
-    .applicationVersion = VK_MAKE_VERSION(0, 1, 0),
+    .applicationVersion = APP_VERSION,
     .pEngineName = "No Engine",
     .engineVersion = VK_MAKE_VERSION(1, 0, 0),
     .apiVersion = VK_API_VERSION_1_0
@@ -71,9 +73,7 @@ void VulkanRenderer::CreateInstance() {
   }
 
   uint32_t glfwExtensionCount = 0;
-  const char** glfwExtenstions;
-
-  glfwExtenstions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+  const char** glfwExtenstions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
   createInfo.enabledExtensionCount = glfwExtensionCount;
   createInfo.ppEnabledExtensionNames = glfwExtenstions;
@@ -162,7 +162,6 @@ void VulkanRenderer::CreateLogicalDevice() {
 }
 
 void VulkanRenderer::InitSwapChain() {
-  int test = 32;
   m_swapchain = new SwapChain(m_window, m_device, m_physicalDevice, m_surface);
 
   m_swapchain->CreateSwapChain();
@@ -188,12 +187,21 @@ void VulkanRenderer::CreateDescriptorSets(VulkanTexture* pTexture, int NumImages
 }
 
 void VulkanRenderer::CreateDescriptorPool(int NumImages) {
+  std::vector<VkDescriptorPoolSize> poolSizes;
+
+  VkDescriptorPoolSize poolSize{
+    .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+    .descriptorCount = (uint32_t)NumImages
+  };
+
+  poolSizes.push_back(poolSize);
+
   VkDescriptorPoolCreateInfo poolInfo = {
     .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
     .flags = 0,
     .maxSets = (uint32_t)NumImages,
-    .poolSizeCount = 0,
-    .pPoolSizes = nullptr
+    .poolSizeCount = (uint32_t)poolSizes.size(),
+    .pPoolSizes = poolSizes.data()
   };
 
   if (vkCreateDescriptorPool(m_device, &poolInfo, nullptr, &m_descriptorPool) != VK_SUCCESS)
@@ -307,7 +315,7 @@ void VulkanRenderer::CreateGraphicsPipeline() {
   bindingDescription.stride = sizeof(VertexF);
   bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-  std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+  std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
 
   attributeDescriptions[0].binding = 0;
   attributeDescriptions[0].location = 0;
@@ -318,6 +326,11 @@ void VulkanRenderer::CreateGraphicsPipeline() {
   attributeDescriptions[1].location = 1;
   attributeDescriptions[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
   attributeDescriptions[1].offset = offsetof(VertexF, colour);
+
+  attributeDescriptions[2].binding = 0;
+  attributeDescriptions[2].location = 2;
+  attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
+  attributeDescriptions[2].offset = offsetof(VertexF, textureCoords);
 
   VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
   vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -384,8 +397,8 @@ void VulkanRenderer::CreateGraphicsPipeline() {
 
   VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-  pipelineLayoutInfo.setLayoutCount = 0; // Optional
-  pipelineLayoutInfo.pSetLayouts = nullptr; // Optional
+  pipelineLayoutInfo.setLayoutCount = 1;
+  pipelineLayoutInfo.pSetLayouts = &m_descriptorSetLayout;
   pipelineLayoutInfo.pushConstantRangeCount = 1;
   pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
 
@@ -539,36 +552,42 @@ void VulkanRenderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
 
   vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-  vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipeline);
+    // FIXME? Instead of using colour instead of texture when the texture coords are negative
+    // remake? pipeline and submit draws for each different "material" (flat colour or texture)
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipeline);
 
-  VkViewport viewport{};
-  viewport.x = 0.0f;
-  viewport.y = 0.0f;
-  viewport.width = static_cast<float>(extent.width);
-  viewport.height = static_cast<float>(extent.height);
-  viewport.minDepth = 0.0f;
-  viewport.maxDepth = 1.0f;
-  vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+    VkViewport viewport{
+      .x = 0.0f,
+      .y = 0.0f,
+      .width = static_cast<float>(extent.width),
+      .height = static_cast<float>(extent.height),
+      .minDepth = 0.0f,
+      .maxDepth = 1.0f
+    };
+    vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
-  VkRect2D scissor{};
-  scissor.offset = {0, 0};
-  scissor.extent = extent;
-  vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+    VkRect2D scissor{
+      .offset = {0, 0},
+      .extent = extent
+    };
+    vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-  VkBuffer vertexBuffers[] = { m_vertexBuffer };
-  VkDeviceSize offsets[] = { 0 };
+    VkBuffer vertexBuffers[] = { m_vertexBuffer };
+    VkDeviceSize offsets[] = { 0 };
 
-  int framebufferWidth, framebufferHeight;
-  glfwGetFramebufferSize(m_window, &framebufferWidth, &framebufferHeight);
+    int framebufferWidth, framebufferHeight;
+    glfwGetFramebufferSize(m_window, &framebufferWidth, &framebufferHeight);
 
-  PushConstants pc{};
-  pc.width = static_cast<float>(framebufferWidth);
-  pc.height = static_cast<float>(framebufferHeight);
+    PushConstants pc{};
+    pc.width = static_cast<float>(framebufferWidth);
+    pc.height = static_cast<float>(framebufferHeight);
 
-  vkCmdPushConstants(commandBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants), &pc);
+    vkCmdPushConstants(commandBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants), &pc);
 
-  vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-  vkCmdDraw(commandBuffer, static_cast<uint32_t>(m_vertexArray.size()), 1, 0, 0);
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout,
+                            0, 1, &m_descriptorSets[m_currentFrame], 0, nullptr);
+    vkCmdDraw(commandBuffer, static_cast<uint32_t>(m_vertexArray.size()), 1, 0, 0);
 
   vkCmdEndRenderPass(commandBuffer);
 
@@ -669,6 +688,14 @@ void VulkanRenderer::FillVertexBuffer(std::vector<Vertex<float, float>> Vertices
   // TODO:
   // Should actually take an array of triangles, sort via Z index 
   // then split into a single array vertices
+  
+  // FIXME: Set the texture coords before this stage
+  Vertices[0].SetTextureCoords({0.f, 0.f});
+  Vertices[1].SetTextureCoords({1.f, 0.f});
+  Vertices[2].SetTextureCoords({0.f, 1.f});
+  Vertices[3].SetTextureCoords({1.f, 0.f});
+  Vertices[4].SetTextureCoords({0.f, 1.f});
+  Vertices[5].SetTextureCoords({1.f, 1.f});
 
   m_vertexArray = Vertices;
 }
@@ -682,8 +709,11 @@ void VulkanRenderer::Cleanup() {
   vkDestroyCommandPool(m_device, m_commandPool, nullptr);
   delete m_swapchain;
   vkDestroyPipeline(m_device, m_graphicsPipeline, nullptr);
+  m_texture.Destroy(m_device);
   vkDestroyPipelineLayout(m_device, m_pipelineLayout, nullptr);
   vkDestroyRenderPass(m_device, m_renderPass, nullptr);
+  vkDestroyDescriptorSetLayout(m_device, m_descriptorSetLayout, nullptr);
+  vkDestroyDescriptorPool(m_device, m_descriptorPool, nullptr);
   vkDestroyBuffer(m_device, m_vertexBuffer, nullptr);
   vkFreeMemory(m_device, m_vertexBufferMemory, nullptr);
   vkDestroyDevice(m_device, nullptr);
