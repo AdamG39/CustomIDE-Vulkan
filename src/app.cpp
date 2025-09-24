@@ -6,7 +6,7 @@
 /*\ ---- TODO: ----
  *  [X] Have a basic vulkan implementation to draw a flat colour for the window
  *  [X] Draw a rectangle to represent new title bar
- *  [-] Render quads for custom buttons with textures
+ *  [X] Render quads for custom buttons with textures
  *  [X] Ensure new title bar doesnt interfere with the rest of the windows ui
  *  [X] Implement window dragging
  *  [X] Implement window resizing
