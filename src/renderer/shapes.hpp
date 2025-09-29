@@ -131,8 +131,6 @@ private:
   Colour<C> m_colour;
   int m_zIndex;
 
-  std::array<Vector2<T>, 4> m_vertexTextureCoords = {Vector2(-1.f, -1.f), Vector2(-1.f, -1.f),
-                                                     Vector2(-1.f, -1.f), Vector2(-1.f, -1.f)};
   std::array<Vertex<T, C>, 4> m_vertices;
 
 public:
@@ -156,8 +154,10 @@ public:
                 Vertex<T, C>(Vector2<T>(Position.x - (Size.x / 2), Position.y + (Size.y / 2)), RectColour),
                 Vertex<T, C>(Vector2<T>(Position.x + (Size.x / 2), Position.y + (Size.y / 2)), RectColour) } {}
 
-  void SetTextureCoords(const std::array<Vector2<T>, 4>& TextureCoords) const {
-    m_vertexTextureCoords = TextureCoords;
+  void SetTextureCoords(const std::array<Vector2<T>, 4>& TextureCoords) {
+    for (size_t i = 0; i < TextureCoords.size(); i++) {
+      m_vertices[i].SetTextureCoords(TextureCoords[i]);
+    }
   }
 
   std::array<Vertex<T, C>, 6> GetVertices() const {

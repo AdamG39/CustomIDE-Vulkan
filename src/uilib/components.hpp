@@ -145,7 +145,7 @@ public:
   static int TypeValue() { return TypeStaticColour; }
   int GetType() override { return TypeValue(); }
 
-  StaticColour() : m_colour(Colour<float>()) {}
+  StaticColour() : m_colour() {}
   StaticColour(const Colour<float>& Colour) : m_colour(Colour) {}
 
   void SetColour(const Colour<float>& Colour) {
@@ -158,9 +158,21 @@ public:
 };
 
 class Texture : public IComponent {
+private:
+  std::array<Vector2<float>, 4> m_textureCoords = {Vector2(0.f, 0.f), Vector2(1.f, 0.f),
+                                                   Vector2(0.f, 1.f), Vector2(1.f, 1.f)};
+
 public:
   static int TypeValue() { return TypeTexture; }
   int GetType() override { return TypeValue(); }
+
+  Texture() = default;
+  Texture(const std::array<Vector2<float>, 4> TextureCoords)
+  : m_textureCoords(std::move(TextureCoords)) {}
+
+  const std::array<Vector2<float>, 4>& GetTextureCoords() const {
+    return m_textureCoords;
+  }
 };
 
 /*

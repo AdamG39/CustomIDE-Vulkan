@@ -33,9 +33,8 @@ void EntityManager::RenderTree() {
     if (staticColour != nullptr) {
       geometries.emplace_back(transform->GetPixelSize(), transform->GetPixelPosition(), staticColour->GetColour());
     } else if (texture != nullptr) {
-      ExitWithError("Unimplemented", -99);
-      // geometries.emplace_back(transform.GetPixelSize(), transform.GetPixelPosition(), COLOUR_CLEAR);
-      // geometries.back().SetTextureCoords();
+      geometries.emplace_back(transform->GetPixelSize(), transform->GetPixelPosition(), COLOUR_CLEAR);
+      geometries.back().SetTextureCoords(texture->GetTextureCoords());
     }
     // Dont do anything if either condition isnt met
   }

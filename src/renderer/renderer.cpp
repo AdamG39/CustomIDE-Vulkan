@@ -689,15 +689,7 @@ void VulkanRenderer::FillVertexBuffer(std::vector<Vertex<float, float>> Vertices
   // Should actually take an array of triangles, sort via Z index 
   // then split into a single array vertices
   
-  // FIXME: Set the texture coords before this stage
-  Vertices[0].SetTextureCoords({0.f, 0.f});
-  Vertices[1].SetTextureCoords({1.f, 0.f});
-  Vertices[2].SetTextureCoords({0.f, 1.f});
-  Vertices[3].SetTextureCoords({1.f, 0.f});
-  Vertices[4].SetTextureCoords({0.f, 1.f});
-  Vertices[5].SetTextureCoords({1.f, 1.f});
-
-  m_vertexArray = Vertices;
+  m_vertexArray = std::move(Vertices);
 }
 
 void VulkanRenderer::Cleanup() {
