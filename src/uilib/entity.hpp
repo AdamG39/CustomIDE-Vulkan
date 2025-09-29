@@ -7,7 +7,7 @@
 
 class Entity {
 private:
-  std::vector<std::unique_ptr<IComponent>> m_components;
+  std::vector<std::shared_ptr<IComponent>> m_components;
 
 public:
   Entity() {
@@ -22,7 +22,7 @@ public:
 
   template <class ComponentType, typename... Args>
   void AddComponent(Args&&... Parameters) {
-    m_components.emplace_back(std::make_unique<ComponentType>(std::forward<Args>(Parameters)...));
+    m_components.push_back(std::make_shared<ComponentType>(std::forward<Args>(Parameters)...));
   }
 
   template <class ComponentType>
@@ -32,7 +32,7 @@ public:
     bool success = false;
     auto index = m_components.begin();
     for (size_t i = 0; i < m_components.size(); i++) {
-      if (m_components[i]->GetType() == ComponentType::GetType()) {
+      if (m_components[i]->GetType() == ComponentType::TypeValue()) {
         success = true;
         index += i;
       }
@@ -44,14 +44,14 @@ public:
   }
 
   template <class ComponentType>
-  ComponentType& GetComponent() {
+  ComponentType* GetComponent() {
     for (auto&& component : m_components) {
-      if (component->GetType() == ComponentType::GetType()) {
-        return *static_cast<ComponentType*>(component.get());
+      if (component->GetType() == ComponentType::TypeValue()) {
+        return static_cast<ComponentType*>(component.get());
       }
     }
 
-    return *std::unique_ptr<ComponentType>(nullptr);
+    return nullptr;
   }
 };
 

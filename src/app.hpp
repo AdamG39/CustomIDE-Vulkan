@@ -2,6 +2,7 @@
 #define CUSTOM_APP_H
 
 #include "uilib/ui.hpp"
+#include "uilib/ecs.hpp"
 #include "renderer/renderer.hpp"
 #include <memory>
 #include <map>
@@ -296,6 +297,7 @@ private:
 
   VulkanRenderer* m_renderer;
 
+  EntityManager* m_tree;
   UIManager<float, float>* m_root;
 
   std::map<std::string, GLFWcursor*> m_cursorObjects;

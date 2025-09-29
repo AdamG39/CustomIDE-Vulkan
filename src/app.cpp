@@ -46,6 +46,7 @@ void CustomIDEApplication::StartApplication() {
   framebufferHeight = m_windowHeight;
 
   m_root = new UIManager<float, float>();
+  m_tree = new EntityManager(*m_renderer);
   m_root->BindRenderer(*m_renderer);
   m_root->WindowFlags ^= WINDOW_FLAG_MAXIMISED;
 
@@ -64,6 +65,7 @@ void CustomIDEApplication::MainLoop() {
   while (!glfwWindowShouldClose(m_renderer->GetWindow())) {
     glfwWaitEventsTimeout(0.5f);
 
+    /*
     m_root->HandleEvents();
 
     m_root->RenderAll();
@@ -73,6 +75,9 @@ void CustomIDEApplication::MainLoop() {
     UpdateCursorState();
 
     HandleDragging();
+    */
+
+    m_tree->RenderTree();
 
     m_renderer->DrawFrame();
   }
@@ -227,7 +232,7 @@ void CustomIDEApplication::CreateUIElements() {
   m_root->AddElement(titleBar);
   m_root->AddElement(exitButton);
   m_root->AddElement(maximiseButton);
-  m_root->AddElement(minimiseButton);*/
+  m_root->AddElement(minimiseButton);
 
   Panel textureTest = Panel(Vector2<UISize<float>>({400.f}, {400.f}),
                             Vector2<UISize<float>>({0.f}, {0.f}),
@@ -239,7 +244,19 @@ void CustomIDEApplication::CreateUIElements() {
 
   m_root->AddElement(textureTest);
 
-  m_root->RecalculateUILayout(framebufferWidth, framebufferHeight);
+  m_root->RecalculateUILayout(framebufferWidth, framebufferHeight);*/
+
+  Entity& titleBar = m_tree->AddEntity(Vector2<UISize<float>>({1.0f, SizeMode::Proportional}, {40.0f}),
+                                       Vector2<UISize<float>>({0.0f}, {20.0f}));
+
+  titleBar.GetComponent<Transform>()->SetAnchor(UIAnchor(Vector2<UISize<float>>({0.0f}, {0.0f}), UIAnchorType::Top));
+
+  titleBar.AddComponent<StaticColour>(THEME_DARK_COLOUR_0);
+
+  Entity& test = m_tree->AddEntity(Vector2<UISize<float>>({800.f, 800.f}),
+                                   Vector2<UISize<float>>({0.f, 0.f}));
+
+  test.AddComponent<StaticColour>(THEME_DARK_COLOUR_0);
 }
 
 bool CursorAtHorizontalBorder(double xpos, ResizeSide* side) {
