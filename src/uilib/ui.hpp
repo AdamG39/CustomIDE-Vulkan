@@ -214,6 +214,7 @@ public:
   UIType GetType() const { return m_type; }
 };
 
+// TODO: Remove these unessessary classes in favour of the ECS /*
 template <typename T, typename C>
 class Panel : public UIElement<T, C> {
 private:
@@ -221,7 +222,8 @@ private:
   int m_zIndex;
 
 public:
-  Panel(Vector2<UISize<T>> Size, Vector2<UISize<T>> Position, Colour<C> Colour, UIElement<T, C>* Parent = nullptr, int zIndex = 0)
+  Panel(Vector2<UISize<T>> Size, Vector2<UISize<T>> Position, Colour<C> Colour,
+        UIElement<T, C>* Parent = nullptr, int zIndex = 0)
   : UIElement<T, C>(Size, Position, Parent), m_colour(Colour), m_zIndex(zIndex) {
     UIElement<T, C>::SetVisibility(true); UIElement<T, C>::m_type = UIType::Panel;
   }
@@ -308,7 +310,7 @@ public:
 
 private:
   Button<T, C> m_button;
-};
+}; //*/
 
 template <typename T, typename C>
 std::vector<Vertex<T, C>> TriVectorToSortedVertexVector(std::vector<Triangle<T, C>> Tris) {

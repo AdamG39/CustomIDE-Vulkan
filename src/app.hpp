@@ -2,6 +2,7 @@
 #define CUSTOM_APP_H
 
 #include "uilib/ui.hpp"
+#include "uilib/ecs.hpp"
 #include "renderer/renderer.hpp"
 #include <memory>
 #include <map>
@@ -141,8 +142,6 @@ public:
     auto verts = TriVectorToSortedVertexVector(tris);
 
     // Pass the list of vertices to the vertex buffer converting if nessessary
-    /*m_renderer->FillVertexBuffer(
-        ConvertVertexVector<int, float, float, float>(TriVectorToSortedVertexVector(tris)));*/
 
     m_renderer->FillVertexBuffer(TriVectorToSortedVertexVector(tris));
   }
@@ -298,6 +297,7 @@ private:
 
   VulkanRenderer* m_renderer;
 
+  EntityManager* m_tree;
   UIManager<float, float>* m_root;
 
   std::map<std::string, GLFWcursor*> m_cursorObjects;

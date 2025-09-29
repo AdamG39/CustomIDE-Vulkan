@@ -20,3 +20,61 @@ void VulkanBuffer::Destroy(VkDevice Device) {
   }
 }
 
+VulkanBuffer CreateBuffer(const VkDeviceSize& Size, const VkBufferUsageFlags& Usage,
+                          const VkMemoryPropertyFlags& Properties, const VkDevice& Device,
+                          const VkPhysicalDevice& PhysicalDevice) {
+  VkBufferCreateInfo bufferInfo = {
+    .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+    .size = Size,
+    .usage = Usage,
+    .sharingMode = VK_SHARING_MODE_EXCLUSIVE
+  };
+
+  VulkanBuffer buffer;
+
+  if (vkCreateBuffer(Device, &bufferInfo, nullptr, &buffer.buffer) != VK_SUCCESS)
+    ExitWithError("Failed to create buffer", -18);
+
+  VkMemoryRequirements memoryRequirements = { 0 };
+  vkGetBufferMemoryRequirements(Device, buffer.buffer, &memoryRequirements);
+
+  buffer.allocationSize = memoryRequirements.size;
+
+  uint32_t memoryTypeIndex = GetMemoryTypeIndex(memoryRequirements.memoryTypeBits, Properties, PhysicalDevice);
+
+  VkMemoryAllocateInfo memoryAllocateInfo = {
+    .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+    .pNext = nullptr,
+    .allocationSize = memoryRequirements.size,
+    .memoryTypeIndex = memoryTypeIndex
+  };
+
+  if (vkAllocateMemory(Device, &memoryAllocateInfo, nullptr, &buffer.memory) != VK_SUCCESS)
+    ExitWithError("Failed to allocate memory for image", -14);
+
+  if (vkBindBufferMemory(Device, buffer.buffer, buffer.memory, 0) != VK_SUCCESS)
+    ExitWithError("Failed to bind image memory", -15);
+
+  return buffer;
+}
+
+uint32_t GetMemoryTypeIndex(uint32_t MemoryTypeBitsMask, const VkMemoryPropertyFlags& RequiredMemoryPropertyFlags,
+                            const VkPhysicalDevice& PhysicalDevice) {
+  VkPhysicalDeviceMemoryProperties memoryProperties;
+  vkGetPhysicalDeviceMemoryProperties(PhysicalDevice, &memoryProperties);
+
+  for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++) {
+    VkMemoryType memoryType = memoryProperties.memoryTypes[i];
+    uint32_t currentBitmask = (1 << i);
+    bool isCurrentMemoryTypeSupported = (MemoryTypeBitsMask & currentBitmask);
+    bool hasRequiredMemoryProperties = 
+      ((memoryType.propertyFlags & RequiredMemoryPropertyFlags) == RequiredMemoryPropertyFlags);
+
+    if (isCurrentMemoryTypeSupported && hasRequiredMemoryProperties) return i;
+  }
+
+  ExitWithError("No valid memory type found", -13);
+  return -1;
+}
+
+

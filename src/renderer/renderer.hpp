@@ -3,42 +3,53 @@
 
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
-#include <string>
-#include <vector>
-#include <optional>
+#include "swapChain.hpp"
 #include "shapes.hpp"
 #include "texture.hpp"
-#include "buffer.hpp"
+#include <string>
+#include <vector>
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
-
-struct QueueFamilyIndicies {
-  std::optional<uint32_t> graphicsFamily;
-  std::optional<uint32_t> presentFamily;
-
-  bool IsComplete() {
-    return graphicsFamily.has_value() && presentFamily.has_value();
-  }
-};
-
-struct SwapChainSupportDetails {
-  VkSurfaceCapabilitiesKHR capabilities;
-  std::vector<VkSurfaceFormatKHR> formats;
-  std::vector<VkPresentModeKHR> presentModes;
-};
-
-struct PushConstants {
-  float width;
-  float height;
-};
 
 class VulkanRenderer {
 public:
   VulkanRenderer(std::string AppName, Colour<float> ClearColour)
   : m_appName(AppName)
   {
-    Start();
     SetClearColour(ClearColour);
+    Start();
+  }
+
+  VulkanRenderer& operator = (const VulkanRenderer& other) {
+    m_appName = other.m_appName;
+    m_window = other.m_window;
+    m_instance = other.m_instance;
+    m_surface = other.m_surface;
+    m_physicalDevice = other.m_physicalDevice;
+    m_device = other.m_device;
+    m_graphicsQueue = other.m_graphicsQueue;
+    m_presentQueue = other.m_presentQueue;
+    m_swapchain = other.m_swapchain;
+    m_texture = other.m_texture;
+    m_descriptorPool = other.m_descriptorPool;
+    m_descriptorSetLayout = other.m_descriptorSetLayout;
+    m_descriptorSets = other.m_descriptorSets;
+    m_renderPass = other.m_renderPass;
+    m_clearColour = other.m_clearColour;
+    m_pipelineLayout = other.m_pipelineLayout;
+    m_graphicsPipeline = other.m_graphicsPipeline;
+    m_commandPool = other.m_commandPool;
+    m_commandBuffers = other.m_commandBuffers;
+    m_vertexBufferCapacity = other.m_vertexBufferCapacity;
+    m_vertexArray = other.m_vertexArray;
+    m_vertexBufferMemory = other.m_vertexBufferMemory;
+    m_vertexBuffer = other.m_vertexBuffer;
+    m_imageAvailableSemaphores = other.m_imageAvailableSemaphores;
+    m_renderFinishedSemaphores = other.m_renderFinishedSemaphores;
+    m_inFlightFences = other.m_inFlightFences;
+    m_currentFrame = other.m_currentFrame;
+
+    return *this;
   }
 
   ~VulkanRenderer() {
@@ -90,12 +101,7 @@ private:
   VkQueue m_graphicsQueue;
   VkQueue m_presentQueue;
 
-  VkSwapchainKHR m_swapChain;
-  std::vector<VkImage> m_swapChainImages;
-  VkFormat m_swapChainImageFormat;
-  VkExtent2D m_swapChainExtent;
-  std::vector<VkImageView> m_swapChainImageViews;
-  std::vector<VkFramebuffer> m_swapChainFramebuffers;
+  SwapChain* m_swapchain = nullptr;
 
   VulkanTexture m_texture;
 
@@ -133,33 +139,11 @@ private:
 
   void CreateSurface();
 
-  bool CheckValidationLayerSupport();
-
-  bool IsDeviceSuitable(VkPhysicalDevice device);
-
-  bool CheckDeviceExtensionSupport(VkPhysicalDevice device);
-
-  QueueFamilyIndicies FindQueueFamilies(VkPhysicalDevice device);
-
-  SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device);
-
-  VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
-
-  VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
-
-  VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
-
   void PickPhysicalDevice();
 
   void CreateLogicalDevice();
 
-  void CreateSwapChain();
-
-  void CreateImageViews();
-
-  void CreateRenderPass();
-
-  VkShaderModule CreateShaderModule(const std::vector<char>& code);
+  void InitSwapChain();
 
   void CreateDescriptorSets(VulkanTexture* pTexture, int NumImages);
 
@@ -172,8 +156,6 @@ private:
   void UpdateDescriptorSets(VulkanTexture* pTexture, int NumImages);
 
   void CreateGraphicsPipeline();
-
-  void CreateFramebuffers();
 
   void CreateCommandPool();
 
@@ -190,53 +172,7 @@ private:
   void CreateSyncObjects();
 
   void Cleanup();
-
-  VulkanBuffer CreateBuffer(VkDeviceSize Size, VkBufferUsageFlags Usage, VkMemoryPropertyFlags Properties);
-
-  void CreateTexture(const char* pFilename, VulkanTexture& Texture);
-
-  void CreateTextureImageFromData(VulkanTexture& Texture, const void* pPixels,
-                                  uint32_t ImageWidth, uint32_t ImageHeight, VkFormat TextureFormat);
-
-  void CreateTextureImage(VulkanTexture& Texture, uint32_t ImageWidth, uint32_t ImageHeight, VkFormat TextureFormat,
-                          VkImageUsageFlags UsageFlags, VkMemoryPropertyFlags PropertyFlags);
-
-  void UpdateTextureImage(VulkanTexture& Texture, uint32_t ImageWidth, uint32_t ImageHeight,
-                          VkFormat TextureFormat, const void* pPixels);
-
-  int GetBytesPerTextureFormat(VkFormat TextureFormat);
-
-  uint32_t GetMemoryTypeIndex(uint32_t MemoryTypeBitsMask, VkMemoryPropertyFlags RequiredMemoryPropertyFlags);
-
-  void TransitionImageLayout(VkImage& Image, VkFormat Format, VkImageLayout OldLayout, VkImageLayout NewLayout);
-
-  void ImageMemoryBarrier(VkCommandBuffer CmdBuf, VkImage Image, VkFormat Format,
-                       VkImageLayout OldLayout, VkImageLayout NewLayout);
-
-  void CopyBufferToImage(VkImage Destination, VkBuffer Source, uint32_t ImageWidth, uint32_t ImageHeight);
-
-  void BeginCommandBuffer(VkCommandBuffer CommandBuffer, VkCommandBufferUsageFlags UsageFlags);
-
-  void SubmitCopyCommand();
 };
-
-VkImageView CreateImageView(VkDevice, VkImage Image, VkFormat Format,
-                            VkImageAspectFlags AspectFlags);
-
-VkSampler CreateTextureSampler(VkDevice Device, VkFilter MinFilter, VkFilter MaxFilter, 
-                               VkSamplerAddressMode AddressMode);
-
-void CloseWindowCallback(GLFWwindow* window);
-
-void MouseButtonCallback(GLFWwindow* Window, int Button, int Action, int Mods);
-
-void FramebufferResizeCallback(GLFWwindow* Window, int Width, int Height);
-
-void CursorPositionCallback(GLFWwindow* Window, double xpos, double ypos);
-
-void ToggleMaximiseCallback(GLFWwindow* Window);
-
-void MinimiseCallback(GLFWwindow* Window);
 
 #endif
 

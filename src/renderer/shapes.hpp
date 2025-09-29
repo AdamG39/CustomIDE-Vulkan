@@ -86,7 +86,7 @@ template <typename T, typename C>
 struct Vertex {
   Vector3<T> position;
   Colour<C> colour;
-  Vector2<T> textureCoords;
+  Vector2<T> textureCoords = {-1, -1};
 
   Vertex() : position(), colour(), textureCoords() {}
   
@@ -99,6 +99,10 @@ struct Vertex {
   template <typename Ut, typename Uc, typename = std::enable_if_t<!std::is_same_v<T, Ut> || !std::is_same_v<C, Uc>>>
   Vertex(const Vertex<Ut, Uc>& That)
   : position(That.position), colour(That.colour) {}
+
+  void SetTextureCoords(const Vector2<T>& TextureCoords) {
+    textureCoords = TextureCoords;
+  }
 };
 
 template <typename T, typename C>
@@ -127,6 +131,8 @@ private:
   Colour<C> m_colour;
   int m_zIndex;
 
+  std::array<Vector2<T>, 4> m_vertexTextureCoords = {Vector2(-1.f, -1.f), Vector2(-1.f, -1.f),
+                                                     Vector2(-1.f, -1.f), Vector2(-1.f, -1.f)};
   std::array<Vertex<T, C>, 4> m_vertices;
 
 public:
@@ -149,6 +155,10 @@ public:
                 Vertex<T, C>(Vector2<T>(Position.x + (Size.x / 2), Position.y - (Size.y / 2)), RectColour),
                 Vertex<T, C>(Vector2<T>(Position.x - (Size.x / 2), Position.y + (Size.y / 2)), RectColour),
                 Vertex<T, C>(Vector2<T>(Position.x + (Size.x / 2), Position.y + (Size.y / 2)), RectColour) } {}
+
+  void SetTextureCoords(const std::array<Vector2<T>, 4>& TextureCoords) const {
+    m_vertexTextureCoords = TextureCoords;
+  }
 
   std::array<Vertex<T, C>, 6> GetVertices() const {
     std::array<Vertex<T, C>, 6> vertices;
