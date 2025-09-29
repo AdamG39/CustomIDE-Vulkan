@@ -19,7 +19,7 @@ vec4 srgbToLinear(vec4 c) {
 
 void main() {
   if (fragTexCoord.x < 0 || fragTexCoord.y < 0) {
-    outColour = fragColour;
+    outColour = srgbToLinear(fragColour);
   } else {
     outColour = srgbToLinear(texture(texSampler, fragTexCoord));
   }
