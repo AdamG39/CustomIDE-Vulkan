@@ -1,7 +1,5 @@
 #include "vulkanCore.hpp"
 #include "../helpers/errors/errors.hpp"
-#include "../io/io.hpp"
-#include "texture.hpp"
 #include <set>
 #include <string>
 #include <algorithm>
