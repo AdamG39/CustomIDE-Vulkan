@@ -57,8 +57,8 @@ public:
     return m_parent;
   }
 
-  void SetParent(const Entity* Parent) {
-    m_parent = std::make_shared<Entity>(Parent);
+  void SetParent(Entity* Parent) {
+    m_parent = std::shared_ptr<Entity>(Parent);
   }
 
   void AddChild(const Entity& Child) {

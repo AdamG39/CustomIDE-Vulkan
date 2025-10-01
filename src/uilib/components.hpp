@@ -106,10 +106,9 @@ public:
 
   Vector2<UISize<float>> GetSize() const { return m_size; }
 
-  Vector2<float> GetPixelSize() const {
-    // if no parent
-    return CalculateEntitySize(float(framebufferWidth), float(framebufferHeight));
-    // if has parent change arguments to parents width and size
+  Vector2<float> GetPixelSize(float ParentWidth = (float)framebufferWidth,
+                              float ParentHeight = (float)framebufferHeight) const {
+    return CalculateEntitySize(ParentWidth, ParentHeight);
   }
 
   void SetPosition(const Vector2<UISize<float>>& Position) {
@@ -118,10 +117,9 @@ public:
 
   Vector2<UISize<float>> GetPosition() const { return m_position; }
 
-  Vector2<float> GetPixelPosition() const {
-    // if no parent
-    return CalculateEntityPosition((float)framebufferWidth, (float)framebufferHeight, m_anchor);
-    // if has parent change arguments to parents width and size
+  Vector2<float> GetPixelPosition(float ParentWidth = (float)framebufferWidth,
+                                  float ParentHeight = (float)framebufferHeight) const {
+    return CalculateEntityPosition(ParentWidth, ParentHeight, m_anchor);
   }
 
   void SetAnchor(const UIAnchorType& AnchorValue) {

@@ -1,3 +1,4 @@
+#include <stack>
 #include "ecs.hpp"
 
 std::vector<std::shared_ptr<Entity>>& EntityManager::GetEntityTree() {
@@ -20,21 +21,32 @@ void EntityManager::RemoveEntity(const size_t Index) {
 
 void EntityManager::RenderTree() {
   std::vector<Rect<float, float>> geometries;
-  // FIXME: Should gather all tree nodes and send them all to the renderer
-  for (size_t i = 0; i < m_entityTree.size(); i++) {
-    Transform* transform = m_entityTree[i]->GetComponent<Transform>();
-    StaticColour* staticColour = m_entityTree[i]->GetComponent<StaticColour>();
-    Texture* texture = m_entityTree[i]->GetComponent<Texture>();
-    // An entity requires a colour/texture component and a transform to be renderered
-    if (transform == nullptr) continue; // Just skip this entity since it cant be renderered
 
-    if (staticColour != nullptr) {
-      geometries.emplace_back(transform->GetPixelSize(), transform->GetPixelPosition(), staticColour->GetColour());
-    } else if (texture != nullptr) {
-      geometries.emplace_back(transform->GetPixelSize(), transform->GetPixelPosition(), COLOUR_CLEAR);
-      geometries.back().SetTextureCoords(texture->GetTextureCoords());
+  for (size_t i = 0; i < m_entityTree.size(); i++) {
+    std::stack<Entity*> entities;
+    entities.push(m_entityTree[i].get());
+
+    while (!entities.empty()) {
+      Entity* top = entities.top();
+      entities.pop();
+      for (auto entity : top->GetChildren()) {
+        entities.push(entity.get());
+      }
+
+      Transform* transform = top->GetComponent<Transform>();
+      StaticColour* staticColour = top->GetComponent<StaticColour>();
+      Texture* texture = top->GetComponent<Texture>();
+      // An entity requires a colour/texture component and a transform to be renderered
+      if (transform == nullptr) continue; // Just skip this entity since it cant be renderered
+
+      if (staticColour != nullptr) {
+        geometries.emplace_back(transform->GetPixelSize(), transform->GetPixelPosition(), staticColour->GetColour());
+      } else if (texture != nullptr) {
+        geometries.emplace_back(transform->GetPixelSize(), transform->GetPixelPosition(), COLOUR_CLEAR);
+        geometries.back().SetTextureCoords(texture->GetTextureCoords());
+      }
+      // Dont do anything if either condition isnt met
     }
-    // Dont do anything if either condition isnt met
   }
 
   std::vector<Triangle<float, float>> tris;
