@@ -8,15 +8,14 @@
 class Entity {
 private:
   std::vector<std::shared_ptr<IComponent>> m_components;
+  std::vector<std::shared_ptr<Entity>> m_children;
+  std::shared_ptr<Entity> m_parent;
 
 public:
-  Entity() {
+  Entity(Vector2<UISize<float>> Size = {}, Vector2<UISize<float>> Position = {}, Entity* Parent = nullptr)
+  : m_parent(Parent) {
     // By default every object will have a transform component
     // This can be manually removed if preferred
-    AddComponent<Transform>();
-  }
-
-  Entity(Vector2<UISize<float>> Size, Vector2<UISize<float>> Position) {
     AddComponent<Transform>(Size, Position);
   }
 
@@ -52,6 +51,35 @@ public:
     }
 
     return nullptr;
+  }
+
+  std::shared_ptr<Entity> GetParent() {
+    return m_parent;
+  }
+
+  void SetParent(const Entity* Parent) {
+    m_parent = std::make_shared<Entity>(Parent);
+  }
+
+  void AddChild(const Entity& Child) {
+    m_children.push_back(std::make_shared<Entity>(std::move(Child)));
+    m_children.back().get()->SetParent(this);
+  }
+
+  void RemoveChild(size_t Index) {
+    m_children.erase(m_children.begin() + Index);
+  }
+
+  const std::vector<std::shared_ptr<Entity>>& GetChildren() {
+    return m_children;
+  }
+
+  std::shared_ptr<Entity> GetChild(size_t Index) {
+    return m_children[Index];
+  }
+
+  size_t GetChildCount() {
+    return m_children.size();
   }
 };
 
