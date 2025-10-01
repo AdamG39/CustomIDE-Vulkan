@@ -8,8 +8,6 @@
 #include "../helpers/errors/errors.hpp"
 #include "../renderer/shapes.hpp"
 
-enum class UIType { Base, Panel, Button, PanelButton };
-
 enum class SizeMode { Fixed, Proportional };
 
 template <typename T>
@@ -27,19 +25,19 @@ struct UISize {
   : Value(static_cast<T>(That.Value)), Mode(That.Mode) {}
 };
 
-enum class UIAnchorType { Center, Top, Bottom, Left, Right, TopLeft, TopRight, BottomLeft, BottomRight };
-
-template <typename T>
-struct UIAnchor {
-  Vector2<UISize<T>> Offset;
-  UIAnchorType Type = UIAnchorType::Center;
-
-  UIAnchor() = default;
-
-  UIAnchor(Vector2<UISize<T>> Offset, UIAnchorType Type = UIAnchorType::Center)
-  : Offset(Offset), Type(Type) {}
+enum class UIAnchorType {
+  Center,
+  Top,
+  Bottom,
+  Left,
+  Right,
+  TopLeft,
+  TopRight,
+  BottomLeft,
+  BottomRight
 };
 
+/*
 template <typename T, typename C>
 class UIElement {
 protected:
@@ -214,7 +212,7 @@ public:
   UIType GetType() const { return m_type; }
 };
 
-// TODO: Remove these unessessary classes in favour of the ECS /*
+// TODO: Remove these unessessary classes in favour of the ECS 
 template <typename T, typename C>
 class Panel : public UIElement<T, C> {
 private:
@@ -310,7 +308,7 @@ public:
 
 private:
   Button<T, C> m_button;
-}; //*/
+}; */
 
 template <typename T, typename C>
 std::vector<Vertex<T, C>> TriVectorToSortedVertexVector(std::vector<Triangle<T, C>> Tris) {

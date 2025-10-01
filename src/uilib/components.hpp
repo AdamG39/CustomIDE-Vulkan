@@ -26,7 +26,7 @@ class Transform : public IComponent {
 private:
   Vector2<UISize<float>> m_size;
   Vector2<UISize<float>> m_position;
-  UIAnchor<float> m_anchor;
+  UIAnchorType m_anchor = UIAnchorType::Center;
 
   Vector2<float> CalculateEntitySize(float ParentWidth, float ParentHeight) const {
     Vector2<float> calculatedSize;
@@ -42,10 +42,10 @@ private:
     return calculatedSize;
   }
 
-  Vector2<float> CalculateEntityPosition(float ParentWidth, float ParentHeight, const UIAnchor<float>& Anchor) const {
+  Vector2<float> CalculateEntityPosition(float ParentWidth, float ParentHeight, const UIAnchorType& Anchor) const {
     Vector2<float> calculatedPosition;
 
-    switch (m_anchor.Type) {
+    switch (Anchor) {
       case UIAnchorType::Center:
         calculatedPosition.x = ParentWidth / 2;
         calculatedPosition.y = ParentHeight / 2;
@@ -78,14 +78,6 @@ private:
         calculatedPosition.y = ParentHeight;
         break;
     }
-
-    if (m_anchor.Offset.x.Mode == SizeMode::Proportional) {
-      calculatedPosition.x += ParentWidth * m_anchor.Offset.x.Value;
-    } else { calculatedPosition.x += m_anchor.Offset.x.Value; }
-
-    if (m_anchor.Offset.y.Mode == SizeMode::Proportional) {
-      calculatedPosition.y += ParentHeight * m_anchor.Offset.y.Value;
-    } else { calculatedPosition.y += m_anchor.Offset.y.Value; }
 
     if (m_position.x.Mode == SizeMode::Proportional) {
       calculatedPosition.x += ParentWidth * m_position.x.Value;
@@ -126,15 +118,15 @@ public:
 
   Vector2<float> GetPixelPosition() const {
     // if no parent
-    return CalculateEntityPosition(float(framebufferWidth), float(framebufferHeight), m_anchor);
+    return CalculateEntityPosition((float)framebufferWidth, (float)framebufferHeight, m_anchor);
     // if has parent change arguments to parents width and size
   }
 
-  void SetAnchor(const UIAnchor<float>& AnchorValue) {
+  void SetAnchor(const UIAnchorType& AnchorValue) {
     m_anchor = AnchorValue;
   }
 
-  UIAnchor<float> GetAnchor() const { return m_anchor; }
+  UIAnchorType GetAnchor() const { return m_anchor; }
 };
 
 class StaticColour : public IComponent {
@@ -159,8 +151,8 @@ public:
 
 class Texture : public IComponent {
 private:
-  std::array<Vector2<float>, 4> m_textureCoords = {Vector2(0.f, 0.f), Vector2(1.f, 0.f),
-                                                   Vector2(0.f, 1.f), Vector2(1.f, 1.f)};
+  std::array<Vector2<float>, 4> m_textureCoords = {Vector2<float>(0.f, 0.f), Vector2<float>(1.f, 0.f),
+                                                   Vector2<float>(0.f, 1.f), Vector2<float>(1.f, 1.f)};
 
 public:
   static int TypeValue() { return TypeTexture; }
