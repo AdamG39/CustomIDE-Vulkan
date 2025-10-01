@@ -6,7 +6,7 @@
 #include <utility>
 
 // Standard colours
-#define COLOUR_CLEAR  Colour(0x000000, 0.0f)
+#define COLOUR_CLEAR  Colour(0xFFFFFF, 0.0f)
 #define COLOUR_BLACK  Colour(0x000000, 1.0f)
 #define COLOUR_WHITE  Colour(0xFFFFFF, 1.0f)
 #define COLOUR_RED    Colour(0xFF0000, 1.0f)

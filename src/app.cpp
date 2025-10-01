@@ -45,10 +45,8 @@ void CustomIDEApplication::StartApplication() {
   framebufferWidth = m_windowWidth;
   framebufferHeight = m_windowHeight;
 
-  m_root = new UIManager<float, float>();
   m_tree = new EntityManager(*m_renderer);
-  m_root->BindRenderer(*m_renderer);
-  m_root->WindowFlags ^= WINDOW_FLAG_MAXIMISED;
+  //m_root->WindowFlags ^= WINDOW_FLAG_MAXIMISED;
 
   CreateUIElements();
 
@@ -87,7 +85,6 @@ void CustomIDEApplication::MainLoop() {
 
 void CustomIDEApplication::EndApplication() {
   DestroyRenderer();
-  delete m_root;
 }
 
 void CustomIDEApplication::CreateRenderer(std::string AppName) {
@@ -151,7 +148,7 @@ void CustomIDEApplication::HandleResizing() {
     m_windowWidth = framebufferWidth;
     m_windowHeight = framebufferHeight;
 
-    m_root->RecalculateUILayout(framebufferWidth, framebufferHeight);
+    //m_root->RecalculateUILayout(framebufferWidth, framebufferHeight);
   }
 }
 
@@ -177,6 +174,8 @@ void CustomIDEApplication::UpdateCursorState() {
   }
 }
 
+// FIXME Transition from old uimanager to new ecs manager
+/*
 void CustomIDEApplication::HandleDragging() {
   if ((m_root->EventFlags & EVENT_FLAG_DRAGGING) != 0) {
     double xpos, ypos;
@@ -188,75 +187,25 @@ void CustomIDEApplication::HandleDragging() {
     newYPos += (int)ypos - m_root->MousePressPosition.y;
     glfwSetWindowPos(window, newXPos, newYPos);
   }
-}
+}*/
 
 void CustomIDEApplication::CreateUIElements() {
-  /*
-  Panel background = Panel(Vector2<UISize<float>>({1.0f, SizeMode::Proportional}, {1.0f, SizeMode::Proportional}),
-                           Vector2<UISize<float>>({0.0f}, {0.0f}),
-                           THEME_DARK_COLOUR_0);
-
-  Panel titleBar = Panel(Vector2<UISize<float>>({1.0f, SizeMode::Proportional}, {40.0f}),
-                         Vector2<UISize<float>>({0.0f}, {0.0f}),
-                         THEME_DARK_COLOUR_1);
-
-  titleBar.SetAnchor(UIAnchor(Vector2<UISize<float>>({0.0f}, {20.0f}), UIAnchorType::Top));
-
-  PanelButton exitButton = PanelButton(Vector2<UISize<float>>({50.0f}, {40.0f}),
-                                       Vector2<UISize<float>>({0.0f}, {0.0f}),
-                                       COLOUR_RED,
-                                       CloseWindowCallback, m_renderer->GetWindow());
-
-  exitButton.SetAnchor(UIAnchor(Vector2<UISize<float>>({-25.0f}, {20.0f}), UIAnchorType::TopRight));
-
-  PanelButton maximiseButton = PanelButton(Vector2<UISize<float>>({50.0f}, {40.0f}),
-                                           Vector2<UISize<float>>({-50.0f,}, {0.0f}),
-                                           COLOUR_GREEN,
-                                           ToggleMaximiseCallback, m_renderer->GetWindow());
-
-  maximiseButton.SetAnchor(UIAnchor(Vector2<UISize<float>>({-25.0f}, {20.0f}), UIAnchorType::TopRight));
-
-  PanelButton minimiseButton = PanelButton(Vector2<UISize<float>>({50.0f}, {40.0f}),
-                                           Vector2<UISize<float>>({-100.0f}, {0.0f}),
-                                           COLOUR_BLUE,
-                                           MinimiseCallback, m_renderer->GetWindow());
-
-  minimiseButton.SetAnchor(UIAnchor(Vector2<UISize<float>>({-25.0f}, {20.0f}), UIAnchorType::TopRight));
-
-  titleBar.SetZIndex(1);
-  exitButton.SetZIndex(1);
-  maximiseButton.SetZIndex(1);
-  minimiseButton.SetZIndex(1);
-
-  m_root->AddElement(background);
-  m_root->AddElement(titleBar);
-  m_root->AddElement(exitButton);
-  m_root->AddElement(maximiseButton);
-  m_root->AddElement(minimiseButton);
-
-  Panel textureTest = Panel(Vector2<UISize<float>>({400.f}, {400.f}),
-                            Vector2<UISize<float>>({0.f}, {0.f}),
-                            THEME_DARK_COLOUR_0);
-
-  textureTest.SetAnchor(UIAnchor(Vector2<UISize<float>>({0.f}, {0.f}), UIAnchorType::Center));
-
-  textureTest.SetZIndex(1);
-
-  m_root->AddElement(textureTest);
-
-  m_root->RecalculateUILayout(framebufferWidth, framebufferHeight);*/
-
   Entity& titleBar = m_tree->AddEntity(Vector2<UISize<float>>({1.0f, SizeMode::Proportional}, {40.0f}),
                                        Vector2<UISize<float>>({0.0f}, {20.0f}));
 
-  titleBar.GetComponent<Transform>()->SetAnchor(UIAnchor(Vector2<UISize<float>>({0.0f}, {0.0f}), UIAnchorType::Top));
+  titleBar.GetComponent<Transform>()->SetAnchor(UIAnchorType::Top);
 
-  titleBar.AddComponent<StaticColour>(THEME_DARK_COLOUR_0);
+  titleBar.AddComponent<StaticColour>(THEME_DARK_COLOUR_1);
 
   Entity& test = m_tree->AddEntity(Vector2<UISize<float>>({800.f, 800.f}),
                                    Vector2<UISize<float>>({0.f, 0.f}));
 
-  test.AddComponent<StaticColour>(THEME_DARK_COLOUR_0);
+  test.AddComponent<StaticColour>(THEME_DARK_COLOUR_1);
+
+  Entity& textureTest = m_tree->AddEntity(Vector2<UISize<float>>({800.f, 800.f}),
+                                          Vector2<UISize<float>>({800.f, 0.f}));
+
+  textureTest.AddComponent<Texture>();
 }
 
 bool CursorAtHorizontalBorder(double xpos, ResizeSide* side) {
@@ -283,6 +232,10 @@ void CloseWindowCallback(GLFWwindow* Window){
   glfwDestroyWindow(Window);
 }
 
+void MouseButtonCallback(GLFWwindow* Window, int Button, int Action, int Mods) {}
+
+// FIXME transition from old uimanager to new ecs manager
+/*
 void MouseButtonCallback(GLFWwindow* Window, int Button, int Action, int Mods) {
   if (Button != GLFW_MOUSE_BUTTON_LEFT) return;
 
@@ -330,7 +283,7 @@ void MouseButtonCallback(GLFWwindow* Window, int Button, int Action, int Mods) {
       }
     }
   }
-}
+}*/
 
 void FramebufferResizeCallback(GLFWwindow* Window, int Width, int Height) {
   framebufferResized = true;
@@ -353,6 +306,8 @@ void CursorPositionCallback(GLFWwindow* Window, double xpos, double ypos) {
   }
 }
 
+// FIXME transition from old uimanager to new ecs manager
+/*
 void ToggleMaximiseCallback(GLFWwindow* Window) {
   if (glfwGetWindowAttrib(Window, GLFW_MAXIMIZED)) {
     // Un-maximise window if already maximised
@@ -369,7 +324,7 @@ void ToggleMaximiseCallback(GLFWwindow* Window) {
       CustomIDEApplication::s_instance->GetUIManager()->AddEvent(std::make_shared<UIEvent>(UIEvent(UIEventType::WINDOW_MAXIMISE)));
     }
   }
-}
+}*/
 
 void MinimiseCallback(GLFWwindow* Window) {
   glfwIconifyWindow(Window);

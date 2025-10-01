@@ -2,7 +2,6 @@
 #define CUSTOM_LAYOUT_PARSER_H
 
 #include <string>
-#include "../app.hpp"
 
 template <typename K, typename V>
 struct KeyValuePair {
@@ -10,6 +9,7 @@ struct KeyValuePair {
   V Value;
 };
 
+/*
 class Parser {
 public:
   Parser(std::string FilePath, const UIManager<int, float>& Manager)
@@ -29,7 +29,7 @@ private:
   KeyValuePair<K, V> ParseAttribute() {
     
   }
-};
+};*/
 
 #endif
 

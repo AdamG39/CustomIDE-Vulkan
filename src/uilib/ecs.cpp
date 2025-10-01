@@ -26,9 +26,7 @@ void EntityManager::RenderTree() {
     StaticColour* staticColour = m_entityTree[i]->GetComponent<StaticColour>();
     Texture* texture = m_entityTree[i]->GetComponent<Texture>();
     // An entity requires a colour/texture component and a transform to be renderered
-    if (transform == nullptr) {
-      continue; // Just skip this entity since it cant be renderered
-    }
+    if (transform == nullptr) continue; // Just skip this entity since it cant be renderered
 
     if (staticColour != nullptr) {
       geometries.emplace_back(transform->GetPixelSize(), transform->GetPixelPosition(), staticColour->GetColour());

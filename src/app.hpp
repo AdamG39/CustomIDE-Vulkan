@@ -64,6 +64,7 @@ bool CursorAtHorizonalBorder(double xpos, ResizeSide* side);
 
 bool CursorAtVerticalBorder(double ypos, ResizeSide* side);
 
+/*
 template <typename T, typename C>
 class UIManager {
 public:
@@ -261,6 +262,7 @@ private:
   }
 
 };
+*/
 
 class CustomIDEApplication {
 public:
@@ -280,7 +282,6 @@ public:
 
   VulkanRenderer* GetRenderer() const { return m_renderer; }
 
-  UIManager<float, float>* GetUIManager() const { return m_root; }
 
   void CreateUIElements();
 
@@ -298,7 +299,6 @@ private:
   VulkanRenderer* m_renderer;
 
   EntityManager* m_tree;
-  UIManager<float, float>* m_root;
 
   std::map<std::string, GLFWcursor*> m_cursorObjects;
 
