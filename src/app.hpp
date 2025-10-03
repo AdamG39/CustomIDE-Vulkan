@@ -1,14 +1,13 @@
 #ifndef CUSTOM_APP_H
 #define CUSTOM_APP_H
 
-#include "uilib/ui.hpp"
 #include "uilib/ecs.hpp"
 #include "renderer/renderer.hpp"
-#include <memory>
+#include "event/eventManager.hpp"
 #include <map>
 
 #define BORDER_THICKNESS                  10
-#define MAXIMISE_DISTANCE_FROM_SCREEN_TOP 5
+#define MAXIMISE_DISTANCE_FROM_SCREEN_TOP  5
 
 #define RESULT_SUCCESS 0
 #define RESULT_FAIL    1
@@ -21,44 +20,7 @@
 
 #define WINDOW_FLAG_MAXIMISED 0x00000001
 
-enum class UIEventType { MOUSE_PRESS, MOUSE_RELEASE, WINDOW_MAXIMISE, WINDOW_RESTORE, WINDOW_RESIZE };
-
 enum class ResizeSide { Top, Left, Right, Bottom };
-
-struct UIEvent {
-  UIEventType Type;
-
-  UIEvent(UIEventType Type) : Type(Type) {}
-
-  virtual ~UIEvent() = default;
-};
-
-struct UIMouseEvent : public UIEvent {
-  Vector2<float> CursorPos;
-  int Button;
-  int Mods;
-
-  UIMouseEvent(Vector2<float> CursorPos, int Button, int Action, int Mods)
-  : UIEvent((Action == GLFW_PRESS) ? UIEventType::MOUSE_PRESS : UIEventType::MOUSE_RELEASE),
-    CursorPos(CursorPos),
-    Button(Button),
-    Mods(Mods) {}
-
-  void SetEventType(const UIEventType& Type) {
-    UIEvent::Type = Type;
-  }
-};
-
-template <typename T>
-bool CursorOverlap(Vector2<float> CursorPos, Vector2<T> Size, Vector2<T> Position) {
-  Vector2 min = Vector2(Position.x - (Size.x / 2), Position.y - (Size.y / 2));
-  Vector2 max = Vector2(Position.x + (Size.x / 2), Position.y + (Size.y / 2));
-
-  if (CursorPos.x >= min.x && CursorPos.x <= max.x &&
-      CursorPos.y >= min.y && CursorPos.y <= max.y) return true;
-
-  return false;
-}
 
 bool CursorAtHorizonalBorder(double xpos, ResizeSide* side);
 
@@ -282,6 +244,9 @@ public:
 
   VulkanRenderer* GetRenderer() const { return m_renderer; }
 
+  EntityManager* GetEntityManager() const { return m_tree; }
+
+  EventManager* GetEventManager() const { return m_eventManager; }
 
   void CreateUIElements();
 
@@ -299,6 +264,8 @@ private:
   VulkanRenderer* m_renderer;
 
   EntityManager* m_tree;
+
+  EventManager* m_eventManager;
 
   std::map<std::string, GLFWcursor*> m_cursorObjects;
 

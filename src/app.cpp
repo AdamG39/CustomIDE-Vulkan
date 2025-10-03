@@ -46,6 +46,7 @@ void CustomIDEApplication::StartApplication() {
   framebufferHeight = m_windowHeight;
 
   m_tree = new EntityManager(*m_renderer);
+  m_eventManager = new EventManager();
   //m_root->WindowFlags ^= WINDOW_FLAG_MAXIMISED;
 
   CreateUIElements();
@@ -74,6 +75,8 @@ void CustomIDEApplication::MainLoop() {
 
     HandleDragging();
     */
+
+    m_eventManager->HandleEvents();
 
     m_tree->RenderTree();
 
@@ -197,6 +200,17 @@ void CustomIDEApplication::CreateUIElements() {
 
   titleBar.AddComponent<StaticColour>(THEME_DARK_COLOUR_1);
 
+  Entity& closeButton = m_tree->AddEntity(Vector2<UISize<float>>({50.f}, {40.f}),
+                                          Vector2<UISize<float>>({-25.f}, {20.f}));
+
+  closeButton.GetComponent<Transform>()->SetAnchor(UIAnchorType::TopRight);
+
+  closeButton.AddComponent<StaticColour>(COLOUR_RED);
+  closeButton.AddComponent<Button>();
+  Button* temp = closeButton.GetComponent<Button>();
+  temp->SetOnRelease(&glfwSetWindowShouldClose, m_renderer->GetWindow(), GLFW_TRUE);
+  temp->SetOnPress(&printf, "window is %s", "closing");
+
   Entity& test = m_tree->AddEntity(Vector2<UISize<float>>({800.f, 800.f}),
                                    Vector2<UISize<float>>({0.f, 0.f}));
 
@@ -232,7 +246,19 @@ void CloseWindowCallback(GLFWwindow* Window){
   glfwDestroyWindow(Window);
 }
 
-void MouseButtonCallback(GLFWwindow* Window, int Button, int Action, int Mods) {}
+void MouseButtonCallback(GLFWwindow* Window, int Button, int Action, int Mods) { 
+  double xPos, yPos;
+  glfwGetCursorPos(Window, &xPos, &yPos);
+
+  EventInfo info {
+    .EntityManager = CustomIDEApplication::s_instance->GetEntityManager(),
+    .CursorPosition = Vector2<float>((float)xPos, (float)yPos),
+    .MouseButton = Button,
+    .MouseAction = Action,
+    .MouseModifications = Mods
+  };
+  CustomIDEApplication::s_instance->GetEventManager()->AddEvent(EventType::Mouse, &info);
+}
 
 // FIXME transition from old uimanager to new ecs manager
 /*
