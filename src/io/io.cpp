@@ -215,10 +215,8 @@ std::shared_ptr<Image> ParseBMPData(const std::vector<char>& Data, BITMAPINFOHEA
       pixelArray[0] = Data[tempOffset + 2];
       pixelArray[1] = Data[tempOffset + 1];
       pixelArray[2] = Data[tempOffset];
-      if (BitMapInfo.bitsPerPixel == 32)
-        pixelArray[3] = Data[tempOffset + 3];
-      else
-        pixelArray[3] = 0xFF;
+
+      pixelArray[3] = (BitMapInfo.bitsPerPixel == 32) ? Data[tempOffset + 3] : 0xFF;
 
       pixelArray += 4;
     }
