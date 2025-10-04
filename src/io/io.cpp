@@ -193,7 +193,9 @@ std::shared_ptr<Image> ParseBMPData(const std::vector<char>& Data, BITMAPINFOHEA
   returnPtr->pixels = pixelArray;
 
   if (BitMapInfo.height > 0) {
-    for (uint32_t row = (uint32_t)(BitMapInfo.height - 1); row > 0; row--) {
+    // Add 1 to row condition to stop underflowing unsigned value (by using >=)
+    // while still accounting for last pixel row
+    for (uint32_t row = (uint32_t)(BitMapInfo.height - 1); row + 1 > 0; row--) {
       uint32_t rowOffset = Offset + (rowSize * row);
       for (uint32_t pixel = 0; pixel < rowSize; pixel += (BitMapInfo.bitsPerPixel / 8)) {
         uint32_t tempOffset = pixel + rowOffset;
@@ -201,10 +203,8 @@ std::shared_ptr<Image> ParseBMPData(const std::vector<char>& Data, BITMAPINFOHEA
         pixelArray[0] = Data[tempOffset + 2];
         pixelArray[1] = Data[tempOffset + 1];
         pixelArray[2] = Data[tempOffset];
-        if (BitMapInfo.bitsPerPixel == 32)
-          pixelArray[3] = Data[tempOffset + 3];
-        else
-          pixelArray[3] = 0xFF;
+
+        pixelArray[3] = (BitMapInfo.bitsPerPixel == 32) ? Data[tempOffset + 3] : 0xFF;
 
         pixelArray += 4;
       }
