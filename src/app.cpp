@@ -29,6 +29,8 @@ bool resizing = false;
 ResizeSide resizeSide;
 
 void CustomIDEApplication::StartApplication() {
+  std::vector<std::shared_ptr<Image>> test;
+  ReadImageFile("../assets/textures/pngTest.png", test);
   std::vector<std::shared_ptr<Image>> loadedImages;
   ReadImageFile("../CustomIDE icon.ico", loadedImages);
   std::vector<GLFWimage> appIcon;

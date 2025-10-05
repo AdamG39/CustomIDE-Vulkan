@@ -2,6 +2,16 @@
 #include "io.hpp"
 #include <fstream>
 #include <cmath>
+#include <assert.h>
+#include "zlib.h"
+
+#if defined(MSDOS) || defined(OS2) || defined(WIN32) || defined(__CYGWIN__)
+  #include <fcntl.h>
+  #include <io.h>
+  #define SET_BINARY_MODE(file) _setmode(_fileno(file), O_BINARY)
+#else
+  #define SET_BINARY_MODE(file)
+#endif
 
 std::vector<char> ReadBinaryFile(const std::string& filename) {
   std::ifstream file(filename, std::ios::ate | std::ios::binary);
@@ -39,7 +49,7 @@ bool ReadImageFile(const std::string &filename, std::vector<std::shared_ptr<Imag
   if (buffer.size() == 0) ExitWithError("File buffer size is 0", -6);
 
   if (CompareByteValues(buffer, PNG_MAGIC_NUMBERS, PNG_MAGIC_NUMBER_BYTE_AMOUNT)) {
-    //OutImages = ParsePNGData(buffer);
+    OutImages.push_back(ParsePNGData(buffer, 0));
     return true;
   }
 
@@ -114,15 +124,80 @@ std::shared_ptr<Image> ParsePNGData(const std::vector<char>& Data, uint32_t Offs
     offset += sizeof(uint32_t) * 2;
   } while (chunk.chunkType != PNG_IDAT_CHUNK_SIGNATURE);
 
+  std::vector<uint8_t> pixelVector;
   // IDAT chunk found
   // Need to decode the data into valid pixel data
-  InflateDecoder(std::vector(Data.begin() + offset, Data.begin() + offset + chunk.chunkSize), returnPtr->pixels);
+  
+  int result = InflateDecoder(std::vector(Data.begin() + offset, Data.begin() + offset + chunk.chunkSize), pixelVector);
+  FILE* file;
+  fopen_s(&file, "test.txt", "w");
+  fwrite(pixelVector.data(), 1, pixelVector.size(), file);
+  fclose(file);
+  // Then remove filtering
 
   return returnPtr;
 }
 
-void InflateDecoder(const std::vector<char>& Data, uint8_t* Output) {
-  ExitWithError("Unimpemented function", -99);
+int InflateDecoder(const std::vector<char>& Data, std::vector<uint8_t>& Output) {
+  int ret;
+  z_stream stream;
+  uint32_t have;
+
+  const long int CHUNK = 16384;
+  size_t remainingData = Data.size();
+  size_t chunkCount = 0;
+  uint8_t in[CHUNK];
+  uint8_t out[CHUNK];
+
+  stream.zalloc = Z_NULL;
+  stream.zfree = Z_NULL;
+  stream.opaque = Z_NULL;
+  stream.avail_in = 0;
+  stream.next_in = Z_NULL;
+
+  ret = inflateInit(&stream);
+  if (ret != Z_OK)
+    return ret;
+
+  do {
+    size_t amountMoved;
+    if (remainingData >= CHUNK) {
+      amountMoved = CHUNK;
+    } else {
+      amountMoved = remainingData;
+    }
+    remainingData -= amountMoved;
+    for (size_t i = 0; i < amountMoved; i++) {
+      in[i] = Data[i + (CHUNK * chunkCount)];
+    }
+    stream.avail_in = amountMoved;
+    if (stream.avail_in == 0)
+      break;
+    stream.next_in = in;
+
+    do {
+      stream.avail_out = CHUNK;
+      stream.next_out = out;
+      ret = inflate(&stream, Z_NO_FLUSH);
+      assert(ret != Z_STREAM_ERROR);
+      switch (ret) {
+        case Z_NEED_DICT:
+          ret = Z_DATA_ERROR;
+        case Z_DATA_ERROR:
+        case Z_MEM_ERROR:
+          inflateEnd(&stream);
+          return ret;
+      }
+      have = CHUNK - stream.avail_out;
+      Output.reserve(Output.size() + have);
+      for (size_t i = 0; i < have; i++) {
+        Output.push_back(out[i]);
+      }
+    } while (stream.avail_out == 0);
+  } while (ret != Z_STREAM_END);
+
+  inflateEnd(&stream);
+  return ret == Z_STREAM_END ? Z_OK : Z_DATA_ERROR;
 }
 
 void ParseICOData(const std::vector<char>& Data, std::vector<std::shared_ptr<Image>>& OutImages) {

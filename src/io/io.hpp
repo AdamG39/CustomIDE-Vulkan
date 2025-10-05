@@ -113,7 +113,7 @@ bool ReadImageFile(const std::string &filename, std::vector<std::shared_ptr<Imag
 
 std::shared_ptr<Image> ParsePNGData(const std::vector<char>& Data, uint32_t Offset);
 
-void InflateDecoder(const std::vector<char>& Data, uint8_t* Output);
+int InflateDecoder(const std::vector<char>& Data, std::vector<uint8_t>& Output);
 
 void ParseICOData(const std::vector<char>& Data, std::vector<std::shared_ptr<Image>>& OutImages);
 
