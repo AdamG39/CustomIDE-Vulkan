@@ -195,18 +195,26 @@ public:
   }
 
   void OnPress() {
-    assert(m_onPress);
-    m_onPress();
+    if (m_onPress) {
+      m_onPress();
+    } else {
+      puts("no onpress");
+      printf("[Warning]: No OnPress() function assigned for object: %p", this);
+    }
   }
 
   void OnRelease() {
-    assert(m_onRelease);
-    m_onRelease();
+    if (m_onRelease) {
+      m_onRelease();
+    } else
+      printf("[Warning]: No OnRelease() function assigned for object: %p", this);
   }
 
   void OnHover() {
-    assert(m_onHover);
-    m_onHover();
+    if (m_onHover) {
+      m_onHover();
+    } else
+      printf("[Warning]: No OnHover() function assigned for object: %p", this);
   }
 };
 
