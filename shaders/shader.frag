@@ -21,6 +21,6 @@ void main() {
   if (fragTexCoord.x < 0 || fragTexCoord.y < 0) {
     outColour = srgbToLinear(fragColour);
   } else {
-    outColour = srgbToLinear(vec4(fragColour.xyz * texture(texSampler, fragTexCoord).rgb, 1.0));
+    outColour = srgbToLinear(fragColour * texture(texSampler, fragTexCoord));
   }
 }

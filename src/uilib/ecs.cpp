@@ -42,7 +42,7 @@ void EntityManager::RenderTree() {
       if (staticColour != nullptr) {
         geometries.emplace_back(transform->GetPixelSize(), transform->GetPixelPosition(), staticColour->GetColour());
       } else if (texture != nullptr) {
-        geometries.emplace_back(transform->GetPixelSize(), transform->GetPixelPosition(), COLOUR_CLEAR);
+        geometries.emplace_back(transform->GetPixelSize(), transform->GetPixelPosition(), COLOUR_WHITE);
         geometries.back().SetTextureCoords(texture->GetTextureCoords());
       }
       // Dont do anything if either condition isnt met

@@ -282,7 +282,7 @@ void VulkanRenderer::UpdateDescriptorSets(VulkanTexture* pTexture, int NumImages
 }
 
 void VulkanRenderer::CreateGraphicsPipeline() {
-  CreateTexture("../assets/textures/test.bmp", m_texture, m_device, m_physicalDevice, m_commandBuffers.data(),
+  CreateTexture("../assets/textures/pngTest.png", m_texture, m_device, m_physicalDevice, m_commandBuffers.data(),
                 m_currentFrame, m_graphicsQueue);
 
   CreateDescriptorSets(&m_texture, MAX_FRAMES_IN_FLIGHT);
@@ -364,10 +364,17 @@ void VulkanRenderer::CreateGraphicsPipeline() {
   multisampling.sampleShadingEnable = VK_FALSE;
   multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
-  VkPipelineColorBlendAttachmentState colourBlendAttachment{};
-  colourBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-                                        VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-  colourBlendAttachment.blendEnable = VK_FALSE;
+  VkPipelineColorBlendAttachmentState colourBlendAttachment{
+    .blendEnable = VK_TRUE,
+    .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+    .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+    .colorBlendOp = VK_BLEND_OP_ADD,
+    .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+    .dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+    .alphaBlendOp = VK_BLEND_OP_ADD,
+    .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+                      VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
+  };
 
   VkPipelineColorBlendStateCreateInfo colourBlending{};
   colourBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
