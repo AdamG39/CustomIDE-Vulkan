@@ -108,37 +108,82 @@ std::shared_ptr<Image> ParsePNGData(const std::vector<char>& Data, uint32_t Offs
   imageHeader.filterMethod = Data[offset + 11];
   imageHeader.interlaceMethod = Data[offset + 12];
 
+  int BytesPerPixel = PNG::GetImageBitsPerPixel(imageHeader.bitDepth, (PNG::ColourType)imageHeader.colourType) / 8;
+  size_t Stride = imageHeader.width * BytesPerPixel;
+  size_t PixelDataSize = Stride * imageHeader.height;
+
   returnPtr->width = imageHeader.width;
   returnPtr->height = imageHeader.height;
-  returnPtr->pixels = (uint8_t*)calloc((32 / imageHeader.bitDepth) * imageHeader.width * imageHeader.height, sizeof(uint8_t));
+  returnPtr->pixels = (uint8_t*)calloc(PixelDataSize, sizeof(uint8_t));
 
-  offset += sizeof(PNGIMAGEHEADER) - sizeof(uint32_t) + 1;
+  offset += sizeof(PNGIMAGEHEADER) - sizeof(Pixel) + 1;
   chunk = {};
+  std::vector<uint8_t> dataChunks;
 
   do {
-    offset += sizeof(uint32_t); // Add an extra 4 bytes to get past the CRC
+    offset += sizeof(Pixel); // Add an extra 4 bytes to get past the CRC
     offset += chunk.chunkSize;
     chunk = {};
     chunk.chunkSize = u32(Data[offset], Data[offset + 1], Data[offset + 2], Data[offset + 3]);
     chunk.chunkType = u32(Data[offset + 4], Data[offset + 5], Data[offset + 6], Data[offset + 7]);
-    offset += sizeof(uint32_t) * 2;
-  } while (chunk.chunkType != PNG_IDAT_CHUNK_SIGNATURE);
+    offset += sizeof(Pixel) * 2; // Move offset to the byte after the size and type
+    if (chunk.chunkType == PNG_IDAT_CHUNK_SIGNATURE) {
+      dataChunks.reserve(dataChunks.size() + chunk.chunkSize);
+      for (int i = 0; i < chunk.chunkSize; i++) {
+        dataChunks.push_back(Data[offset + i]);
+      }
+    }
+  } while (chunk.chunkType != PNG_IEND_CHUNK_SIGNATURE);
 
   std::vector<uint8_t> pixelVector;
-  // IDAT chunk found
+  // IDAT chunks found
   // Need to decode the data into valid pixel data
   
-  int result = InflateDecoder(std::vector(Data.begin() + offset, Data.begin() + offset + chunk.chunkSize), pixelVector);
-  FILE* file;
-  fopen_s(&file, "test.txt", "w");
-  fwrite(pixelVector.data(), 1, pixelVector.size(), file);
-  fclose(file);
+  //int result = InflateDecoder(std::vector(Data.begin() + offset, Data.begin() + offset + chunk.chunkSize), pixelVector);
+  int result = InflateDecoder(dataChunks, pixelVector);
+  if (result != Z_OK)
+    ExitWithError("Failed to decode PNG file", -24);
+
   // Then remove filtering
+
+  size_t i = 0;
+  size_t pixelArrayIndex = 0;
+  for (size_t ScanLine = 0; ScanLine < imageHeader.height; ScanLine++) {
+    uint8_t filterType = pixelVector[i];
+    i++;
+    for (size_t LineByteOffset = 0; LineByteOffset < Stride; LineByteOffset++) {
+      uint8_t reconX;
+      uint8_t filterX = pixelVector[i];
+      i++;
+      if (filterType == 0)
+        reconX = filterX;
+      else if (filterType == 1)
+        reconX = filterX + PNG::ReconA(ScanLine, LineByteOffset, Stride, BytesPerPixel, returnPtr->pixels);
+      else if (filterType == 2)
+        reconX = filterX + PNG::ReconB(ScanLine, LineByteOffset, Stride, returnPtr->pixels);
+      else if (filterType == 3)
+        reconX = filterX + PNG::ReconC(ScanLine, LineByteOffset, Stride, BytesPerPixel, returnPtr->pixels);
+      else if (filterType == 4)
+        reconX = filterX + PNG::PaethPredictor(PNG::ReconA(ScanLine, LineByteOffset, Stride, BytesPerPixel, returnPtr->pixels),
+                                               PNG::ReconB(ScanLine, LineByteOffset, Stride, returnPtr->pixels),
+                                               PNG::ReconC(ScanLine, LineByteOffset, Stride, BytesPerPixel, returnPtr->pixels));
+      returnPtr->pixels[pixelArrayIndex++] = reconX;
+    }
+  }
+
+  std::ofstream tempOutput;
+  tempOutput.open("test.txt", std::ofstream::out | std::ofstream::binary);
+  if (!tempOutput.is_open())
+    ExitWithError("Failed to open png test file", -22);
+  for (size_t i = 0; i < PixelDataSize; i++) {
+    tempOutput << returnPtr->pixels[i];
+  }
+  tempOutput.close();
 
   return returnPtr;
 }
 
-int InflateDecoder(const std::vector<char>& Data, std::vector<uint8_t>& Output) {
+int InflateDecoder(const std::vector<uint8_t>& Data, std::vector<uint8_t>& Output) {
   int ret;
   z_stream stream;
   uint32_t have;
@@ -194,10 +239,39 @@ int InflateDecoder(const std::vector<char>& Data, std::vector<uint8_t>& Output) 
         Output.push_back(out[i]);
       }
     } while (stream.avail_out == 0);
+    chunkCount++;
   } while (ret != Z_STREAM_END);
 
   inflateEnd(&stream);
   return ret == Z_STREAM_END ? Z_OK : Z_DATA_ERROR;
+}
+
+constexpr uint8_t PNG::ReconA(size_t ScanLine, size_t LineByteOffset, size_t Stride,
+                              int BytesPerPixel, const uint8_t* Output) {
+  return (LineByteOffset >= BytesPerPixel) ? Output[ScanLine * Stride + LineByteOffset - BytesPerPixel] : 0;
+}
+
+constexpr uint8_t PNG::ReconB(size_t ScanLine, size_t LineByteOffset, size_t Stride,
+                              const uint8_t* Output) {
+  return (ScanLine > 0) ? Output[(ScanLine - 1) * Stride + LineByteOffset] : 0;
+}
+
+constexpr uint8_t PNG::ReconC(size_t ScanLine, size_t LineByteOffset, size_t Stride,
+                              int BytesPerPixel, const uint8_t* Output) {
+  return (ScanLine > 0 && LineByteOffset >= BytesPerPixel) ? Output[(ScanLine - 1) * Stride + LineByteOffset - BytesPerPixel] : 0;
+}
+
+constexpr uint8_t PNG::PaethPredictor(uint8_t A, uint8_t B, uint8_t C) {
+  auto p = A + B - C;
+  auto pa = abs(p - A);
+  auto pb = abs(p - B);
+  auto pc = abs(p - C);
+  if (pa <= pb && pa <= pc)
+    return A;
+  else if (pb <= pc)
+    return B;
+  else
+    return C;
 }
 
 void ParseICOData(const std::vector<char>& Data, std::vector<std::shared_ptr<Image>>& OutImages) {

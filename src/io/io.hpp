@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include "../helpers/errors/errors.hpp"
 
 // Image file magic numbers
 #define PNG_MAGIC_NUMBER_BYTE_AMOUNT 8
@@ -113,7 +114,38 @@ bool ReadImageFile(const std::string &filename, std::vector<std::shared_ptr<Imag
 
 std::shared_ptr<Image> ParsePNGData(const std::vector<char>& Data, uint32_t Offset);
 
-int InflateDecoder(const std::vector<char>& Data, std::vector<uint8_t>& Output);
+int InflateDecoder(const std::vector<uint8_t>& Data, std::vector<uint8_t>& Output);
+
+namespace PNG {
+  enum class ColourType {
+    Grayscale = 0,
+    Truecolour = 2,
+    Indexed = 3,
+    GrayscaleAlpha = 4,
+    TruecolourAlpha = 6
+  };
+
+  constexpr int GetImageBitsPerPixel(uint8_t BitsPerChannel, ColourType ColourMode) {
+    switch (ColourMode) {
+      case ColourType::Grayscale:
+      case ColourType::Indexed:
+        return 1 * BitsPerChannel;
+      case ColourType::GrayscaleAlpha:
+        return 2 * BitsPerChannel;
+      case ColourType::Truecolour:
+        return 3 * BitsPerChannel;
+      case ColourType::TruecolourAlpha:
+        return 4 * BitsPerChannel;
+    }
+    ExitWithError("Invalid PNG Colour type", -23);
+  }
+
+  constexpr uint8_t ReconA(size_t ScanLine, size_t LineByteOffset, size_t Stride, int BytesPerPixel, const uint8_t* Output);
+  constexpr uint8_t ReconB(size_t ScanLine, size_t LineByteOffset, size_t Stride, const uint8_t* Output);
+  constexpr uint8_t ReconC(size_t ScanLine, size_t LineByteOffset, size_t Stride, int BytesPerPixel, const uint8_t* Output);
+
+  constexpr uint8_t PaethPredictor(uint8_t A, uint8_t B, uint8_t C);
+}
 
 void ParseICOData(const std::vector<char>& Data, std::vector<std::shared_ptr<Image>>& OutImages);
 
