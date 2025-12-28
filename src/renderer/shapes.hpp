@@ -86,7 +86,7 @@ template <typename T, typename C>
 struct Vertex {
   Vector3<T> position;
   Colour<C> colour;
-  Vector2<T> textureCoords = {-1, -1};
+  Vector2<T> textureCoords;
 
   Vertex() : position(), colour(), textureCoords() {}
   
@@ -109,6 +109,7 @@ template <typename T, typename C>
 struct Triangle {
   std::array<Vertex<T, C>, 3> vertices;
   int zIndex;
+  int textureIndex = -1;
 
   Triangle() : vertices(), zIndex(0) {}
 
@@ -121,6 +122,10 @@ struct Triangle {
   bool operator < (const Triangle<T, C>& That) {
     return (zIndex < That.zIndex);
   }
+
+  void SetTextureIndex(int TextureIndex) {
+    textureIndex = TextureIndex;
+  }
 };
 
 template <typename T, typename C>
@@ -130,6 +135,7 @@ private:
   Vector2<T> m_size;
   Colour<C> m_colour;
   int m_zIndex;
+  int m_textureIndex = -1;
 
   std::array<Vertex<T, C>, 4> m_vertices;
 
@@ -160,6 +166,10 @@ public:
     }
   }
 
+  void SetTextureIndex(int TextureIndex) {
+    m_textureIndex = TextureIndex;
+  }
+
   std::array<Vertex<T, C>, 6> GetVertices() const {
     std::array<Vertex<T, C>, 6> vertices;
 
@@ -181,6 +191,11 @@ public:
 
     tris[0] = Triangle<T, C>(m_vertices[0], m_vertices[1], m_vertices[2], m_zIndex);
     tris[1] = Triangle<T, C>(m_vertices[1], m_vertices[2], m_vertices[3], m_zIndex);
+
+    if (m_textureIndex >= 0) {
+      tris[0].SetTextureIndex(m_textureIndex);
+      tris[1].SetTextureIndex(m_textureIndex);
+    }
 
     return tris;
   }

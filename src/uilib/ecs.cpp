@@ -44,6 +44,7 @@ void EntityManager::RenderTree() {
       } else if (texture != nullptr) {
         geometries.emplace_back(transform->GetPixelSize(), transform->GetPixelPosition(), COLOUR_WHITE);
         geometries.back().SetTextureCoords(texture->GetTextureCoords());
+        geometries.back().SetTextureIndex(texture->GetTextureIndex());
       }
       // Dont do anything if either condition isnt met
     }
@@ -57,10 +58,11 @@ void EntityManager::RenderTree() {
     tris.push_back(temp[1]);
   }
 
+  std::vector<TextureArrayBounds> textureIndexArrayBounds;
   // Order each triangle based on its zIndex then convert each triangle into its vertices
-  auto vertices = TriVectorToSortedVertexVector(tris);
+  auto vertices = TriVectorToSortedVertexVector(tris, textureIndexArrayBounds);
 
   if (vertices.size() != 0)
-    m_renderer.FillVertexBuffer(vertices);
+    m_renderer.FillVertexBuffer(vertices, textureIndexArrayBounds);
 }
 

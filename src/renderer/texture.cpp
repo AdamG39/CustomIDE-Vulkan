@@ -34,12 +34,6 @@ void CreateTexture(const char* pFilename, VulkanTexture& Texture,
                              Device, PhysicalDevice, CommandBuffers, CommandBufferIndex, GraphicsQueue);
 
   Texture.view = CreateImageView(Device, Texture.image, format, VK_IMAGE_ASPECT_COLOR_BIT);
-
-  VkFilter minFilter = VK_FILTER_LINEAR;
-  VkFilter maxFilter = VK_FILTER_LINEAR;
-  VkSamplerAddressMode addressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-
-  Texture.sampler = CreateTextureSampler(Device, minFilter, maxFilter, addressMode);
 }
 
 void CreateTextureImageFromData(VulkanTexture& Texture, const void* pPixels, uint32_t ImageWidth,

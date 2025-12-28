@@ -153,17 +153,24 @@ class Texture : public IComponent {
 private:
   std::array<Vector2<float>, 4> m_textureCoords = {Vector2<float>(0.f, 0.f), Vector2<float>(1.f, 0.f),
                                                    Vector2<float>(0.f, 1.f), Vector2<float>(1.f, 1.f)};
+  int m_textureIndex;
 
 public:
   static int TypeValue() { return TypeTexture; }
   int GetType() override { return TypeValue(); }
 
   Texture() = default;
-  Texture(const std::array<Vector2<float>, 4> TextureCoords)
-  : m_textureCoords(std::move(TextureCoords)) {}
+  Texture(int TextureIndex)
+  : m_textureIndex(TextureIndex) {}
+  Texture(int TextureIndex, const std::array<Vector2<float>, 4> TextureCoords)
+  : m_textureCoords(std::move(TextureCoords)), m_textureIndex(TextureIndex) {}
 
   const std::array<Vector2<float>, 4>& GetTextureCoords() const {
     return m_textureCoords;
+  }
+
+  int GetTextureIndex() const {
+    return m_textureIndex;
   }
 };
 

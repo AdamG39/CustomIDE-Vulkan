@@ -2,7 +2,12 @@
 
 //FRAGMENT SHADER
 
-layout(binding = 0) uniform sampler2D texSampler;
+layout(set = 0, binding = 0) uniform sampler samp;
+layout(set = 0, binding = 1) uniform texture2D textures[100];
+
+layout(push_constant) uniform PushConstants {
+  layout(offset = 8) int textureIndex;
+} pc;
 
 layout(location = 0) in vec4 fragColour;
 layout(location = 1) in vec2 fragTexCoord;
@@ -18,9 +23,10 @@ vec4 srgbToLinear(vec4 c) {
 
 
 void main() {
-  if (fragTexCoord.x < 0 || fragTexCoord.y < 0) {
+  if (pc.textureIndex < 0) {
     outColour = srgbToLinear(fragColour);
   } else {
-    outColour = srgbToLinear(fragColour * texture(texSampler, fragTexCoord));
+    outColour = srgbToLinear(fragColour * 
+                texture(sampler2D(textures[pc.textureIndex], samp), fragTexCoord));
   }
 }
