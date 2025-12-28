@@ -28,9 +28,7 @@ bool resizing = false;
 
 ResizeSide resizeSide;
 
-void CustomIDEApplication::StartApplication() {
-  std::vector<std::shared_ptr<Image>> test;
-  ReadImageFile("../assets/textures/pngTest.png", test);
+void CustomIDEApplication::InitApplication() {
   std::vector<std::shared_ptr<Image>> loadedImages;
   ReadImageFile("../CustomIDE icon.ico", loadedImages);
   std::vector<GLFWimage> appIcon;
@@ -42,7 +40,8 @@ void CustomIDEApplication::StartApplication() {
     image.pixels = loadedImages[i]->pixels;
     appIcon.push_back(image);
   }
-  CreateRenderer(ApplicationName);
+
+  CreateRenderer(m_applicationName);
   glfwSetWindowIcon(m_renderer->GetWindow(), appIcon.size(), appIcon.data());
   framebufferWidth = m_windowWidth;
   framebufferHeight = m_windowHeight;
@@ -62,7 +61,7 @@ void CustomIDEApplication::StartApplication() {
   }
 }
 
-void CustomIDEApplication::MainLoop() {
+void CustomIDEApplication::RunApplication() {
   while (!glfwWindowShouldClose(m_renderer->GetWindow())) {
     glfwWaitEventsTimeout(0.5f);
 
@@ -253,13 +252,13 @@ void MouseButtonCallback(GLFWwindow* Window, int Button, int Action, int Mods) {
   glfwGetCursorPos(Window, &xPos, &yPos);
 
   EventInfo info {
-    .EntityManager = CustomIDEApplication::s_instance->GetEntityManager(),
+    .EntityManager = CustomIDEApplication::GetInstance()->GetEntityManager(),
     .CursorPosition = Vector2<float>((float)xPos, (float)yPos),
     .MouseButton = Button,
     .MouseAction = Action,
     .MouseModifications = Mods
   };
-  CustomIDEApplication::s_instance->GetEventManager()->AddEvent(EventType::Mouse, &info);
+  CustomIDEApplication::GetInstance()->GetEventManager()->AddEvent(EventType::Mouse, &info);
 }
 
 // FIXME transition from old uimanager to new ecs manager

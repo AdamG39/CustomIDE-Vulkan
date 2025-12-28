@@ -3,11 +3,8 @@
 CustomIDEApplication* CustomIDEApplication::s_instance = nullptr;
 
 int main() {
-  CustomIDEApplication app;
-  CustomIDEApplication::SetInstance(&app);
-
-  app.StartApplication();
-  app.MainLoop();
-
-  app.EndApplication();
+  CustomIDEApplication* app = CustomIDEApplication::GetInstance();
+  app->InitApplication();
+  app->RunApplication();
+  app->EndApplication();
 }

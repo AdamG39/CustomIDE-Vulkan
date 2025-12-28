@@ -228,17 +228,18 @@ private:
 
 class CustomIDEApplication {
 public:
-  static CustomIDEApplication* s_instance;
+  CustomIDEApplication(const CustomIDEApplication& other) = delete;
 
-  std::string ApplicationName = "CustomIDE";
-
-  static void SetInstance(CustomIDEApplication* App) {
-    s_instance = App;
+  static CustomIDEApplication* GetInstance() {
+    if (s_instance == nullptr) {
+      s_instance = new CustomIDEApplication();
+    }
+    return s_instance;
   }
 
-  void StartApplication();
+  void InitApplication();
 
-  void MainLoop();
+  void RunApplication();
 
   void EndApplication();
 
@@ -251,6 +252,10 @@ public:
   void CreateUIElements();
 
 private:
+  static CustomIDEApplication* s_instance;
+
+  std::string m_applicationName;
+
   const int MIN_WIDTH = 800;
   const int MIN_HEIGHT = 600;
 
@@ -260,6 +265,8 @@ private:
 
   int m_windowWidth;
   int m_windowHeight;
+
+  CustomIDEApplication() {}
 
   VulkanRenderer* m_renderer;
 
