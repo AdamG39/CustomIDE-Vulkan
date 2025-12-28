@@ -49,20 +49,5 @@ std::vector<Vertex<T, C>> TriVectorToSortedVertexVector(std::vector<Triangle<T, 
   return vertices;
 }
 
-template <typename T1, typename C1, typename T2, typename C2>
-std::vector<Vertex<T2, C2>> ConvertVertexVector(const std::vector<Vertex<T1, C1>>& Source) {
-  if constexpr (std::is_same_v<T1, T2> && std::is_same_v<C1, C2>) {
-    // No conversion needed
-    return Source;
-  }
-  std::vector<Vertex<T2, C2>> result;
-  result.reserve(Source.size());
-  for (const auto& v: Source) {
-    result.emplace_back(v);
-  }
-
-  return result;
-}
-
 #endif
 
