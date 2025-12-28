@@ -190,5 +190,15 @@ public:
   Vector2<T> GetPosition() const { return m_position; }
 };
 
+struct ArrayBounds {
+  size_t start;
+  size_t count;
+};
+
+struct TextureArrayBounds {
+  ArrayBounds bounds;
+  int textureIndex;
+};
+
 #endif
 

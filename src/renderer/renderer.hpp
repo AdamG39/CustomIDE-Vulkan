@@ -10,6 +10,7 @@
 #include <vector>
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
+const int MAX_TEXTURES = 100;
 
 class VulkanRenderer {
 public:
@@ -26,7 +27,8 @@ public:
 
   void DrawFrame();
 
-  void FillVertexBuffer(std::vector<Vertex<float, float>> Vertices);
+  void FillVertexBuffer(std::vector<Vertex<float, float>> Vertices,
+                        std::vector<TextureArrayBounds> textureIndexArrayBounds);
 
   GLFWwindow* GetWindow() const { return m_window; }
 
@@ -71,7 +73,8 @@ private:
 
   SwapChain* m_swapchain = nullptr;
 
-  VulkanTexture m_texture;
+  VulkanTexture m_textures[MAX_TEXTURES];
+  VkSampler m_sampler;
 
   VkDescriptorPool m_descriptorPool;
   VkDescriptorSetLayout m_descriptorSetLayout = VK_NULL_HANDLE;
@@ -86,6 +89,7 @@ private:
 
   size_t m_vertexBufferCapacity = 0;
   std::vector<Vertex<float, float>> m_vertexArray;
+  std::vector<TextureArrayBounds> m_textureIndexArrayBounds;
   VkDeviceMemory m_vertexBufferMemory;
   VkBuffer m_vertexBuffer = VK_NULL_HANDLE;
 
@@ -113,11 +117,13 @@ private:
 
   void InitSwapChain();
 
+  void LoadImages(const std::vector<std::string>& filePaths);
+
   void CreateDescriptorSets(VulkanTexture* pTexture, int NumImages);
 
   void CreateDescriptorPool(int NumImages);
 
-  void CreateDescriptorSetLayout(VulkanTexture* pTexture);
+  void CreateDescriptorSetLayout(VulkanTexture* pTexture, int NumImages);
 
   void AllocateDescriptorSets(int NumImages);
 
@@ -135,7 +141,8 @@ private:
 
   void UploadVertexData();
 
-  void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+  void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex,
+                           const std::vector<TextureArrayBounds>& bounds);
 
   void CreateSyncObjects();
 
