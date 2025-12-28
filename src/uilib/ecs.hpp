@@ -14,12 +14,6 @@ private:
 public:
   EntityManager(VulkanRenderer& Renderer) : m_renderer(Renderer) {}
 
-  EntityManager& operator = (const EntityManager& other) {
-    m_entityTree = other.m_entityTree;
-    m_renderer = other.m_renderer;
-    return *this;
-  }
-
   std::vector<std::shared_ptr<Entity>>& GetEntityTree();
 
   Entity& AddEntity();

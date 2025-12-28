@@ -20,38 +20,6 @@ public:
     Start();
   }
 
-  VulkanRenderer& operator = (const VulkanRenderer& other) {
-    m_appName = other.m_appName;
-    m_window = other.m_window;
-    m_instance = other.m_instance;
-    m_surface = other.m_surface;
-    m_physicalDevice = other.m_physicalDevice;
-    m_device = other.m_device;
-    m_graphicsQueue = other.m_graphicsQueue;
-    m_presentQueue = other.m_presentQueue;
-    m_swapchain = other.m_swapchain;
-    m_texture = other.m_texture;
-    m_descriptorPool = other.m_descriptorPool;
-    m_descriptorSetLayout = other.m_descriptorSetLayout;
-    m_descriptorSets = other.m_descriptorSets;
-    m_renderPass = other.m_renderPass;
-    m_clearColour = other.m_clearColour;
-    m_pipelineLayout = other.m_pipelineLayout;
-    m_graphicsPipeline = other.m_graphicsPipeline;
-    m_commandPool = other.m_commandPool;
-    m_commandBuffers = other.m_commandBuffers;
-    m_vertexBufferCapacity = other.m_vertexBufferCapacity;
-    m_vertexArray = other.m_vertexArray;
-    m_vertexBufferMemory = other.m_vertexBufferMemory;
-    m_vertexBuffer = other.m_vertexBuffer;
-    m_imageAvailableSemaphores = other.m_imageAvailableSemaphores;
-    m_renderFinishedSemaphores = other.m_renderFinishedSemaphores;
-    m_inFlightFences = other.m_inFlightFences;
-    m_currentFrame = other.m_currentFrame;
-
-    return *this;
-  }
-
   ~VulkanRenderer() {
     Cleanup();
   }
