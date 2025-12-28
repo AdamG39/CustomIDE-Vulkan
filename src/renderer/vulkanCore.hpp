@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 #include <optional>
 #include <vector>
+#include <string>
 
 struct QueueFamilyIndicies {
   std::optional<uint32_t> graphicsFamily;
@@ -61,6 +62,8 @@ VkSampler CreateTextureSampler(const VkDevice& Device, const VkFilter& MinFilter
 VkRenderPass CreateRenderPass(const VkFormat& SwapChainFormat, const VkDevice& Device);
 
 VkShaderModule CreateShaderModule(const char* pCodeData, size_t CodeSize, const VkDevice& Device);
+
+std::string GetFileNameFromPath(const std::string& filePath, bool includeExtension = false);
 
 void CloseWindowCallback(GLFWwindow* window);
 

@@ -319,3 +319,37 @@ VkShaderModule CreateShaderModule(const char* pCodeData, size_t CodeSize, const 
   return shaderModule;
 }
 
+std::string GetFileNameFromPath(const std::string& filePath, bool includeExtension) {
+  size_t forwardSlash = filePath.find_last_of('/');
+  size_t backSlash = filePath.find_last_of('\\');
+
+  std::string result;
+
+  size_t slashSeperatorPos;
+  if (forwardSlash == std::string::npos &&
+        backSlash == std::string::npos) {
+    slashSeperatorPos = -1;
+  }
+  else {
+    if (forwardSlash == std::string::npos)
+      slashSeperatorPos = backSlash;
+    else if (backSlash == std::string::npos)
+      slashSeperatorPos = forwardSlash;
+    else
+      slashSeperatorPos = (forwardSlash > backSlash) ? forwardSlash : backSlash;
+  }
+
+  result = filePath.substr(slashSeperatorPos + 1);
+
+  if (!includeExtension) {
+    size_t extensionStart = result.find_last_of('.');
+
+    if (extensionStart != std::string::npos)
+      return result.substr(0, extensionStart);
+
+    return result;
+  }
+
+  return result;
+}
+
