@@ -1,2 +1,0 @@
-A Queue is a command buffer that allows for asynchronous execution of the commands within its buffer, therefore returning control flow to the application after commands have been submitted.
-Commands submitted to the buffer are usually executed in submission order however this isn't guaranteed

@@ -3,6 +3,7 @@
 /externals
 /.cache
 /.vscode
+/CustomIDE Docs/.obsidian
 
 # Clang diagnostic files
 .clangd

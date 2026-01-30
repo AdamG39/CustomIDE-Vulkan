@@ -1,0 +1,8 @@
+- Implement text rendering (Just display prerendered text for the appropriate scale)
+- Implement text editing
+	- Define text storage system
+	- Handle adding text
+	- Handle removing text
+	- Handle word wrap
+	- Handle text navigation
+	- Allow for text copy and paste

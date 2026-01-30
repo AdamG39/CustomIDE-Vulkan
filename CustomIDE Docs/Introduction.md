@@ -1,0 +1,2 @@
+This folder contains the documentation for the CustomIDE application including writing plugins, configuration and building.
+CustomIDE is an IDE that uses Vulkan and glfw for rendering and window management. The app uses a custom system for rendering various UI elements. A UI element is defined as an entity that has a series of components that allow for various functions. These UI elements are stored in a hierarchical tree with positioning and sizing relative to the parent element if needed. More info on the UI system can be found here and UI configuration can be found here.
