@@ -3,11 +3,12 @@
 
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
+#include <string>
+#include <vector>
+#include <unordered_map>
 #include "swapChain.hpp"
 #include "shapes.hpp"
 #include "texture.hpp"
-#include <string>
-#include <vector>
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 const int MAX_TEXTURES = 100;
@@ -119,15 +120,15 @@ private:
 
   void LoadImages(const std::vector<std::string>& filePaths);
 
-  void CreateDescriptorSets(VulkanTexture* pTexture, int NumImages);
+  void CreateDescriptorSets(VulkanTexture* Textures, int NumImages);
 
   void CreateDescriptorPool(int NumImages);
 
-  void CreateDescriptorSetLayout(VulkanTexture* pTexture, int NumImages);
+  void CreateDescriptorSetLayout(int NumImages);
 
   void AllocateDescriptorSets(int NumImages);
 
-  void UpdateDescriptorSets(VulkanTexture* pTexture, int NumImages);
+  void UpdateDescriptorSets(VulkanTexture* Textures, int NumImages);
 
   void CreateGraphicsPipeline();
 

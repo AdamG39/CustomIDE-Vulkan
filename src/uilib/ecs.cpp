@@ -34,9 +34,12 @@ void EntityManager::RenderTree() {
       }
 
       Transform* transform = top->GetComponent<Transform>();
+      // TODO: merge colour and texture into one component 
+      //auto renderableComponents = top->GetRenderableComponents();
       StaticColour* staticColour = top->GetComponent<StaticColour>();
       Texture* texture = top->GetComponent<Texture>();
-      // An entity requires a colour/texture component and a transform to be renderered
+      Label* label = top->GetComponent<Label>();
+      // An entity requires a renderable component and a transform to be renderered
       if (transform == nullptr) continue; // Just skip this entity since it cant be renderered
 
       if (staticColour != nullptr) {
@@ -45,6 +48,25 @@ void EntityManager::RenderTree() {
         geometries.emplace_back(transform->GetPixelSize(), transform->GetPixelPosition(), COLOUR_WHITE);
         geometries.back().SetTextureCoords(texture->GetTextureCoords());
         geometries.back().SetTextureIndex(texture->GetTextureIndex());
+      } else if (label != nullptr) {
+        // calculate size of each character based on font
+        Font font = label->GetFont();
+        Vector2 labelPos = transform->GetPixelPosition();
+        Vector2<float> charSize {(float)font.size, (float)font.size};
+        Vector2<float> fontAtlasSize {64, 2};
+        std::string content = label->GetContent();
+        int charsPerLine = transform->GetPixelSize().x / charSize.x;
+        // create a rect for each character
+        for (size_t i = 0; i < content.size(); i++) {
+          Vector2<float> charPosition {
+            labelPos.x + (charSize.x * (i % charsPerLine)),
+            labelPos.y + (((i >= charsPerLine) ? int(i / charsPerLine) + 1 : 1) * charSize.y)
+          };
+          geometries.emplace_back(charSize, charPosition, COLOUR_WHITE);
+          geometries.back().SetTextureIndex(4);
+          auto textureCoords = label->CalculateCharTextureCoords(fontAtlasSize, content[i]);
+          geometries.back().SetTextureCoords(textureCoords);
+        }
       }
       // Dont do anything if either condition isnt met
     }

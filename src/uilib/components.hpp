@@ -2,7 +2,7 @@
 #define CUSTOM_COMPONENTS_H
 
 #include <functional>
-#include <cassert>
+#include <string>
 #include "../renderer/shapes.hpp"
 #include "ui.hpp"
 
@@ -14,7 +14,7 @@ enum ComponentTypes{
   TypeStaticColour,
   TypeTexture,
   TypeButton,
-  TypeText
+  TypeLabel
 };
 
 class IComponent {
@@ -23,6 +23,8 @@ public:
   virtual int GetType() = 0;
   virtual ~IComponent() = default;
 };
+
+class IRenderable : public IComponent {};
 
 class Transform : public IComponent {
 private:
@@ -129,7 +131,7 @@ public:
   UIAnchorType GetAnchor() const { return m_anchor; }
 };
 
-class StaticColour : public IComponent {
+class StaticColour : public IRenderable {
 private:
   Colour<float> m_colour;
 
@@ -149,7 +151,7 @@ public:
   }
 };
 
-class Texture : public IComponent {
+class Texture : public IRenderable {
 private:
   std::array<Vector2<float>, 4> m_textureCoords = {Vector2<float>(0.f, 0.f), Vector2<float>(1.f, 0.f),
                                                    Vector2<float>(0.f, 1.f), Vector2<float>(1.f, 1.f)};
@@ -205,7 +207,6 @@ public:
     if (m_onPress) {
       m_onPress();
     } else {
-      puts("no onpress");
       printf("[Warning]: No OnPress() function assigned for object: %p", this);
     }
   }
@@ -225,10 +226,48 @@ public:
   }
 };
 
-class Text : public IComponent {
+struct Font {
+  int size;
+  std::string familyName;
+  std::string filePath;
+};
+
+class Label : public IRenderable {
+private:
+  Font m_font;
+  //size_t m_length;
+  std::string m_content;
+
 public:
-  static int TypeValue() { return TypeText; }
+  static int TypeValue() { return TypeLabel; }
   int GetType() override { return TypeValue(); }
+
+  Label(Font Font, std::string Content) : m_font(Font), m_content(Content) {}
+
+  Font GetFont() const {
+    return m_font;
+  }
+
+  std::string GetContent() const {
+    return m_content;
+  }
+
+  std::array<Vector2<float>, 4> CalculateCharTextureCoords(Vector2<float> FontAtlasSize, char Character) {
+    Vector2 textureCoordsMax { 1.f / FontAtlasSize.x, 1.f / FontAtlasSize.y };
+
+    return {
+      Vector2<float>(textureCoordsMax.x * Character,
+                     textureCoordsMax.y * int(Character / FontAtlasSize.x)),
+      Vector2<float>((textureCoordsMax.x * Character) + textureCoordsMax.x,
+                     textureCoordsMax.y * int(Character / FontAtlasSize.x)),
+      Vector2<float>(textureCoordsMax.x * Character,
+                     (textureCoordsMax.y * int(Character / FontAtlasSize.x)) +
+                     textureCoordsMax.y),
+      Vector2<float>((textureCoordsMax.x * Character) + textureCoordsMax.x,
+                     (textureCoordsMax.y * int(Character / FontAtlasSize.x)) +
+                     textureCoordsMax.y)
+    };
+  }
 };
 
 #endif

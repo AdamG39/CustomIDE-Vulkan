@@ -196,14 +196,14 @@ void VulkanRenderer::RecreateSwapChain() {
   m_swapchain->RecreateSwapChain(m_renderPass);
 }
 
-void VulkanRenderer::CreateDescriptorSets(VulkanTexture* pTexture, int NumImages) {
+void VulkanRenderer::CreateDescriptorSets(VulkanTexture* Textures, int NumImages) {
   CreateDescriptorPool(NumImages);
 
-  CreateDescriptorSetLayout(pTexture, NumImages);
+  CreateDescriptorSetLayout(NumImages);
 
   AllocateDescriptorSets(NumImages);
 
-  UpdateDescriptorSets(pTexture, NumImages);
+  UpdateDescriptorSets(Textures, NumImages);
 }
 
 void VulkanRenderer::CreateDescriptorPool(int NumImages) {
@@ -235,7 +235,7 @@ void VulkanRenderer::CreateDescriptorPool(int NumImages) {
     ExitWithError("Failed to create descriptor pool", 1);
 }
 
-void VulkanRenderer::CreateDescriptorSetLayout(VulkanTexture* pTex, int NumImages) {
+void VulkanRenderer::CreateDescriptorSetLayout(int NumImages) {
 	std::vector<VkDescriptorSetLayoutBinding> LayoutBindings;
 
 	VkDescriptorSetLayoutBinding samplerLayoutBinding {
@@ -283,7 +283,7 @@ void VulkanRenderer::AllocateDescriptorSets(int NumImages) {
     ExitWithError("Failed to allocate for descriptor sets", 1);
 }
 
-void VulkanRenderer::UpdateDescriptorSets(VulkanTexture* pTexture, int NumImages) {
+void VulkanRenderer::UpdateDescriptorSets(VulkanTexture* Textures, int NumImages) {
   VkDescriptorImageInfo imageInfos[MAX_TEXTURES];
 
   VkFilter minFilter = VK_FILTER_LINEAR;
@@ -298,7 +298,7 @@ void VulkanRenderer::UpdateDescriptorSets(VulkanTexture* pTexture, int NumImages
 
   for (uint32_t i = 0; i < MAX_TEXTURES; i++) {
     imageInfos[i].sampler = nullptr;
-    imageInfos[i].imageView = pTexture[i].view;
+    imageInfos[i].imageView = Textures[i].view;
     imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
   }
 
@@ -329,11 +329,8 @@ void VulkanRenderer::UpdateDescriptorSets(VulkanTexture* pTexture, int NumImages
 
 void VulkanRenderer::LoadImages(const std::vector<std::string>& filePaths) {
   int i = 0;
-  for (std::string filePath : filePaths) {
+  for (std::string filepath : filePaths) {
     m_textures[i] = VulkanTexture();
-    CreateTexture(filePath.c_str(), m_textures[i], m_device, m_physicalDevice,
-        m_commandBuffers.data(), m_currentFrame, m_graphicsQueue);
-    i++;
   }
 }
 
@@ -341,7 +338,9 @@ void VulkanRenderer::CreateGraphicsPipeline() {
   std::vector<std::string> filePaths = {
     "../assets/textures/pngTest.png",
     "../assets/textures/test.bmp",
-    "../assets/textures/cross.png"
+    "../assets/textures/cross.png",
+    "../assets/unscii-alt-font.png",
+    "../assets/unscii-alt-font-32.png"
   };
   LoadImages(filePaths);
 

@@ -152,7 +152,7 @@ std::shared_ptr<Image> ParsePNGData(const std::vector<char>& Data, uint32_t Offs
     uint8_t filterType = pixelVector[i];
     i++;
     for (size_t LineByteOffset = 0; LineByteOffset < Stride; LineByteOffset++) {
-      uint8_t reconX;
+      uint8_t reconX = 0;
       uint8_t filterX = pixelVector[i];
       i++;
       if (filterType == 0)
@@ -170,15 +170,6 @@ std::shared_ptr<Image> ParsePNGData(const std::vector<char>& Data, uint32_t Offs
       returnPtr->pixels[pixelArrayIndex++] = reconX;
     }
   }
-
-  std::ofstream tempOutput;
-  tempOutput.open("test.txt", std::ofstream::out | std::ofstream::binary);
-  if (!tempOutput.is_open())
-    ExitWithError("Failed to open png test file", -22);
-  for (size_t i = 0; i < PixelDataSize; i++) {
-    tempOutput << returnPtr->pixels[i];
-  }
-  tempOutput.close();
 
   return returnPtr;
 }
