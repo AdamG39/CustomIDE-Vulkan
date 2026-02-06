@@ -226,10 +226,17 @@ public:
   }
 };
 
+enum TextType {
+  Normal,
+  Bold,
+  Italic
+};
+
 struct Font {
-  int size;
+  Vector2<int> size;
   std::string familyName;
-  std::string filePath;
+  Colour<float> colour;
+  TextType type = Normal;
 };
 
 class Label : public IRenderable {

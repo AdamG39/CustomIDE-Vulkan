@@ -291,5 +291,7 @@ private:
   void HandleDragging();
 };
 
+Font CreateFont(const std::string& Filepath, const Colour<float>& FontColour);
+
 #endif
 

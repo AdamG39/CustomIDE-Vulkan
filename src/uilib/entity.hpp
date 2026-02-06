@@ -9,7 +9,7 @@ class Entity {
 private:
   std::vector<std::shared_ptr<IComponent>> m_components;
   std::vector<std::shared_ptr<Entity>> m_children;
-  std::shared_ptr<Entity> m_parent;
+  Entity* m_parent;
 
 public:
   Entity(Vector2<UISize<float>> Size = {}, Vector2<UISize<float>> Position = {}, Entity* Parent = nullptr)
@@ -65,12 +65,12 @@ public:
     return renderableComps;
   }
 
-  std::shared_ptr<Entity> GetParent() {
+  Entity* GetParent() {
     return m_parent;
   }
 
   void SetParent(Entity* Parent) {
-    m_parent = std::shared_ptr<Entity>(Parent);
+    m_parent = Parent;
   }
 
   void AddChild(const Entity& Child) {

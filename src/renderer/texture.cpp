@@ -22,6 +22,52 @@ void VulkanTexture::Destroy(VkDevice Device) {
   }
 }
 
+TextureBufferMap::TextureBufferMap(size_t MaxTextures) {
+  m_maxCapacity = MaxTextures;
+}
+
+const VulkanTexture& TextureBufferMap::operator[](size_t Index) const {
+  if (Index >= m_size)
+    ExitWithError("Index out of bounds of TextureBufferMap array", -33);
+
+  return m_textures[Index];
+}
+
+
+VulkanTexture& TextureBufferMap::operator[](std::string FileName) {
+  if (size_t pos = Contains(FileName); pos != m_size) { // Filename exists as a key
+    return m_textures[pos];
+  }
+
+  return m_textures[Insert(FileName)];
+}
+
+size_t TextureBufferMap::Insert(std::string FileName, VulkanTexture Texture) {
+  if (m_size == m_maxCapacity)
+    ExitWithError("TextureBufferMap capacity reached failed to insert VulkanTexture", -34);
+
+  m_textures.push_back(Texture);
+  m_fileNames.push_back(FileName);
+
+  m_size++;
+
+  return m_size - 1;
+}
+
+size_t TextureBufferMap::Contains(std::string FileName) const {
+  for (size_t i = 0; i < m_size; i++) {
+    if (m_fileNames[i] == FileName) return i;
+  }
+
+  return m_size;
+}
+
+void TextureBufferMap::Destroy(VkDevice Device) {
+  for (size_t i = 0; i < m_size; i++) {
+    m_textures[i].Destroy(Device);
+  }
+}
+
 void CreateTexture(const char* pFilename, VulkanTexture& Texture,
                    const VkDevice& Device, const VkPhysicalDevice& PhysicalDevice,
                    const VkCommandBuffer* CommandBuffers, uint32_t CommandBufferIndex,

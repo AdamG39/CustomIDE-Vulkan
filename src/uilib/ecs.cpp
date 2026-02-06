@@ -1,5 +1,6 @@
 #include <stack>
 #include "ecs.hpp"
+#include "../helpers/errors/errors.hpp"
 
 std::vector<std::shared_ptr<Entity>>& EntityManager::GetEntityTree() {
   return m_entityTree;
@@ -52,18 +53,19 @@ void EntityManager::RenderTree() {
         // calculate size of each character based on font
         Font font = label->GetFont();
         Vector2 labelPos = transform->GetPixelPosition();
-        Vector2<float> charSize {(float)font.size, (float)font.size};
         Vector2<float> fontAtlasSize {64, 2};
         std::string content = label->GetContent();
-        int charsPerLine = transform->GetPixelSize().x / charSize.x;
+        int charsPerLine = transform->GetPixelSize().x / font.size.x;
         // create a rect for each character
         for (size_t i = 0; i < content.size(); i++) {
           Vector2<float> charPosition {
-            labelPos.x + (charSize.x * (i % charsPerLine)),
-            labelPos.y + (((i >= charsPerLine) ? int(i / charsPerLine) + 1 : 1) * charSize.y)
+            labelPos.x + (font.size.x * (i % charsPerLine)),
+            labelPos.y + (((i >= charsPerLine) ? int(i / charsPerLine) + 1 : 1) * font.size.y)
           };
-          geometries.emplace_back(charSize, charPosition, COLOUR_WHITE);
-          geometries.back().SetTextureIndex(4);
+          geometries.emplace_back(font.size, charPosition, font.colour);
+          auto imageIndex = m_renderer.GetImageIndexFromName(font.familyName);
+          if (imageIndex < 0) ExitWithError("No image with that name found", -35);
+          geometries.back().SetTextureIndex(imageIndex);
           auto textureCoords = label->CalculateCharTextureCoords(fontAtlasSize, content[i]);
           geometries.back().SetTextureCoords(textureCoords);
         }

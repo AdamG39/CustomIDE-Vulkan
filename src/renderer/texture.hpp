@@ -2,14 +2,46 @@
 #define CUSTOM_VULKAN_TEXTURE_H
 
 #include <vulkan/vulkan.h>
+#include <vector>
+#include <string>
+#include "shapes.hpp"
+
+struct ImageMetadata {
+  Vector2<int> dimensions;
+};
 
 struct VulkanTexture {
+  ImageMetadata metadata {};
   VkImage image = VK_NULL_HANDLE;
   VkDeviceMemory memory = VK_NULL_HANDLE;
   VkImageView view = VK_NULL_HANDLE;
   VkSampler sampler = VK_NULL_HANDLE;
 
   VulkanTexture() {}
+
+  void Destroy(VkDevice Device);
+};
+
+class TextureBufferMap {
+private:
+  std::vector<VulkanTexture> m_textures;
+  size_t m_maxCapacity = NULL;
+  size_t m_size = NULL;
+  std::vector<std::string> m_fileNames;
+
+public:
+  TextureBufferMap(size_t MaxTextures);
+
+  const VulkanTexture& operator[](size_t Index) const;
+  VulkanTexture& operator[](std::string FileName);
+
+  size_t Insert(std::string FileName, VulkanTexture Texture = VulkanTexture());
+
+  size_t Capacity() const { return m_maxCapacity; }
+
+  size_t Size() const { return m_size; }
+
+  size_t Contains(std::string FileName) const;
 
   void Destroy(VkDevice Device);
 };

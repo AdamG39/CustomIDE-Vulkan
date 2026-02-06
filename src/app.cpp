@@ -1,18 +1,11 @@
 #include "app.hpp"
 #include "io/io.hpp"
 #include "helpers/errors/errors.hpp"
+#include "renderer/vulkanCore.hpp"
 #include <GLFW/glfw3.h>
 
 /*\ ---- TODO: ----
- *  [X] Have a basic vulkan implementation to draw a flat colour for the window
- *  [X] Draw a rectangle to represent new title bar
- *  [X] Render quads for custom buttons with textures
- *  [X] Ensure new title bar doesnt interfere with the rest of the windows ui
- *  [X] Implement window dragging
- *  [X] Implement window resizing
- *  [X] Implement minimise, maximise and close buttons
  *  [ ] Dim or change colour of title bar when window is unfocused
- *  [ ] Update button class to contain additional functions such as OnHover, OnRelease etc
  *  [ ] Create a dropdown UI element
  *  [ ] Allow for text rendering
  *  [ ] Create a text field UI element
@@ -210,7 +203,13 @@ void CustomIDEApplication::CreateUIElements() {
   closeButton.AddComponent<Button>();
   Button* temp = closeButton.GetComponent<Button>();
   temp->SetOnRelease(&glfwSetWindowShouldClose, m_renderer->GetWindow(), GLFW_TRUE);
-  temp->SetOnPress(&printf, "window is %s", "closing");
+
+  closeButton.AddChild(Entity(Vector2<UISize<float>>({40.f}, {40.f}),
+                              Vector2<UISize<float>>({0.f, SizeMode::Proportional}, {0.f, SizeMode::Proportional})));
+
+  std::shared_ptr closeButtonCross = closeButton.GetChild(0);
+
+  closeButtonCross->AddComponent<Texture>(2);
 
   Entity& test = m_tree->AddEntity(Vector2<UISize<float>>({800.f, 800.f}),
                                    Vector2<UISize<float>>({0.f, 0.f}));
@@ -218,9 +217,23 @@ void CustomIDEApplication::CreateUIElements() {
   test.AddComponent<StaticColour>(THEME_DARK_COLOUR_1);
 
   Entity& textureTest = m_tree->AddEntity(Vector2<UISize<float>>({800.f, 800.f}),
-                                          Vector2<UISize<float>>({800.f, 0.f}));
+                                          Vector2<UISize<float>>({0.f, 0.f}));
 
-  textureTest.AddComponent<Texture>();
+  textureTest.AddComponent<Texture>(0);
+
+  Entity& textureTest2 = m_tree->AddEntity(Vector2<UISize<float>>({400.f, 400.f}),
+                                           Vector2<UISize<float>>({400.f, 0.f}));
+
+  textureTest2.AddComponent<Texture>(1);
+
+  Entity& titleLabel = m_tree->AddEntity(Vector2<UISize<float>>({600.f, 40.f}),
+                                         Vector2<UISize<float>>({20.f, 5.f}));
+
+  titleLabel.GetComponent<Transform>()->SetAnchor(UIAnchorType::TopLeft);
+
+  Font font = CreateFont("../assets/unscii-alt-font-16.png", COLOUR_WHITE);
+
+  titleLabel.AddComponent<Label>(font, "CustomIDE | File | Edit");
 }
 
 bool CursorAtHorizontalBorder(double xpos, ResizeSide* side) {
@@ -355,5 +368,20 @@ void ToggleMaximiseCallback(GLFWwindow* Window) {
 
 void MinimiseCallback(GLFWwindow* Window) {
   glfwIconifyWindow(Window);
+}
+
+Font CreateFont(const std::string& Filepath, const Colour<float>& FontColour) {
+  Font font;
+
+  font.colour = FontColour;
+
+  auto renderer = CustomIDEApplication::GetInstance()->GetRenderer();
+  renderer->LoadImage(Filepath);
+  std::string fileName = GetFileNameFromPath(Filepath);
+  Vector2<int> dimensions = renderer->GetImageDimensions(renderer->GetImageIndexFromName(fileName));
+  font.size = { dimensions.x / 64, dimensions.y / 2 };
+  font.familyName = fileName;
+
+  return font;
 }
 

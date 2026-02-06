@@ -5,7 +5,6 @@
 #include <GLFW/glfw3.h>
 #include <string>
 #include <vector>
-#include <unordered_map>
 #include "swapChain.hpp"
 #include "shapes.hpp"
 #include "texture.hpp"
@@ -41,6 +40,17 @@ public:
     m_clearColour = {{{ClearColour.r, ClearColour.g, ClearColour.b, ClearColour.a}}};
   }
 
+  void LoadImage(const std::string& Filepath, bool UpdateDescriptors = false);
+
+  long long GetImageIndexFromName(const std::string& FileName) const {
+    auto pos = m_textures.Contains(FileName);
+    return (pos != m_textures.Size()) ? pos : -1;
+  }
+
+  Vector2<int> GetImageDimensions(size_t ImageIndex) const {
+    return m_textures[ImageIndex].metadata.dimensions;
+  }
+
 private:
   const uint32_t WIDTH = 1920;
   const uint32_t HEIGHT = 1080;
@@ -74,8 +84,8 @@ private:
 
   SwapChain* m_swapchain = nullptr;
 
-  VulkanTexture m_textures[MAX_TEXTURES];
-  VkSampler m_sampler;
+  TextureBufferMap m_textures {(size_t)MAX_TEXTURES};
+  VkSampler m_sampler = VK_NULL_HANDLE;
 
   VkDescriptorPool m_descriptorPool;
   VkDescriptorSetLayout m_descriptorSetLayout = VK_NULL_HANDLE;
@@ -118,9 +128,9 @@ private:
 
   void InitSwapChain();
 
-  void LoadImages(const std::vector<std::string>& filePaths);
+  void LoadImages(const std::vector<std::string>& Filepaths);
 
-  void CreateDescriptorSets(VulkanTexture* Textures, int NumImages);
+  void CreateDescriptorSets(const TextureBufferMap& Textures, int NumImages);
 
   void CreateDescriptorPool(int NumImages);
 
@@ -128,7 +138,7 @@ private:
 
   void AllocateDescriptorSets(int NumImages);
 
-  void UpdateDescriptorSets(VulkanTexture* Textures, int NumImages);
+  void UpdateDescriptorSets(const TextureBufferMap& Textures, int NumImages);
 
   void CreateGraphicsPipeline();
 
