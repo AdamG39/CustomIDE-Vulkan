@@ -6,17 +6,17 @@
 #include <utility>
 
 // Standard colours
-#define COLOUR_CLEAR  Colour(0xFFFFFF, 0.0f)
-#define COLOUR_BLACK  Colour(0x000000, 1.0f)
-#define COLOUR_WHITE  Colour(0xFFFFFF, 1.0f)
-#define COLOUR_RED    Colour(0xFF0000, 1.0f)
-#define COLOUR_GREEN  Colour(0x00FF00, 1.0f)
-#define COLOUR_BLUE   Colour(0x0000FF, 1.0f)
+#define COLOUR_CLEAR  Colour(0xFFFFFF, 0.f)
+#define COLOUR_BLACK  Colour(0x000000, 1.f)
+#define COLOUR_WHITE  Colour(0xFFFFFF, 1.f)
+#define COLOUR_RED    Colour(0xFF0000, 1.f)
+#define COLOUR_GREEN  Colour(0x00FF00, 1.f)
+#define COLOUR_BLUE   Colour(0x0000FF, 1.f)
 
 // Theme colours
   // Dark Theme
-    #define THEME_DARK_COLOUR_0 Colour(0x3B1C32, 1.0f)
-    #define THEME_DARK_COLOUR_1 Colour(0x1A1A1D, 1.0f)
+    #define THEME_DARK_COLOUR_0 Colour(0x3B1C32, 1.f)
+    #define THEME_DARK_COLOUR_1 Colour(0x1A1A1D, 1.f)
 
 template <typename T>
 struct Vector2 {

@@ -376,7 +376,7 @@ Font CreateFont(const std::string& Filepath, const Colour<float>& FontColour) {
   font.colour = FontColour;
 
   auto renderer = CustomIDEApplication::GetInstance()->GetRenderer();
-  renderer->LoadImage(Filepath);
+  renderer->LoadImage(Filepath, true);
   std::string fileName = GetFileNameFromPath(Filepath);
   Vector2<int> dimensions = renderer->GetImageDimensions(renderer->GetImageIndexFromName(fileName));
   font.size = { dimensions.x / 64, dimensions.y / 2 };

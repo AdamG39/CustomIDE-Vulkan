@@ -55,12 +55,12 @@ void EntityManager::RenderTree() {
         Vector2 labelPos = transform->GetPixelPosition();
         Vector2<float> fontAtlasSize {64, 2};
         std::string content = label->GetContent();
-        int charsPerLine = transform->GetPixelSize().x / font.size.x;
+        int charsPerLine = int(transform->GetPixelSize().x) / font.size.x;
         // create a rect for each character
         for (size_t i = 0; i < content.size(); i++) {
           Vector2<float> charPosition {
             labelPos.x + (font.size.x * (i % charsPerLine)),
-            labelPos.y + (((i >= charsPerLine) ? int(i / charsPerLine) + 1 : 1) * font.size.y)
+            labelPos.y + (((i >= charsPerLine) ? int(i / charsPerLine) : 0) * font.size.y)
           };
           geometries.emplace_back(font.size, charPosition, font.colour);
           auto imageIndex = m_renderer.GetImageIndexFromName(font.familyName);

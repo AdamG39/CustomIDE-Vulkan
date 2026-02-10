@@ -263,14 +263,14 @@ public:
     Vector2 textureCoordsMax { 1.f / FontAtlasSize.x, 1.f / FontAtlasSize.y };
 
     return {
-      Vector2<float>(textureCoordsMax.x * Character,
+      Vector2<float>(textureCoordsMax.x * (Character % static_cast<int>(FontAtlasSize.x)),
                      textureCoordsMax.y * int(Character / FontAtlasSize.x)),
-      Vector2<float>((textureCoordsMax.x * Character) + textureCoordsMax.x,
+      Vector2<float>((textureCoordsMax.x * (Character % static_cast<int>(FontAtlasSize.x))) + textureCoordsMax.x,
                      textureCoordsMax.y * int(Character / FontAtlasSize.x)),
-      Vector2<float>(textureCoordsMax.x * Character,
+      Vector2<float>(textureCoordsMax.x * (Character % static_cast<int>(FontAtlasSize.x)),
                      (textureCoordsMax.y * int(Character / FontAtlasSize.x)) +
                      textureCoordsMax.y),
-      Vector2<float>((textureCoordsMax.x * Character) + textureCoordsMax.x,
+      Vector2<float>((textureCoordsMax.x * (Character % static_cast<int>(FontAtlasSize.x))) + textureCoordsMax.x,
                      (textureCoordsMax.y * int(Character / FontAtlasSize.x)) +
                      textureCoordsMax.y)
     };

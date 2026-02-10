@@ -49,22 +49,23 @@ std::vector<Vertex<T, C>> TriVectorToSortedVertexVector(std::vector<Triangle<T, 
   // (a bound encapsulates tris with the same zIndex and textureIndex)
   for (size_t i = 0; i < Tris.size(); i++) {
     size_t start = i * 3;
-    size_t count = 3;
+    size_t count = 1;
 
-    for (size_t j = i + 1; j < Tris.size(); j++) {
-      if (Tris[i].textureIndex != Tris[j].textureIndex) {
-        ArrayBounds bounds { start, count };
-        arrayBounds.push_back({ bounds, Tris[i].textureIndex });
-        i = j - 1;
-        break;
-      }
+    int currentIndex = Tris[i].textureIndex;
+    int counter = i + 1;
 
-      count += 3;
-      if (j == (Tris.size() - 1)) {
-        ArrayBounds bounds { start, count };
-        arrayBounds.push_back({ bounds, Tris[i].textureIndex });
-      }
+    while (counter < Tris.size()) {
+      if (Tris[counter].textureIndex != currentIndex) break;
+      count++;
+      counter++;
     }
+
+    count *= 3;
+
+    ArrayBounds bounds { start, count };
+    arrayBounds.push_back({ bounds, currentIndex });
+
+    i = counter - 1;
   }
 
   for (size_t i = 0; i < Tris.size(); i++) {

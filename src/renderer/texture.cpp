@@ -75,6 +75,8 @@ void CreateTexture(const char* pFilename, VulkanTexture& Texture,
   std::vector<std::shared_ptr<Image>> image;
   if (!ReadImageFile(pFilename, image)) ExitWithError("Failed to load file", -11);
 
+  Texture.metadata.dimensions = { static_cast<int>(image[0]->width), static_cast<int>(image[0]->height) };
+
   VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
   CreateTextureImageFromData(Texture, image[0]->pixels, image[0]->width, image[0]->height, format,
                              Device, PhysicalDevice, CommandBuffers, CommandBufferIndex, GraphicsQueue);
