@@ -71,7 +71,3 @@ void TextBox::Delete(int Position, int Count) {
 
 }
 
-std::string TextBox::GetContent() const {
-
-}
-

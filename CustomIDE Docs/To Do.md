@@ -1,6 +1,4 @@
 - Implement text editing
-	- Define text storage system (use a piece table)
-	- Handle removing text
 	- Handle actual user input
 	- Handle text navigation
 	- Allow for text copy and paste

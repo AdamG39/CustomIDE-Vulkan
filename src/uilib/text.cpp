@@ -99,6 +99,95 @@ void PieceTable::Insert(char Character, int Position) {
 }
 
 void PieceTable::Delete(int Position) {
+  unsigned counter = 0;
+  long long entryIndex = -1;
+  for (size_t i = 0; i < m_entries.size(); i++) {
+    auto entry = m_entries[i];
+    if (Position >= counter && Position <= (counter + (entry.Length - 1))) {
+      entryIndex = i;
+      break;
+    }
 
+    counter += entry.Length;
+  }
+
+  if (entryIndex < 0) ExitWithError("Character to delete is out of bounds of PieceTable", -46);
+
+  PieceTableEntry& entry = m_entries[entryIndex];
+
+  // Found the entry now split it
+  if (counter == Position) { // Character to be deleted at start of this entry
+    entry.Start++;
+    entry.Length--;
+    // If this entry is now empty remove it
+    if (entry.Length == 0) m_entries.erase(m_entries.begin() + entryIndex);
+  }
+
+  else if (counter + (entry.Length - 1) == Position) { // Character to be deleted at end of this entry
+    entry.Length--;
+    // If this entry is now empty remove it
+    if (entry.Length == 0) m_entries.erase(m_entries.begin() + entryIndex);
+  }
+
+  else { // Character to be deleted in the midle of this entry
+    int relativePosition = Position - counter;
+
+    size_t previousLength = entry.Length;
+    entry.Length = relativePosition;
+
+    PieceTableEntry secondPart {
+      .Type = entry.Type,
+      .Start = entry.Start + entry.Length + 1,
+      .Length = previousLength - (entry.Length + 1)
+    };
+
+    if (entryIndex + 1 == m_entries.size())
+      m_entries.push_back(secondPart);
+    else
+      m_entries.insert(m_entries.begin() + entryIndex + 1, secondPart);
+  }
+}
+
+std::string PieceTable::GetContent() const {
+  std::string result;
+
+  for (auto entry : m_entries) {
+    if (entry.Type == PieceTableBufferType::Original) {
+      result.append(m_original.substr(entry.Start, entry.Length));
+    } else {
+      result.append(m_add.substr(entry.Start, entry.Length));
+    }
+  }
+
+  return result;
+}
+
+#include <iostream>
+
+void PieceTable::Print() {
+  std::string result;
+
+  for (auto entry : m_entries) {
+    if (entry.Type == PieceTableBufferType::Original) {
+      result.append(m_original.substr(entry.Start, entry.Length));
+    } else {
+      result.append(m_add.substr(entry.Start, entry.Length));
+    }
+  }
+
+  std::cout << result << std::endl;
+}
+
+void PieceTable::DebugPrint() {
+  std::cout << "PieceTable:" << std::endl;
+
+  std::cout << "Original Buffer: { " << m_original << " }" << std::endl;
+  std::cout << "Add Buffer: { " << m_add << " }\n" << std::endl;
+
+  for (auto entry : m_entries) {
+    std::cout << "(Entry): ";
+    std::cout << "Type: " << ((entry.Type == PieceTableBufferType::Original) ? "Original" : "Add");
+    std::cout << ", Start: " << entry.Start << ", Length: " << entry.Length << std::endl;
+  }
 }
 

@@ -7,8 +7,6 @@
 /*\ ---- TODO: ----
  *  [ ] Dim or change colour of title bar when window is unfocused
  *  [ ] Create a dropdown UI element
- *  [ ] Allow for text rendering
- *  [ ] Create a text field UI element
 \*/
 
 bool framebufferResized = false;

@@ -40,6 +40,7 @@ void EntityManager::RenderTree() {
       StaticColour* staticColour = top->GetComponent<StaticColour>();
       Texture* texture = top->GetComponent<Texture>();
       Label* label = top->GetComponent<Label>();
+      TextBox* textBox = top->GetComponent<TextBox>();
       // An entity requires a renderable component and a transform to be renderered
       if (transform == nullptr) continue; // Just skip this entity since it cant be renderered
 
@@ -67,6 +68,26 @@ void EntityManager::RenderTree() {
           if (imageIndex < 0) ExitWithError("No image with that name found", -35);
           geometries.back().SetTextureIndex(imageIndex);
           auto textureCoords = label->CalculateCharTextureCoords(fontAtlasSize, content[i]);
+          geometries.back().SetTextureCoords(textureCoords);
+        }
+      } else if (textBox != nullptr) {
+        // calculate size of each character based on font
+        Font font = textBox->GetFont();
+        Vector2 labelPos = transform->GetPixelPosition();
+        Vector2<float> fontAtlasSize {64, 2};
+        std::string content = textBox->GetContent();
+        int charsPerLine = int(transform->GetPixelSize().x) / font.size.x;
+        // create a rect for each character
+        for (size_t i = 0; i < content.size(); i++) {
+          Vector2<float> charPosition {
+            labelPos.x + (font.size.x * (i % charsPerLine)),
+            labelPos.y + (((i >= charsPerLine) ? int(i / charsPerLine) : 0) * font.size.y)
+          };
+          geometries.emplace_back(font.size, charPosition, font.colour);
+          auto imageIndex = m_renderer.GetImageIndexFromName(font.familyName);
+          if (imageIndex < 0) ExitWithError("No image with that name found", -35);
+          geometries.back().SetTextureIndex(imageIndex);
+          auto textureCoords = textBox->CalculateCharTextureCoords(fontAtlasSize, content[i]);
           geometries.back().SetTextureCoords(textureCoords);
         }
       }

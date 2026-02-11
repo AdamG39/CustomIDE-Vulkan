@@ -68,6 +68,12 @@ public:
   void Insert(char Character, int Position);
 
   void Delete(int Position);
+
+  std::string GetContent() const;
+
+  void Print();
+
+  void DebugPrint();
 };
 
 #endif

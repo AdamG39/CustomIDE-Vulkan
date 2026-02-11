@@ -197,7 +197,11 @@ public:
   void Delete(int Position) { m_table.Delete(Position); }
   void Delete(int Position, int Count);
 
-  std::string GetContent() const override;
+  std::string GetContent() const override { return m_table.GetContent(); }
+
+  void Print() { m_table.Print(); }
+
+  void DebugPrint() { m_table.DebugPrint(); }
 };
 
 #endif
