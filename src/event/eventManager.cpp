@@ -36,7 +36,7 @@ bool EventHandler::HandleWindowEvent(const EventInfo& Info) {
 }
 
 bool EventHandler::HandleKeyboardEvent(const EventInfo& Info) {
-  if (Info.KeyboardInfo.Action != GLFW_PRESS) return true;
+  if (Info.KeyboardInfo.Action == GLFW_RELEASE) return true;
   auto& entityTree = Info.EntityManager->GetEntityTree();
 
   bool foundTextBox = false;
@@ -50,11 +50,26 @@ bool EventHandler::HandleKeyboardEvent(const EventInfo& Info) {
       const char* temp = glfwGetKeyName(Info.KeyboardInfo.Key, 0);
       char keyChar = (temp != nullptr) ? temp[0] : NULL;
 
-      if (Info.KeyboardInfo.Key == GLFW_KEY_BACKSPACE) {
+      switch (Info.KeyboardInfo.Key) {
+      case GLFW_KEY_BACKSPACE:
         textBox->Delete(textBox->GetContent().size() - 1);
-      } else if (Info.KeyboardInfo.Key == GLFW_KEY_SPACE) {
+        break;
+      case GLFW_KEY_DELETE:
+        textBox->Delete(textBox->GetContent().size());
+        break;
+      case GLFW_KEY_SPACE:
         textBox->Insert(' ', textBox->GetContent().size());
-      } else if (keyChar != NULL) {
+        break;
+      case GLFW_KEY_ENTER:
+        textBox->Insert('\n', textBox->GetContent().size());
+        break;
+      case GLFW_KEY_A ... GLFW_KEY_Z:
+        // use uppercase A..Z when shift is pressed
+        textBox->Insert(keyChar + 
+            ((Info.KeyboardInfo.Modifications & GLFW_MOD_SHIFT) ? 0x20 : 0),
+            textBox->GetContent().size());
+        break;
+      default:
         textBox->Insert(keyChar, textBox->GetContent().size());
       }
     }

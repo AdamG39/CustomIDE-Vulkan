@@ -39,8 +39,10 @@ void EntityManager::RenderTree() {
       //auto renderableComponents = top->GetRenderableComponents();
       StaticColour* staticColour = top->GetComponent<StaticColour>();
       Texture* texture = top->GetComponent<Texture>();
-      Label* label = top->GetComponent<Label>();
-      TextBox* textBox = top->GetComponent<TextBox>();
+      IText* textObj = top->GetComponent<Label>();
+      if (textObj == nullptr)
+        textObj = top->GetComponent<TextBox>();
+
       // An entity requires a renderable component and a transform to be renderered
       if (transform == nullptr) continue; // Just skip this entity since it cant be renderered
 
@@ -50,48 +52,42 @@ void EntityManager::RenderTree() {
         geometries.emplace_back(transform->GetPixelSize(), transform->GetPixelPosition(), COLOUR_WHITE);
         geometries.back().SetTextureCoords(texture->GetTextureCoords());
         geometries.back().SetTextureIndex(texture->GetTextureIndex());
-      } else if (label != nullptr) {
+      } else if (textObj != nullptr) {
         // calculate size of each character based on font
-        Font font = label->GetFont();
-        Vector2 labelPos = transform->GetPixelPosition();
+        Font font = textObj->GetFont();
+        Vector2 textObjPos = transform->GetPixelPosition();
         Vector2<float> fontAtlasSize {64, 2};
-        std::string content = label->GetContent();
+        std::string content = textObj->GetContent();
         int charsPerLine = int(transform->GetPixelSize().x) / font.size.x;
         // create a rect for each character
+        int linePosition = 0;
+        int lineCount = 0;
         for (size_t i = 0; i < content.size(); i++) {
+          if (content[i] == '\n') {
+            lineCount++;
+            linePosition = 0;
+            continue;
+          }
+
           Vector2<float> charPosition {
-            labelPos.x + (font.size.x * (i % charsPerLine)),
-            labelPos.y + (((i >= charsPerLine) ? int(i / charsPerLine) : 0) * font.size.y)
+            textObjPos.x + (font.size.x * linePosition),
+            textObjPos.y + (lineCount * font.size.y)
           };
+
+          linePosition++;
+          if (linePosition > charsPerLine) { 
+            lineCount++;
+            linePosition = 0;
+          }
+
           geometries.emplace_back(font.size, charPosition, font.colour);
           auto imageIndex = m_renderer.GetImageIndexFromName(font.familyName);
           if (imageIndex < 0) ExitWithError("No image with that name found", -35);
           geometries.back().SetTextureIndex(imageIndex);
-          auto textureCoords = label->CalculateCharTextureCoords(fontAtlasSize, content[i]);
+          auto textureCoords = textObj->CalculateCharTextureCoords(fontAtlasSize, content[i]);
           geometries.back().SetTextureCoords(textureCoords);
         }
-      } else if (textBox != nullptr) {
-        // calculate size of each character based on font
-        Font font = textBox->GetFont();
-        Vector2 labelPos = transform->GetPixelPosition();
-        Vector2<float> fontAtlasSize {64, 2};
-        std::string content = textBox->GetContent();
-        int charsPerLine = int(transform->GetPixelSize().x) / font.size.x;
-        // create a rect for each character
-        for (size_t i = 0; i < content.size(); i++) {
-          Vector2<float> charPosition {
-            labelPos.x + (font.size.x * (i % charsPerLine)),
-            labelPos.y + (((i >= charsPerLine) ? int(i / charsPerLine) : 0) * font.size.y)
-          };
-          geometries.emplace_back(font.size, charPosition, font.colour);
-          auto imageIndex = m_renderer.GetImageIndexFromName(font.familyName);
-          if (imageIndex < 0) ExitWithError("No image with that name found", -35);
-          geometries.back().SetTextureIndex(imageIndex);
-          auto textureCoords = textBox->CalculateCharTextureCoords(fontAtlasSize, content[i]);
-          geometries.back().SetTextureCoords(textureCoords);
-        }
-      }
-      // Dont do anything if either condition isnt met
+      } 
     }
   }
 

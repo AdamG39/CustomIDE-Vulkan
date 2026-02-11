@@ -111,7 +111,8 @@ void PieceTable::Delete(int Position) {
     counter += entry.Length;
   }
 
-  if (entryIndex < 0) ExitWithError("Character to delete is out of bounds of PieceTable", -46);
+  // Character is out of bounds so just ignore call
+  if (entryIndex < 0) return;
 
   PieceTableEntry& entry = m_entries[entryIndex];
 
@@ -162,6 +163,7 @@ std::string PieceTable::GetContent() const {
   return result;
 }
 
+#ifdef _DEBUG
 #include <iostream>
 
 void PieceTable::Print() {
@@ -190,4 +192,6 @@ void PieceTable::DebugPrint() {
     std::cout << ", Start: " << entry.Start << ", Length: " << entry.Length << std::endl;
   }
 }
+
+#endif // _DEBUG
 

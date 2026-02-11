@@ -199,9 +199,11 @@ public:
 
   std::string GetContent() const override { return m_table.GetContent(); }
 
+#ifdef _DEBUG
   void Print() { m_table.Print(); }
 
   void DebugPrint() { m_table.DebugPrint(); }
+#endif // _DEBUG
 };
 
 #endif
