@@ -1,5 +1,4 @@
 - Implement text editing
-	- Handle actual user input
 	- Handle text navigation
 	- Allow for text copy and paste
 	- Handle undo/redo

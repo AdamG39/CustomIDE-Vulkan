@@ -77,5 +77,7 @@ void ToggleMaximiseCallback(GLFWwindow* Window);
 
 void MinimiseCallback(GLFWwindow* Window);
 
+void KeyCallback(GLFWwindow* Window, int Key, int Scancode, int Action, int Mods);
+
 #endif
 

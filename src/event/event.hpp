@@ -7,6 +7,7 @@
 enum EventType {
   Mouse,
   Window,
+  Keyboard,
 };
 
 enum WindowEventAction {
@@ -15,19 +16,30 @@ enum WindowEventAction {
   Minimise,
 };
 
+struct MouseEventInfo {
+  Vector2<float> Position;
+  int Button;
+  int Action;
+  int Modifications;
+};
+
+struct KeyboardEventInfo {
+  int Key;
+  int Scancode;
+  int Action;
+  int Modifications;
+};
+
 struct EventInfo {
   // Application manager pointers
   EntityManager* EntityManager;
   GLFWwindow* Window;
   
-  // Mouse related info
-  Vector2<float> CursorPosition;
-  int MouseButton;
-  int MouseAction;
-  int MouseModifications;
-
-  // Window related info
-  WindowEventAction WindowAction;
+  union {
+    MouseEventInfo MouseInfo;
+    KeyboardEventInfo KeyboardInfo;
+    WindowEventAction WindowAction;
+  };
 };
 
 struct Event {

@@ -199,8 +199,7 @@ void CustomIDEApplication::CreateUIElements() {
 
   closeButton.AddComponent<StaticColour>(COLOUR_RED);
   closeButton.AddComponent<Button>();
-  Button* temp = closeButton.GetComponent<Button>();
-  temp->SetOnRelease(&glfwSetWindowShouldClose, m_renderer->GetWindow(), GLFW_TRUE);
+  closeButton.GetComponent<Button>()->SetOnRelease(&glfwSetWindowShouldClose, m_renderer->GetWindow(), GLFW_TRUE);
 
   closeButton.AddChild(Entity(Vector2<UISize<float>>({40.f}, {40.f}),
                               Vector2<UISize<float>>({0.f, SizeMode::Proportional}, {0.f, SizeMode::Proportional})));
@@ -209,47 +208,40 @@ void CustomIDEApplication::CreateUIElements() {
 
   closeButtonCross->AddComponent<Texture>(2);
 
-  Entity& test = m_tree->AddEntity(Vector2<UISize<float>>({800.f, 800.f}),
-                                   Vector2<UISize<float>>({0.f, 0.f}));
-
-  test.AddComponent<StaticColour>(THEME_DARK_COLOUR_1);
-
-  Entity& textureTest = m_tree->AddEntity(Vector2<UISize<float>>({800.f, 800.f}),
-                                          Vector2<UISize<float>>({0.f, 0.f}));
-
-  textureTest.AddComponent<Texture>(0);
-
-  Entity& textureTest2 = m_tree->AddEntity(Vector2<UISize<float>>({400.f, 400.f}),
-                                           Vector2<UISize<float>>({400.f, 0.f}));
-
-  textureTest2.AddComponent<Texture>(1);
 
   Entity& titleLabel = m_tree->AddEntity(Vector2<UISize<float>>({600.f, 40.f}),
-                                         Vector2<UISize<float>>({20.f, 5.f}));
+                                         Vector2<UISize<float>>({20.f, 20.f}));
 
   titleLabel.GetComponent<Transform>()->SetAnchor(UIAnchorType::TopLeft);
 
   Font font = CreateFont("../assets/unscii-alt-font-16.png", COLOUR_WHITE);
 
   titleLabel.AddComponent<Label>(font, "CustomIDE | File | Edit");
+  
+  Entity& textBox = m_tree->AddEntity(Vector2<UISize<float>>({600.f, 600.f}),
+                                      Vector2<UISize<float>>({20.f, 60.f}));
+
+  textBox.GetComponent<Transform>()->SetAnchor(UIAnchorType::TopLeft);
+  
+  textBox.AddComponent<TextBox>(font, "some test text");
 }
 
-bool CursorAtHorizontalBorder(double xpos, ResizeSide* side) {
+bool CursorAtHorizontalBorder(double xpos, ResizeSide& side) {
   if (xpos >= -BORDER_THICKNESS && xpos <= BORDER_THICKNESS) {
-    *side = ResizeSide::Left;
+    side = ResizeSide::Left;
     return true;
   } else if(xpos >= framebufferWidth - BORDER_THICKNESS && xpos <= framebufferWidth + BORDER_THICKNESS) {
-    *side = ResizeSide::Right;
+    side = ResizeSide::Right;
     return true;
   } else return false;
 }
 
-bool CursorAtVerticalBorder(double ypos, ResizeSide* side) {
+bool CursorAtVerticalBorder(double ypos, ResizeSide& side) {
   if (ypos >= -BORDER_THICKNESS && ypos <= BORDER_THICKNESS) {
-    *side = ResizeSide::Top;
+    side = ResizeSide::Top;
     return true;
   } else if (ypos >= framebufferHeight - BORDER_THICKNESS && ypos <= framebufferHeight + BORDER_THICKNESS) {
-    *side = ResizeSide::Bottom;
+    side = ResizeSide::Bottom;
     return true;
   } else return false;
 }
@@ -264,10 +256,12 @@ void MouseButtonCallback(GLFWwindow* Window, int Button, int Action, int Mods) {
 
   EventInfo info {
     .EntityManager = CustomIDEApplication::GetInstance()->GetEntityManager(),
-    .CursorPosition = Vector2<float>((float)xPos, (float)yPos),
-    .MouseButton = Button,
-    .MouseAction = Action,
-    .MouseModifications = Mods
+    .MouseInfo = {
+      .Position = Vector2<float>((float)xPos, (float)yPos),
+      .Button = Button,
+      .Action = Action,
+      .Modifications = Mods
+    },
   };
   CustomIDEApplication::GetInstance()->GetEventManager()->AddEvent(EventType::Mouse, &info);
 }
@@ -335,9 +329,9 @@ void CursorPositionCallback(GLFWwindow* Window, double xpos, double ypos) {
   // Start resizing if at the border and left click is pressed
   // Stop resizing if left click is released
   if (maximisedState) return; // If maximised then resizing doesnt make sense so just return
-  if (CursorAtHorizontalBorder(xpos, &resizeSide)) {
+  if (CursorAtHorizontalBorder(xpos, resizeSide)) {
     resizeHover = true;
-  } else if (CursorAtVerticalBorder(ypos, &resizeSide)) {
+  } else if (CursorAtVerticalBorder(ypos, resizeSide)) {
     resizeHover = true;
   } else {
     resizeHover = false;
@@ -366,6 +360,20 @@ void ToggleMaximiseCallback(GLFWwindow* Window) {
 
 void MinimiseCallback(GLFWwindow* Window) {
   glfwIconifyWindow(Window);
+}
+
+void KeyCallback(GLFWwindow* Window, int Key, int Scancode, int Action, int Mods) {
+  EventInfo info {
+    .EntityManager = CustomIDEApplication::GetInstance()->GetEntityManager(),
+    .Window = Window,
+    .KeyboardInfo {
+      .Key = Key,
+      .Scancode = Scancode,
+      .Action = Action,
+      .Modifications = Mods
+    },
+  };
+  CustomIDEApplication::GetInstance()->GetEventManager()->AddEvent(EventType::Keyboard, &info);
 }
 
 Font CreateFont(const std::string& Filepath, const Colour<float>& FontColour) {
