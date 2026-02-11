@@ -5,6 +5,7 @@
 #include <string>
 #include "../renderer/shapes.hpp"
 #include "ui.hpp"
+#include "text.hpp"
 
 extern int framebufferWidth;
 extern int framebufferHeight;
@@ -14,7 +15,8 @@ enum ComponentTypes{
   TypeStaticColour,
   TypeTexture,
   TypeButton,
-  TypeLabel
+  TypeLabel,
+  TypeTextBox
 };
 
 class IComponent {
@@ -32,67 +34,9 @@ private:
   Vector2<UISize<float>> m_position;
   UIAnchorType m_anchor = UIAnchorType::Center;
 
-  Vector2<float> CalculateEntitySize(float ParentWidth, float ParentHeight) const {
-    Vector2<float> calculatedSize;
+  Vector2<float> CalculateEntitySize(float ParentWidth, float ParentHeight) const;
 
-    if (m_size.x.Mode == SizeMode::Proportional) {
-      calculatedSize.x = ParentWidth * m_size.x.Value;
-    } else { calculatedSize.x = m_size.x.Value; }
-
-    if (m_size.y.Mode == SizeMode::Proportional) {
-      calculatedSize.y = ParentHeight * m_size.y.Value;
-    } else { calculatedSize.y = m_size.y.Value; }
-
-    return calculatedSize;
-  }
-
-  Vector2<float> CalculateEntityPosition(float ParentWidth, float ParentHeight, const UIAnchorType& Anchor) const {
-    Vector2<float> calculatedPosition;
-
-    switch (Anchor) {
-      case UIAnchorType::Center:
-        calculatedPosition.x = ParentWidth / 2;
-        calculatedPosition.y = ParentHeight / 2;
-        break;
-      case UIAnchorType::Top:
-        calculatedPosition.x = ParentWidth / 2;
-        break;
-      case UIAnchorType::Left:
-        calculatedPosition.y = ParentHeight / 2;
-        break;
-      case UIAnchorType::Right:
-        calculatedPosition.x = ParentWidth;
-        calculatedPosition.y = ParentHeight / 2;
-        break;
-      case UIAnchorType::Bottom:
-        calculatedPosition.x = ParentWidth / 2;
-        calculatedPosition.y = ParentHeight;
-        break;
-      case UIAnchorType::TopLeft:         
-        // Already relative to 0, 0 so no changes needed
-        break;
-      case UIAnchorType::TopRight:
-        calculatedPosition.x = ParentWidth;
-        break;
-      case UIAnchorType::BottomLeft:
-        calculatedPosition.y = ParentHeight;
-        break;
-      case UIAnchorType::BottomRight:
-        calculatedPosition.x = ParentWidth;
-        calculatedPosition.y = ParentHeight;
-        break;
-    }
-
-    if (m_position.x.Mode == SizeMode::Proportional) {
-      calculatedPosition.x += ParentWidth * m_position.x.Value;
-    } else { calculatedPosition.x += m_position.x.Value; }
-
-    if (m_position.y.Mode == SizeMode::Proportional) {
-      calculatedPosition.y += ParentHeight * m_position.y.Value;
-    } else { calculatedPosition.y += m_position.y.Value; }
-
-    return calculatedPosition;
-  }
+  Vector2<float> CalculateEntityPosition(float ParentWidth, float ParentHeight, const UIAnchorType& Anchor) const;
 
 public:
   static int TypeValue() { return TypeTransform; }
@@ -102,9 +46,7 @@ public:
   Transform(Vector2<UISize<float>> Size, Vector2<UISize<float>> Position)
   : m_size(Size), m_position(Position) {}
 
-  void SetSize(const Vector2<UISize<float>>& Size) { 
-    m_size = Size; 
-  }
+  void SetSize(const Vector2<UISize<float>>& Size) { m_size = Size; }
 
   Vector2<UISize<float>> GetSize() const { return m_size; }
 
@@ -142,13 +84,9 @@ public:
   StaticColour() : m_colour() {}
   StaticColour(const Colour<float>& Colour) : m_colour(Colour) {}
 
-  void SetColour(const Colour<float>& Colour) {
-    m_colour = Colour;
-  }
+  void SetColour(const Colour<float>& Colour) { m_colour = Colour; }
 
-  Colour<float> GetColour() const {
-    return m_colour;
-  }
+  Colour<float> GetColour() const { return m_colour; }
 };
 
 class Texture : public IRenderable {
@@ -161,9 +99,7 @@ public:
   static int TypeValue() { return TypeTexture; }
   int GetType() override { return TypeValue(); }
 
-  Texture() = default;
-  Texture(int TextureIndex)
-  : m_textureIndex(TextureIndex) {}
+  Texture(int TextureIndex = -1) : m_textureIndex(TextureIndex) {}
   Texture(int TextureIndex, const std::array<Vector2<float>, 4> TextureCoords)
   : m_textureCoords(std::move(TextureCoords)), m_textureIndex(TextureIndex) {}
 
@@ -226,55 +162,42 @@ public:
   }
 };
 
-enum TextType {
-  Normal,
-  Bold,
-  Italic
-};
-
-struct Font {
-  Vector2<int> size;
-  std::string familyName;
-  Colour<float> colour;
-  TextType type = Normal;
-};
-
-class Label : public IRenderable {
+// Static immutable text label
+class Label : public IRenderable, public IText {
 private:
-  Font m_font;
-  //size_t m_length;
-  std::string m_content;
+  const std::string m_content;
 
 public:
   static int TypeValue() { return TypeLabel; }
   int GetType() override { return TypeValue(); }
 
-  Label(Font Font, std::string Content) : m_font(Font), m_content(Content) {}
+  Label(Font Font, std::string Content) : IText::IText(Font), m_content(Content) {}
 
-  Font GetFont() const {
-    return m_font;
-  }
-
-  std::string GetContent() const {
+  std::string GetContent() const override {
     return m_content;
   }
+};
 
-  std::array<Vector2<float>, 4> CalculateCharTextureCoords(Vector2<float> FontAtlasSize, char Character) {
-    Vector2 textureCoordsMax { 1.f / FontAtlasSize.x, 1.f / FontAtlasSize.y };
+// Mutable text box
+class TextBox : public IRenderable, public IText {
+private:
+  PieceTable m_table;
 
-    return {
-      Vector2<float>(textureCoordsMax.x * (Character % static_cast<int>(FontAtlasSize.x)),
-                     textureCoordsMax.y * int(Character / FontAtlasSize.x)),
-      Vector2<float>((textureCoordsMax.x * (Character % static_cast<int>(FontAtlasSize.x))) + textureCoordsMax.x,
-                     textureCoordsMax.y * int(Character / FontAtlasSize.x)),
-      Vector2<float>(textureCoordsMax.x * (Character % static_cast<int>(FontAtlasSize.x)),
-                     (textureCoordsMax.y * int(Character / FontAtlasSize.x)) +
-                     textureCoordsMax.y),
-      Vector2<float>((textureCoordsMax.x * (Character % static_cast<int>(FontAtlasSize.x))) + textureCoordsMax.x,
-                     (textureCoordsMax.y * int(Character / FontAtlasSize.x)) +
-                     textureCoordsMax.y)
-    };
-  }
+public:
+  static int TypeValue() { return TypeTextBox; }
+  int GetType() override { return TypeValue(); }
+
+  TextBox(Font Font, std::string FileContents = "") : IText::IText(Font), m_table(FileContents) {}
+
+  char Index(unsigned Position) { return m_table.Index(Position); }
+
+  void Insert(char Character, int Position) { m_table.Insert(Character, Position); }
+  void Insert(std::string Content, int Position);
+
+  void Delete(int Position) { m_table.Delete(Position); }
+  void Delete(int Position, int Count);
+
+  std::string GetContent() const override;
 };
 
 #endif

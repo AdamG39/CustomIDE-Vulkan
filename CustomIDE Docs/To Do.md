@@ -1,8 +1,7 @@
 - Implement text editing
-	- Define text storage system
-	- Handle adding text
+	- Define text storage system (use a piece table)
 	- Handle removing text
-	- Handle word wrap (done)
+	- Handle actual user input
 	- Handle text navigation
 	- Allow for text copy and paste
 	- Handle undo/redo
