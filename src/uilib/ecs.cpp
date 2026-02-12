@@ -56,29 +56,52 @@ void EntityManager::RenderTree() {
         // calculate size of each character based on font
         Font font = textObj->GetFont();
         Vector2 textObjPos = transform->GetPixelPosition();
-        Vector2<float> fontAtlasSize {64, 2};
+        Vector2 fontAtlasSize {64.f, 2.f};
         std::string content = textObj->GetContent();
+
         int charsPerLine = int(transform->GetPixelSize().x) / font.size.x;
         // create a rect for each character
         int linePosition = 0;
         int lineCount = 0;
         for (size_t i = 0; i < content.size(); i++) {
-          if (content[i] == '\n') {
+          switch (content[i]) {
+          case '\n':
             lineCount++;
             linePosition = 0;
             continue;
+          case ' ':
+            linePosition++;
+            if (textObj->GetWordWrap()) {
+              if (linePosition > charsPerLine) { 
+                lineCount++;
+                linePosition = 0;
+              }
+            }
+            continue;
+          case '\t':
+            linePosition += 4;
+            if (textObj->GetWordWrap()) {
+              if (linePosition > charsPerLine) { 
+                lineCount++;
+                linePosition = 0;
+              }
+            }
+            continue;
+          }
+
+          linePosition++;
+
+          if (textObj->GetWordWrap()) {
+            if (linePosition > charsPerLine) { 
+              lineCount++;
+              linePosition = 0;
+            }
           }
 
           Vector2<float> charPosition {
             textObjPos.x + (font.size.x * linePosition),
             textObjPos.y + (lineCount * font.size.y)
           };
-
-          linePosition++;
-          if (linePosition > charsPerLine) { 
-            lineCount++;
-            linePosition = 0;
-          }
 
           geometries.emplace_back(font.size, charPosition, font.colour);
           auto imageIndex = m_renderer.GetImageIndexFromName(font.familyName);

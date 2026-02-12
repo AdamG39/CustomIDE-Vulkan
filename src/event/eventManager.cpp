@@ -60,6 +60,9 @@ bool EventHandler::HandleKeyboardEvent(const EventInfo& Info) {
       case GLFW_KEY_SPACE:
         textBox->Insert(' ', textBox->GetContent().size());
         break;
+      case GLFW_KEY_TAB:
+        textBox->Insert('\t', textBox->GetContent().size());
+        break;
       case GLFW_KEY_ENTER:
         textBox->Insert('\n', textBox->GetContent().size());
         break;

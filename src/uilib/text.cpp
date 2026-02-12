@@ -18,7 +18,7 @@ std::array<Vector2<float>, 4> IText::CalculateCharTextureCoords(Vector2<float> F
   };
 }
 
-char PieceTable::Index(unsigned Position) {
+char PieceTable::Index(unsigned Position) const {
   unsigned counter = 0;
   for (auto entry : m_entries) {
     if (Position >= counter && Position <= (counter + (entry.Length - 1))) {

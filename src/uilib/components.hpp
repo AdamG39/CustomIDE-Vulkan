@@ -171,7 +171,8 @@ public:
   static int TypeValue() { return TypeLabel; }
   int GetType() override { return TypeValue(); }
 
-  Label(Font Font, std::string Content) : IText::IText(Font), m_content(Content) {}
+  Label(Font Font, std::string Content, bool WordWrap = false)
+  : IText::IText(Font, WordWrap), m_content(Content) {}
 
   std::string GetContent() const override {
     return m_content;
@@ -187,7 +188,8 @@ public:
   static int TypeValue() { return TypeTextBox; }
   int GetType() override { return TypeValue(); }
 
-  TextBox(Font Font, std::string FileContents = "") : IText::IText(Font), m_table(FileContents) {}
+  TextBox(Font Font, std::string FileContents = "", bool WordWrap = false)
+  : IText::IText(Font, WordWrap), m_table(FileContents) {}
 
   char Index(unsigned Position) { return m_table.Index(Position); }
 

@@ -20,14 +20,19 @@ struct Font {
 };
 
 class IText {
+private:
   Font font;
+  bool m_wordWrap;
 
 public:
-  IText(Font Font) : font(Font) {}
+  IText(Font Font, bool WordWrap = false) : font(Font), m_wordWrap(WordWrap) {}
 
   Font GetFont() const {
     return font;
   }
+
+  void SetWordWrap(bool Value) { m_wordWrap = Value; }
+  bool GetWordWrap() { return m_wordWrap; }
 
   virtual std::string GetContent() const = 0;
 
@@ -47,7 +52,7 @@ struct PieceTableEntry {
 
 class PieceTable {
 private:
-  std::string m_original;
+  const std::string m_original;
   std::string m_add;
 
   std::vector<PieceTableEntry> m_entries;
@@ -63,7 +68,7 @@ public:
     m_entries.push_back(initialEntry);
   }
 
-  char Index(unsigned Position);
+  char Index(unsigned Position) const;
 
   void Insert(char Character, int Position);
 
@@ -71,9 +76,11 @@ public:
 
   std::string GetContent() const;
 
+#ifdef _DEBUG
   void Print();
 
   void DebugPrint();
+#endif // _DEBUG
 };
 
 #endif
