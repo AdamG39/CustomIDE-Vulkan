@@ -44,8 +44,9 @@ void PieceTable::Insert(char Character, int Position) {
   // Need to find which entry to add to
   unsigned counter = 0;
   long long entryIndex = -1;
-  for (size_t i = 0; i < m_entries.size(); i++) {
-    auto entry = m_entries[i];
+  auto it = m_entries.begin();
+  for (size_t i = 0; i < m_entries.size(); i++, it++) {
+    auto entry = *it;
     if (Position >= counter && Position <= (counter + (entry.Length - 1))) {
       entryIndex = i;
       break;
@@ -66,12 +67,13 @@ void PieceTable::Insert(char Character, int Position) {
     return;
   }
 
-  PieceTableEntry& entry = m_entries[entryIndex];
+  PieceTableEntry& entry = *it;
 
   // Found the entry now split it
   if (counter == Position) { // Character to be inserted at start of this entry
     // Create a new entry and add before the current one
-    m_entries.insert(m_entries.begin() + entryIndex, newEntry);
+    
+    m_entries.insert(it, newEntry);
     return;
   }
 
@@ -92,8 +94,9 @@ void PieceTable::Insert(char Character, int Position) {
       m_entries.push_back(newEntry);
       m_entries.push_back(secondPart);
     } else {
-      m_entries.insert(m_entries.begin() + entryIndex + 1, secondPart);
-      m_entries.insert(m_entries.begin() + entryIndex + 1, newEntry);
+      it++;
+      m_entries.insert(it, secondPart);
+      m_entries.insert(it, newEntry);
     }
   } 
 }
@@ -101,8 +104,9 @@ void PieceTable::Insert(char Character, int Position) {
 void PieceTable::Delete(int Position) {
   unsigned counter = 0;
   long long entryIndex = -1;
-  for (size_t i = 0; i < m_entries.size(); i++) {
-    auto entry = m_entries[i];
+  auto it = m_entries.begin();
+  for (size_t i = 0; i < m_entries.size(); i++, it++) {
+    auto entry = *it;
     if (Position >= counter && Position <= (counter + (entry.Length - 1))) {
       entryIndex = i;
       break;
@@ -114,20 +118,16 @@ void PieceTable::Delete(int Position) {
   // Character is out of bounds so just ignore call
   if (entryIndex < 0) return;
 
-  PieceTableEntry& entry = m_entries[entryIndex];
+  PieceTableEntry& entry = *it;
 
   // Found the entry now split it
   if (counter == Position) { // Character to be deleted at start of this entry
     entry.Start++;
     entry.Length--;
-    // If this entry is now empty remove it
-    if (entry.Length == 0) m_entries.erase(m_entries.begin() + entryIndex);
   }
 
   else if (counter + (entry.Length - 1) == Position) { // Character to be deleted at end of this entry
     entry.Length--;
-    // If this entry is now empty remove it
-    if (entry.Length == 0) m_entries.erase(m_entries.begin() + entryIndex);
   }
 
   else { // Character to be deleted in the midle of this entry
@@ -144,9 +144,14 @@ void PieceTable::Delete(int Position) {
 
     if (entryIndex + 1 == m_entries.size())
       m_entries.push_back(secondPart);
-    else
-      m_entries.insert(m_entries.begin() + entryIndex + 1, secondPart);
+    else {
+      it++;
+      m_entries.insert(it, secondPart);
+    }
   }
+
+  // If this entry is now empty remove it
+  if (entry.Length == 0) m_entries.erase(it);
 }
 
 std::string PieceTable::GetContent() const {

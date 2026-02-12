@@ -2,7 +2,7 @@
 #define CUSTOM_TEXT_H
 
 #include <string>
-#include <vector>
+#include <list>
 #include "../renderer/shapes.hpp"
 
 
@@ -39,6 +39,17 @@ public:
   std::array<Vector2<float>, 4> CalculateCharTextureCoords(Vector2<float> FontAtlasSize, char Character);
 };
 
+struct TextCursor {
+  int Position;
+};
+
+enum TextCursorMoveDirection : int {
+  Up,
+  Down,
+  Left,
+  Right
+};
+
 enum PieceTableBufferType {
   Original,
   Add
@@ -55,7 +66,7 @@ private:
   const std::string m_original;
   std::string m_add;
 
-  std::vector<PieceTableEntry> m_entries;
+  std::list<PieceTableEntry> m_entries;
 
 public:
   PieceTable(std::string FileContents) : m_original(std::move(FileContents)) {

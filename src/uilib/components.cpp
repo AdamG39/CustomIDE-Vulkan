@@ -63,11 +63,33 @@ Vector2<float> Transform::CalculateEntityPosition(float ParentWidth, float Paren
   return calculatedPosition;
 }
 
+void TextBox::Insert(char Character, int Position) {
+   m_table.Insert(Character, Position);
+   MoveCursorBy(1, Right);
+}
+
 void TextBox::Insert(std::string Content, int Position) {
 
 }
 
 void TextBox::Delete(int Position, int Count) {
 
+}
+
+void TextBox::MoveCursorBy(int Amount, TextCursorMoveDirection Direction) {
+  switch (Direction) {
+    case Left:
+      m_cursor.Position = std::max(0, m_cursor.Position - Amount);
+      break;
+    case Right:
+      m_cursor.Position = std::min(static_cast<size_t>(m_cursor.Position + Amount), GetContent().size());
+      break;
+    case Up:
+      puts("unimplemented");
+      break;
+    case Down:
+      puts("unimplemented");
+      break;
+  }
 }
 

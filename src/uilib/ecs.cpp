@@ -89,6 +89,11 @@ void EntityManager::RenderTree() {
             continue;
           }
 
+          Vector2<float> charPosition {
+            textObjPos.x + (font.size.x * linePosition),
+            textObjPos.y + (lineCount * font.size.y)
+          };
+
           linePosition++;
 
           if (textObj->GetWordWrap()) {
@@ -97,11 +102,6 @@ void EntityManager::RenderTree() {
               linePosition = 0;
             }
           }
-
-          Vector2<float> charPosition {
-            textObjPos.x + (font.size.x * linePosition),
-            textObjPos.y + (lineCount * font.size.y)
-          };
 
           geometries.emplace_back(font.size, charPosition, font.colour);
           auto imageIndex = m_renderer.GetImageIndexFromName(font.familyName);

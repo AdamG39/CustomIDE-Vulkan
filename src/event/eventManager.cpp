@@ -51,29 +51,42 @@ bool EventHandler::HandleKeyboardEvent(const EventInfo& Info) {
       char keyChar = (temp != nullptr) ? temp[0] : NULL;
 
       switch (Info.KeyboardInfo.Key) {
+      case GLFW_KEY_LEFT:
+        textBox->MoveCursorBy(1, TextCursorMoveDirection::Left);
+        break;
+      case GLFW_KEY_RIGHT:
+        textBox->MoveCursorBy(1, TextCursorMoveDirection::Right);
+        break;
+      case GLFW_KEY_UP:
+        textBox->MoveCursorBy(1, TextCursorMoveDirection::Up);
+        break;
+      case GLFW_KEY_DOWN:
+        textBox->MoveCursorBy(1, TextCursorMoveDirection::Down);
+        break;
       case GLFW_KEY_BACKSPACE:
-        textBox->Delete(textBox->GetContent().size() - 1);
+        textBox->Delete(textBox->GetCursorPosition() - 1);
+        textBox->MoveCursorBy(1, Left);
         break;
       case GLFW_KEY_DELETE:
-        textBox->Delete(textBox->GetContent().size());
+        textBox->Delete(textBox->GetCursorPosition());
         break;
       case GLFW_KEY_SPACE:
-        textBox->Insert(' ', textBox->GetContent().size());
+        textBox->Insert(' ', textBox->GetCursorPosition());
         break;
       case GLFW_KEY_TAB:
-        textBox->Insert('\t', textBox->GetContent().size());
+        textBox->Insert('\t', textBox->GetCursorPosition());
         break;
       case GLFW_KEY_ENTER:
-        textBox->Insert('\n', textBox->GetContent().size());
+        textBox->Insert('\n', textBox->GetCursorPosition());
         break;
       case GLFW_KEY_A ... GLFW_KEY_Z:
         // use uppercase A..Z when shift is pressed
         textBox->Insert(keyChar + 
             ((Info.KeyboardInfo.Modifications & GLFW_MOD_SHIFT) ? 0x20 : 0),
-            textBox->GetContent().size());
+            textBox->GetCursorPosition());
         break;
       default:
-        textBox->Insert(keyChar, textBox->GetContent().size());
+        textBox->Insert(keyChar, textBox->GetCursorPosition());
       }
     }
   }

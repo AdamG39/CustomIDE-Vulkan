@@ -182,6 +182,7 @@ public:
 // Mutable text box
 class TextBox : public IRenderable, public IText {
 private:
+  TextCursor m_cursor{};
   PieceTable m_table;
 
 public:
@@ -193,11 +194,14 @@ public:
 
   char Index(unsigned Position) { return m_table.Index(Position); }
 
-  void Insert(char Character, int Position) { m_table.Insert(Character, Position); }
+  void Insert(char Character, int Position);
   void Insert(std::string Content, int Position);
 
   void Delete(int Position) { m_table.Delete(Position); }
   void Delete(int Position, int Count);
+
+  int GetCursorPosition() const { return m_cursor.Position; }
+  void MoveCursorBy(int Amount, TextCursorMoveDirection Direction);
 
   std::string GetContent() const override { return m_table.GetContent(); }
 
