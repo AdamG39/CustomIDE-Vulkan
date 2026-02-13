@@ -47,9 +47,11 @@ void EntityManager::RenderTree() {
       if (transform == nullptr) continue; // Just skip this entity since it cant be renderered
 
       if (staticColour != nullptr) {
-        geometries.emplace_back(transform->GetPixelSize(), transform->GetPixelPosition(), staticColour->GetColour());
+        geometries.emplace_back(transform->GetPixelSize(), transform->GetPixelPosition(),
+                                staticColour->GetColour(), staticColour->GetDrawDepth());
       } else if (texture != nullptr) {
-        geometries.emplace_back(transform->GetPixelSize(), transform->GetPixelPosition(), COLOUR_WHITE);
+        geometries.emplace_back(transform->GetPixelSize(), transform->GetPixelPosition(),
+                                COLOUR_WHITE, texture->GetDrawDepth());
         geometries.back().SetTextureCoords(texture->GetTextureCoords());
         geometries.back().SetTextureIndex(texture->GetTextureIndex());
       } else if (textObj != nullptr) {
@@ -103,7 +105,8 @@ void EntityManager::RenderTree() {
             }
           }
 
-          geometries.emplace_back(font.size, charPosition, font.colour);
+          auto temp = dynamic_cast<IRenderable*>(textObj);
+          geometries.emplace_back(font.size, charPosition, font.colour, temp->GetDrawDepth());
           auto imageIndex = m_renderer.GetImageIndexFromName(font.familyName);
           if (imageIndex < 0) ExitWithError("No image with that name found", -35);
           geometries.back().SetTextureIndex(imageIndex);

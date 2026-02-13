@@ -26,7 +26,14 @@ public:
   virtual ~IComponent() = default;
 };
 
-class IRenderable : public IComponent {};
+class IRenderable : public IComponent {
+private:
+  int m_drawDepth = 0;
+
+public:
+  void SetDrawDepth(int DrawDepth) { m_drawDepth = DrawDepth; }
+  int GetDrawDepth() { return m_drawDepth; }
+};
 
 class Transform : public IComponent {
 private:

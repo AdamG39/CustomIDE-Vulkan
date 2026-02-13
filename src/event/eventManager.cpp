@@ -86,7 +86,8 @@ bool EventHandler::HandleKeyboardEvent(const EventInfo& Info) {
             textBox->GetCursorPosition());
         break;
       default:
-        textBox->Insert(keyChar, textBox->GetCursorPosition());
+        if (keyChar != NULL)
+          textBox->Insert(keyChar, textBox->GetCursorPosition());
       }
     }
   }
