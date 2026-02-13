@@ -1,4 +1,4 @@
 - Implement text editing
-	- Handle text navigation <- needs fixing
+	- Handle cursor rendering
 	- Allow for text copy and paste
 	- Handle undo/redo

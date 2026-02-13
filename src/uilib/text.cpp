@@ -43,12 +43,10 @@ void PieceTable::Insert(char Character, int Position) {
 
   // Need to find which entry to add to
   unsigned counter = 0;
-  long long entryIndex = -1;
   auto it = m_entries.begin();
-  for (size_t i = 0; i < m_entries.size(); i++, it++) {
+  for (; it != m_entries.end(); it++) {
     auto entry = *it;
     if (Position >= counter && Position <= (counter + (entry.Length - 1))) {
-      entryIndex = i;
       break;
     }
 
@@ -62,7 +60,7 @@ void PieceTable::Insert(char Character, int Position) {
   };
 
   // If position is after all entries add it to the end
-  if (entryIndex < 0) {
+  if (it == m_entries.end()) {
     m_entries.push_back(newEntry);
     return;
   }
@@ -72,7 +70,6 @@ void PieceTable::Insert(char Character, int Position) {
   // Found the entry now split it
   if (counter == Position) { // Character to be inserted at start of this entry
     // Create a new entry and add before the current one
-    
     m_entries.insert(it, newEntry);
     return;
   }
@@ -82,19 +79,18 @@ void PieceTable::Insert(char Character, int Position) {
     int relativePosition = Position - counter;
 
     size_t secondPartLength = entry.Length - relativePosition;
-    entry.Length -= relativePosition;
+    entry.Length = relativePosition;
 
     PieceTableEntry secondPart {
       .Type = entry.Type,
-      .Start = entry.Length,
+      .Start = entry.Length + entry.Start,
       .Length = secondPartLength
     };
 
-    if (entryIndex + 1 == m_entries.size()) {
+    if (++it == m_entries.end()) {
       m_entries.push_back(newEntry);
       m_entries.push_back(secondPart);
     } else {
-      it++;
       m_entries.insert(it, secondPart);
       m_entries.insert(it, newEntry);
     }
