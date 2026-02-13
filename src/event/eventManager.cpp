@@ -35,18 +35,16 @@ bool EventHandler::HandleWindowEvent(const EventInfo& Info) {
   return false;
 }
 
+#include <iostream>
+
 bool EventHandler::HandleKeyboardEvent(const EventInfo& Info) {
   if (Info.KeyboardInfo.Action == GLFW_RELEASE) return true;
   auto& entityTree = Info.EntityManager->GetEntityTree();
 
-  bool foundTextBox = false;
-
   for (auto entity : entityTree) {
-    Transform* transform = entity->GetComponent<Transform>();
     TextBox* textBox = entity->GetComponent<TextBox>();
 
-    if (transform != nullptr && textBox != nullptr) {
-      foundTextBox = true;
+    if (textBox != nullptr) {
       const char* temp = glfwGetKeyName(Info.KeyboardInfo.Key, 0);
       char keyChar = (temp != nullptr) ? temp[0] : NULL;
 
@@ -89,10 +87,16 @@ bool EventHandler::HandleKeyboardEvent(const EventInfo& Info) {
         if (keyChar != NULL)
           textBox->Insert(keyChar, textBox->GetCursorPosition());
       }
+
+      std::cout << "raw key converted: " << keyChar << std::endl;
+      temp = glfwGetKeyName(GLFW_KEY_UNKNOWN, Info.KeyboardInfo.Scancode);
+      keyChar = (temp != nullptr) ? temp[0] : NULL;
+      std::cout << "scancode converted: " << keyChar << std::endl;
+      return true;
     }
   }
 
-  return foundTextBox;
+  return false;
 }
 
 bool EventHandler::HandleEvent(const Event& Event) {

@@ -41,6 +41,7 @@ public:
 
 struct TextCursor {
   int Position;
+  Colour<float> Colour;
 };
 
 enum TextCursorMoveDirection : int {

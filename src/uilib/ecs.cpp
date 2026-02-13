@@ -39,9 +39,12 @@ void EntityManager::RenderTree() {
       //auto renderableComponents = top->GetRenderableComponents();
       StaticColour* staticColour = top->GetComponent<StaticColour>();
       Texture* texture = top->GetComponent<Texture>();
+      bool isTextBox = false;
       IText* textObj = top->GetComponent<Label>();
-      if (textObj == nullptr)
+      if (textObj == nullptr) {
         textObj = top->GetComponent<TextBox>();
+        isTextBox = true;
+      }
 
       // An entity requires a renderable component and a transform to be renderered
       if (transform == nullptr) continue; // Just skip this entity since it cant be renderered
@@ -112,6 +115,17 @@ void EntityManager::RenderTree() {
           geometries.back().SetTextureIndex(imageIndex);
           auto textureCoords = textObj->CalculateCharTextureCoords(fontAtlasSize, content[i]);
           geometries.back().SetTextureCoords(textureCoords);
+        }
+        // If a text box render the cursor
+        if (isTextBox) {
+          TextBox* textBoxObj = dynamic_cast<TextBox*>(textObj);
+          int cursorIndexPos = textBoxObj->GetCursorPosition();
+          Vector2<float> finalCursorPosition {
+            textObjPos.x + (font.size.x * (cursorIndexPos % charsPerLine)),
+            textObjPos.y + (lineCount * font.size.y)
+          };
+          geometries.emplace_back(font.size, finalCursorPosition,
+                                  textBoxObj->GetCursorColour(), textBoxObj->GetDrawDepth() + 1);
         }
       } 
     }
