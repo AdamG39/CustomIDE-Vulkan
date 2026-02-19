@@ -9,6 +9,7 @@ private:
   bool HandleMouseEvent(const EventInfo& Info);
   bool HandleWindowEvent(const EventInfo& Info);
   bool HandleKeyboardEvent(const EventInfo& Info);
+  bool HandleCharacterEvent(const EventInfo& Info);
 
 public:
    bool HandleEvent(const Event& Event);

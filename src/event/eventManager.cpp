@@ -35,8 +35,6 @@ bool EventHandler::HandleWindowEvent(const EventInfo& Info) {
   return false;
 }
 
-#include <iostream>
-
 bool EventHandler::HandleKeyboardEvent(const EventInfo& Info) {
   if (Info.KeyboardInfo.Action == GLFW_RELEASE) return true;
   auto& entityTree = Info.EntityManager->GetEntityTree();
@@ -45,9 +43,6 @@ bool EventHandler::HandleKeyboardEvent(const EventInfo& Info) {
     TextBox* textBox = entity->GetComponent<TextBox>();
 
     if (textBox != nullptr) {
-      const char* temp = glfwGetKeyName(Info.KeyboardInfo.Key, 0);
-      char keyChar = (temp != nullptr) ? temp[0] : NULL;
-
       switch (Info.KeyboardInfo.Key) {
       case GLFW_KEY_LEFT:
         textBox->MoveCursorBy(1, TextCursorMoveDirection::Left);
@@ -77,23 +72,27 @@ bool EventHandler::HandleKeyboardEvent(const EventInfo& Info) {
       case GLFW_KEY_ENTER:
         textBox->Insert('\n', textBox->GetCursorPosition());
         break;
-      case GLFW_KEY_A ... GLFW_KEY_Z:
-        // use uppercase A..Z when shift is pressed
-        textBox->Insert(keyChar + 
-            ((Info.KeyboardInfo.Modifications & GLFW_MOD_SHIFT) ? 0x20 : 0),
-            textBox->GetCursorPosition());
-        break;
-      default:
-        if (keyChar != NULL)
-          textBox->Insert(keyChar, textBox->GetCursorPosition());
       }
 
-      std::cout << "raw key converted: " << keyChar << std::endl;
-      temp = glfwGetKeyName(GLFW_KEY_UNKNOWN, Info.KeyboardInfo.Scancode);
-      keyChar = (temp != nullptr) ? temp[0] : NULL;
-      std::cout << "scancode converted: " << keyChar << std::endl;
       return true;
     }
+  }
+
+  return false;
+}
+
+bool EventHandler::HandleCharacterEvent(const EventInfo& Info) {
+  // TODO: add handling of any UFT-8 character
+
+  auto& entityTree = Info.EntityManager->GetEntityTree();
+
+  for (auto entity : entityTree) {
+    TextBox* textBox = entity->GetComponent<TextBox>();
+
+    if (textBox == nullptr) continue;
+
+    textBox->Insert(static_cast<char>(Info.CharacterInfo.Codepoint), textBox->GetCursorPosition());
+    return true;
   }
 
   return false;
@@ -107,6 +106,8 @@ bool EventHandler::HandleEvent(const Event& Event) {
       return HandleWindowEvent(Event.Info);
     case Keyboard:
       return HandleKeyboardEvent(Event.Info);
+    case Character:
+      return HandleCharacterEvent(Event.Info);
   }
 }
 

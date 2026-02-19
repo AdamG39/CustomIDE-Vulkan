@@ -373,7 +373,21 @@ void KeyCallback(GLFWwindow* Window, int Key, int Scancode, int Action, int Mods
       .Modifications = Mods
     },
   };
-  CustomIDEApplication::GetInstance()->GetEventManager()->AddEvent(EventType::Keyboard, &info);
+
+  if (glfwGetKeyName(Key, 0) == nullptr)
+    CustomIDEApplication::GetInstance()->GetEventManager()->AddEvent(EventType::Keyboard, &info);
+}
+
+void CharacterCallback(GLFWwindow *Window, unsigned int Codepoint) {
+  EventInfo info {
+    .EntityManager = CustomIDEApplication::GetInstance()->GetEntityManager(),
+    .Window = Window,
+    .CharacterInfo {
+      .Codepoint = Codepoint
+    },
+  };
+
+  CustomIDEApplication::GetInstance()->GetEventManager()->AddEvent(EventType::Character, &info);
 }
 
 Font CreateFont(const std::string& Filepath, const Colour<float>& FontColour) {

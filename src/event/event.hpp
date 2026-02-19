@@ -8,6 +8,7 @@ enum EventType {
   Mouse,
   Window,
   Keyboard,
+  Character
 };
 
 enum WindowEventAction {
@@ -30,6 +31,10 @@ struct KeyboardEventInfo {
   int Modifications;
 };
 
+struct CharacterEventInfo {
+  unsigned int Codepoint;
+};
+
 struct EventInfo {
   // Application manager pointers
   EntityManager* EntityManager;
@@ -38,6 +43,7 @@ struct EventInfo {
   union {
     MouseEventInfo MouseInfo;
     KeyboardEventInfo KeyboardInfo;
+    CharacterEventInfo CharacterInfo;
     WindowEventAction WindowAction;
   };
 };

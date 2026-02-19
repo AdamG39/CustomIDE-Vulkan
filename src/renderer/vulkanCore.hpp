@@ -79,5 +79,7 @@ void MinimiseCallback(GLFWwindow* Window);
 
 void KeyCallback(GLFWwindow* Window, int Key, int Scancode, int Action, int Mods);
 
+void CharacterCallback(GLFWwindow* Window, unsigned int Codepoint);
+
 #endif
 
