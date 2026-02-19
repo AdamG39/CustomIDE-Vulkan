@@ -81,5 +81,8 @@ void KeyCallback(GLFWwindow* Window, int Key, int Scancode, int Action, int Mods
 
 void CharacterCallback(GLFWwindow* Window, unsigned int Codepoint);
 
+// TODO: Change entity pixel scaling based on scale content %
+//void WindowScaleContentCallback(GLFWwindow* Window, float XScale, float YScale);
+
 #endif
 

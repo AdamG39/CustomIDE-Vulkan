@@ -198,7 +198,7 @@ public:
 
   TextBox(Font Font, std::string FileContents = "", bool WordWrap = false)
   : IText::IText(Font, WordWrap), m_table(FileContents) {
-    m_cursor.Colour = Colour(0x000000, 0.5f);
+    m_cursor.Colour = Font.colour;
   }
 
   char Index(unsigned Position) { return m_table.Index(Position); }

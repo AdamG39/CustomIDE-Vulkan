@@ -128,7 +128,15 @@ void EntityManager::RenderTree() {
           }
 
           auto temp = dynamic_cast<IRenderable*>(textObj);
-          geometries.emplace_back(font.size, charPosition, font.colour, temp->GetDrawDepth());
+          Colour<float> textColour = font.colour;
+          if (isTextBox) {
+            if (cursorIndexPosition == i) {
+              textColour.r = 1.f - textColour.r;
+              textColour.g = 1.f - textColour.g;
+              textColour.b = 1.f - textColour.b;
+            }
+          }
+          geometries.emplace_back(font.size, charPosition, textColour, temp->GetDrawDepth());
           auto imageIndex = m_renderer.GetImageIndexFromName(font.familyName);
           if (imageIndex < 0) ExitWithError("No image with that name found", -35);
           geometries.back().SetTextureIndex(imageIndex);
@@ -141,12 +149,17 @@ void EntityManager::RenderTree() {
           if (cursorIndexPosition == content.size())
             cursorPosition = { linePosition, lineCount };
 
+          Vector2<float> finalCursorSize {
+            static_cast<float>(font.size.x),
+            static_cast<float>(font.size.y) * 1.25f
+          };
+
           Vector2<float> finalCursorPosition {
             textObjPos.x + (font.size.x * cursorPosition.x),
             textObjPos.y + (font.size.y * cursorPosition.y)
           };
-          geometries.emplace_back(font.size, finalCursorPosition,
-                                  textBoxObj->GetCursorColour(), textBoxObj->GetDrawDepth() + 1);
+          geometries.emplace_back(finalCursorSize, finalCursorPosition,
+                                  textBoxObj->GetCursorColour(), textBoxObj->GetDrawDepth());
         }
       } 
     }
