@@ -20,6 +20,7 @@ void EntityManager::RemoveEntity(const size_t Index) {
   m_entityTree.erase(m_entityTree.begin() + Index);
 }
 
+// XXX: Refactor this function its absolutely horrible
 void EntityManager::RenderTree() {
   std::vector<Rect<float, float>> geometries;
 
@@ -68,22 +69,35 @@ void EntityManager::RenderTree() {
         // create a rect for each character
         int linePosition = 0;
         int lineCount = 0;
+
+        int cursorIndexPosition;
+
+        if (isTextBox) {
+          TextBox* textBoxObj = dynamic_cast<TextBox*>(textObj);
+          cursorIndexPosition = textBoxObj->GetCursorPosition();
+        }
+
+        Vector2<int> cursorPosition;
+
         for (size_t i = 0; i < content.size(); i++) {
           switch (content[i]) {
           case '\n':
+            if (isTextBox) {
+              if (cursorIndexPosition == i)
+                cursorPosition = { linePosition, lineCount };
+            }
             lineCount++;
             linePosition = 0;
-            continue;
-          case ' ':
-            linePosition++;
-            if (textObj->GetWordWrap()) {
-              if (linePosition > charsPerLine) { 
-                lineCount++;
-                linePosition = 0;
-              }
+            if (isTextBox) {
+              if (cursorIndexPosition == i)
+                cursorPosition = { linePosition, lineCount };
             }
             continue;
           case '\t':
+            if (isTextBox) {
+              if (cursorIndexPosition == i)
+                cursorPosition = { linePosition, lineCount };
+            }
             linePosition += 4;
             if (textObj->GetWordWrap()) {
               if (linePosition > charsPerLine) { 
@@ -98,6 +112,11 @@ void EntityManager::RenderTree() {
             textObjPos.x + (font.size.x * linePosition),
             textObjPos.y + (lineCount * font.size.y)
           };
+
+          if (isTextBox) {
+            if (cursorIndexPosition == i)
+              cursorPosition = { linePosition, lineCount };
+          }
 
           linePosition++;
 
@@ -119,10 +138,12 @@ void EntityManager::RenderTree() {
         // If a text box render the cursor
         if (isTextBox) {
           TextBox* textBoxObj = dynamic_cast<TextBox*>(textObj);
-          int cursorIndexPos = textBoxObj->GetCursorPosition();
+          if (cursorIndexPosition == content.size())
+            cursorPosition = { linePosition, lineCount };
+
           Vector2<float> finalCursorPosition {
-            textObjPos.x + (font.size.x * (cursorIndexPos % charsPerLine)),
-            textObjPos.y + (lineCount * font.size.y)
+            textObjPos.x + (font.size.x * cursorPosition.x),
+            textObjPos.y + (font.size.y * cursorPosition.y)
           };
           geometries.emplace_back(font.size, finalCursorPosition,
                                   textBoxObj->GetCursorColour(), textBoxObj->GetDrawDepth() + 1);
