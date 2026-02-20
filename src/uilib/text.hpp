@@ -19,26 +19,6 @@ struct Font {
   TextType type = Normal;
 };
 
-class IText {
-private:
-  Font font;
-  bool m_wordWrap;
-
-public:
-  IText(Font Font, bool WordWrap = false) : font(Font), m_wordWrap(WordWrap) {}
-
-  Font GetFont() const {
-    return font;
-  }
-
-  void SetWordWrap(bool Value) { m_wordWrap = Value; }
-  bool GetWordWrap() { return m_wordWrap; }
-
-  virtual std::string GetContent() const = 0;
-
-  std::array<Vector2<float>, 4> CalculateCharTextureCoords(Vector2<float> FontAtlasSize, char Character);
-};
-
 struct TextCursor {
   int Position;
   Colour<float> Colour;
@@ -94,6 +74,8 @@ public:
   void DebugPrint();
 #endif // _DEBUG
 };
+
+std::array<Vector2<float>, 4> CalculateCharTextureCoords(Vector2<float> FontAtlasSize, char Character);
 
 #endif
 

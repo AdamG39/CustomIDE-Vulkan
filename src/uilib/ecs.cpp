@@ -88,10 +88,6 @@ void EntityManager::RenderTree() {
             }
             lineCount++;
             linePosition = 0;
-            if (isTextBox) {
-              if (cursorIndexPosition == i)
-                cursorPosition = { linePosition, lineCount };
-            }
             continue;
           case '\t':
             if (isTextBox) {
@@ -140,7 +136,7 @@ void EntityManager::RenderTree() {
           auto imageIndex = m_renderer.GetImageIndexFromName(font.familyName);
           if (imageIndex < 0) ExitWithError("No image with that name found", -35);
           geometries.back().SetTextureIndex(imageIndex);
-          auto textureCoords = textObj->CalculateCharTextureCoords(fontAtlasSize, content[i]);
+          auto textureCoords = CalculateCharTextureCoords(fontAtlasSize, content[i]);
           geometries.back().SetTextureCoords(textureCoords);
         }
         // If a text box render the cursor

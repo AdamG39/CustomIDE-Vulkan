@@ -33,6 +33,20 @@ private:
 public:
   void SetDrawDepth(int DrawDepth) { m_drawDepth = DrawDepth; }
   int GetDrawDepth() { return m_drawDepth; }
+class IText : public IRenderable {
+protected:
+  Font m_font;
+  bool m_wordWrap;
+
+public:
+  virtual void Render(Vector2<float> DrawArea) override;
+
+  Font GetFont() const { return m_font; }
+
+  void SetWordWrap(bool Value) { m_wordWrap = Value; }
+  bool GetWordWrap() { return m_wordWrap; }
+
+  virtual std::string GetContent() const = 0;
 };
 
 class Transform : public IComponent {
@@ -170,7 +184,7 @@ public:
 };
 
 // Static immutable text label
-class Label : public IRenderable, public IText {
+class Label : public IText {
 private:
   const std::string m_content;
 
@@ -179,7 +193,10 @@ public:
   int GetType() override { return TypeValue(); }
 
   Label(Font Font, std::string Content, bool WordWrap = false)
-  : IText::IText(Font, WordWrap), m_content(Content) {}
+  : m_content(Content) {
+    m_font = Font;
+    m_wordWrap = WordWrap;
+  }
 
   std::string GetContent() const override {
     return m_content;
@@ -187,7 +204,7 @@ public:
 };
 
 // Mutable text box
-class TextBox : public IRenderable, public IText {
+class TextBox : public IText {
 private:
   TextCursor m_cursor{};
   PieceTable m_table;
@@ -197,7 +214,9 @@ public:
   int GetType() override { return TypeValue(); }
 
   TextBox(Font Font, std::string FileContents = "", bool WordWrap = false)
-  : IText::IText(Font, WordWrap), m_table(FileContents) {
+  : m_table(FileContents) {
+    m_font = Font;
+    m_wordWrap = WordWrap;
     m_cursor.Colour = Font.colour;
   }
 

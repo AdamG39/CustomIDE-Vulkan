@@ -1,6 +1,5 @@
 #include "components.hpp"
 
-
 Vector2<float> Transform::CalculateEntitySize(float ParentWidth, float ParentHeight) const {
   Vector2<float> calculatedSize;
 

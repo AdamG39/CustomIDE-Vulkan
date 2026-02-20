@@ -1,7 +1,7 @@
 #include "../helpers/errors/errors.hpp"
 #include "text.hpp"
 
-std::array<Vector2<float>, 4> IText::CalculateCharTextureCoords(Vector2<float> FontAtlasSize, char Character) {
+std::array<Vector2<float>, 4> CalculateCharTextureCoords(Vector2<float> FontAtlasSize, char Character) {
   Vector2 textureCoordsMax { 1.f / FontAtlasSize.x, 1.f / FontAtlasSize.y };
 
   return {
