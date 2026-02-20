@@ -9,12 +9,17 @@
 class EntityManager {
 private:
   std::vector<std::shared_ptr<Entity>> m_entityTree;
+  std::list<Rect<float, float>> m_geometries;
   VulkanRenderer& m_renderer;
 
 public:
   EntityManager(VulkanRenderer& Renderer) : m_renderer(Renderer) {}
 
+  VulkanRenderer& GetRenderer() { return m_renderer; }
+
   std::vector<std::shared_ptr<Entity>>& GetEntityTree();
+
+  void AddGeometry(Rect<float, float> Geometry);
 
   Entity& AddEntity();
 
@@ -22,7 +27,7 @@ public:
 
   void RemoveEntity(size_t Index);
 
-  void RenderTree();
+  void RenderTree(float framebufferWidth, float framebufferHeight);
 };
 
 #endif

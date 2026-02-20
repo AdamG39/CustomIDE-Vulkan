@@ -53,16 +53,15 @@ public:
     return nullptr;
   }
 
-  std::vector<IRenderable*> GetRenderableComponents() {
-    std::vector<IRenderable*> renderableComps;
+  IRenderable* GetRenderableComponent() {
     for (auto&& component : m_components) {
       auto renderable = dynamic_cast<IRenderable*>(component.get());
       if (renderable != nullptr) {
-        renderableComps.push_back(renderable);
+        return renderable;
       }
     }
 
-    return renderableComps;
+    return nullptr;
   }
 
   Entity* GetParent() {

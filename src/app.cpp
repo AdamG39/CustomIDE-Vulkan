@@ -57,10 +57,6 @@ void CustomIDEApplication::RunApplication() {
     glfwWaitEventsTimeout(0.5f);
 
     /*
-    m_root->HandleEvents();
-
-    m_root->RenderAll();
-
     HandleResizing();
 
     UpdateCursorState();
@@ -70,7 +66,7 @@ void CustomIDEApplication::RunApplication() {
 
     m_eventManager->HandleEvents();
 
-    m_tree->RenderTree();
+    m_tree->RenderTree(m_windowWidth, m_windowHeight);
 
     m_renderer->DrawFrame();
   }
@@ -190,14 +186,14 @@ void CustomIDEApplication::CreateUIElements() {
 
   titleBar.GetComponent<Transform>()->SetAnchor(UIAnchorType::Top);
 
-  titleBar.AddComponent<StaticColour>(THEME_DARK_COLOUR_1);
+  titleBar.AddComponent<UIImage>(THEME_DARK_COLOUR_1);
 
   Entity& closeButton = m_tree->AddEntity(Vector2<UISize<float>>({50.f}, {40.f}),
                                           Vector2<UISize<float>>({-25.f}, {20.f}));
 
   closeButton.GetComponent<Transform>()->SetAnchor(UIAnchorType::TopRight);
 
-  closeButton.AddComponent<StaticColour>(COLOUR_RED);
+  closeButton.AddComponent<UIImage>(COLOUR_RED);
   closeButton.AddComponent<Button>();
   closeButton.GetComponent<Button>()->SetOnRelease(&glfwSetWindowShouldClose, m_renderer->GetWindow(), GLFW_TRUE);
 
@@ -206,7 +202,7 @@ void CustomIDEApplication::CreateUIElements() {
 
   std::shared_ptr closeButtonCross = closeButton.GetChild(0);
 
-  closeButtonCross->AddComponent<Texture>(2);
+  closeButtonCross->AddComponent<UIImage>(COLOUR_WHITE, 2);
 
 
   Entity& titleLabel = m_tree->AddEntity(Vector2<UISize<float>>({600.f, 40.f}),

@@ -12,34 +12,41 @@ extern int framebufferHeight;
 
 enum ComponentTypes{
   TypeTransform,
-  TypeStaticColour,
-  TypeTexture,
+  TypeImage,
   TypeButton,
   TypeLabel,
   TypeTextBox
 };
 
+class Transform;
+class EntityManager;
+
 class IComponent {
-protected:
 public:
   virtual int GetType() = 0;
   virtual ~IComponent() = default;
 };
 
 class IRenderable : public IComponent {
-private:
+protected:
   int m_drawDepth = 0;
 
 public:
   void SetDrawDepth(int DrawDepth) { m_drawDepth = DrawDepth; }
   int GetDrawDepth() { return m_drawDepth; }
+
+  virtual void Render(EntityManager& Manager,
+      const Transform* Transform, Vector2<float> DrawArea) = 0;
+};
+
 class IText : public IRenderable {
 protected:
   Font m_font;
   bool m_wordWrap;
 
 public:
-  virtual void Render(Vector2<float> DrawArea) override;
+  virtual void Render(EntityManager& Manager, 
+      const Transform* Transform, Vector2<float> DrawArea) override;
 
   Font GetFont() const { return m_font; }
 
@@ -94,43 +101,35 @@ public:
   UIAnchorType GetAnchor() const { return m_anchor; }
 };
 
-class StaticColour : public IRenderable {
+class UIImage : public IRenderable {
 private:
   Colour<float> m_colour;
-
-public:
-  static int TypeValue() { return TypeStaticColour; }
-  int GetType() override { return TypeValue(); }
-
-  StaticColour() : m_colour() {}
-  StaticColour(const Colour<float>& Colour) : m_colour(Colour) {}
-
-  void SetColour(const Colour<float>& Colour) { m_colour = Colour; }
-
-  Colour<float> GetColour() const { return m_colour; }
-};
-
-class Texture : public IRenderable {
-private:
-  std::array<Vector2<float>, 4> m_textureCoords = {Vector2<float>(0.f, 0.f), Vector2<float>(1.f, 0.f),
-                                                   Vector2<float>(0.f, 1.f), Vector2<float>(1.f, 1.f)};
+  std::array<Vector2<float>, 4> m_textureCoords = { Vector2<float>(0.f, 0.f), Vector2<float>(1.f, 0.f),
+                                                    Vector2<float>(0.f, 1.f), Vector2<float>(1.f, 1.f) };
   int m_textureIndex;
 
 public:
-  static int TypeValue() { return TypeTexture; }
+  static int TypeValue() { return TypeImage; }
   int GetType() override { return TypeValue(); }
 
-  Texture(int TextureIndex = -1) : m_textureIndex(TextureIndex) {}
-  Texture(int TextureIndex, const std::array<Vector2<float>, 4> TextureCoords)
-  : m_textureCoords(std::move(TextureCoords)), m_textureIndex(TextureIndex) {}
+  UIImage(const Colour<float>& _Colour = Colour<float>(), int TextureCoords = -1)
+  : m_colour(_Colour), m_textureIndex(TextureCoords) {}
 
+  void Render(EntityManager& Manager,
+      const Transform* Transform, Vector2<float> DrawArea) override;
+
+  void SetColour(const Colour<float>& Colour) { m_colour = Colour; }
+  Colour<float> GetColour() const { return m_colour; }
+
+  void SetTextureCoords(std::array<Vector2<float>, 4> TextureCoords) {
+    m_textureCoords = TextureCoords;
+  }
   const std::array<Vector2<float>, 4>& GetTextureCoords() const {
     return m_textureCoords;
   }
 
-  int GetTextureIndex() const {
-    return m_textureIndex;
-  }
+  void SetTextureIndex(int TextureIndex) { m_textureIndex = TextureIndex; }
+  int GetTextureIndex() const { return m_textureIndex; }
 };
 
 class Button : public IComponent {
@@ -219,6 +218,9 @@ public:
     m_wordWrap = WordWrap;
     m_cursor.Colour = Font.colour;
   }
+
+  void Render(EntityManager& Manager,
+      const Transform* Transform, Vector2<float> DrawArea) override;
 
   char Index(unsigned Position) { return m_table.Index(Position); }
 
