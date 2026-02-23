@@ -92,6 +92,12 @@ public:
   size_t GetChildCount() {
     return m_children.size();
   }
+
+  void RenderEntity(EntityManager& Manager, Transform* Transform,
+      IRenderable* Renderable, Vector2<float> DrawArea, Vector2<float> DrawAreaOffset);
+
+  void RenderEntityAndChildren(EntityManager& Manager, Transform* Transform,
+      IRenderable* Renderable, Vector2<float> DrawArea, Vector2<float> DrawAreaOffset);
 };
 
 #endif

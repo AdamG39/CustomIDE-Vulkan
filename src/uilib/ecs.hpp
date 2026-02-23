@@ -21,6 +21,8 @@ public:
 
   void AddGeometry(Rect<float, float> Geometry);
 
+  Rect<float, float> GetLastGeometry();
+
   Entity& AddEntity();
 
   Entity& AddEntity(const Vector2<UISize<float>>& Size, const Vector2<UISize<float>>& Position);

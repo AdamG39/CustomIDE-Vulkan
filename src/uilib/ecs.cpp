@@ -1,4 +1,3 @@
-#include <stack>
 #include "ecs.hpp"
 
 std::vector<std::shared_ptr<Entity>>& EntityManager::GetEntityTree() {
@@ -23,23 +22,15 @@ void EntityManager::AddGeometry(Rect<float, float> Geometry) {
   m_geometries.push_back(Geometry);
 }
 
+Rect<float, float> EntityManager::GetLastGeometry() {
+  return m_geometries.back();
+}
+
 void EntityManager::RenderTree(float framebufferWidth, float framebufferHeight) {
-  for (size_t i = 0; i < m_entityTree.size(); i++) {
-    std::stack<Entity*> entities;
-    entities.push(m_entityTree[i].get());
-
-    while (!entities.empty()) {
-      Entity* top = entities.top();
-      entities.pop();
-      for (auto entity : top->GetChildren()) {
-        entities.push(entity.get());
-      }
-
-      Transform* transform = top->GetComponent<Transform>();
-      auto renderableComponent = top->GetRenderableComponent();
-
-      renderableComponent->Render(*this, transform, Vector2<float>(framebufferWidth, framebufferHeight));
-    }
+  for (auto entity : m_entityTree) {
+    Transform* transform = entity->GetComponent<Transform>();
+    IRenderable* renderableComponent = entity->GetRenderableComponent();
+    entity->RenderEntityAndChildren(*this, transform, renderableComponent, Vector2(framebufferWidth, framebufferHeight), {0, 0});
   }
 
   std::vector<Triangle<float, float>> tris;

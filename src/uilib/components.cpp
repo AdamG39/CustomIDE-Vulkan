@@ -2,7 +2,7 @@
 #include "../helpers/errors/errors.hpp"
 #include "ecs.hpp"
 
-Vector2<float> Transform::CalculateEntitySize(float ParentWidth, float ParentHeight) const {
+Vector2<float> Transform::RecalculateEntitySize(float ParentWidth, float ParentHeight) {
   Vector2<float> calculatedSize;
 
   if (m_size.x.Mode == SizeMode::Proportional) {
@@ -13,63 +13,73 @@ Vector2<float> Transform::CalculateEntitySize(float ParentWidth, float ParentHei
     calculatedSize.y = ParentHeight * m_size.y.Value;
   } else { calculatedSize.y = m_size.y.Value; }
 
+  m_pixelSize = calculatedSize;
   return calculatedSize;
 }
 
-Vector2<float> Transform::CalculateEntityPosition(float ParentWidth, float ParentHeight, const UIAnchorType& Anchor) const {
+// TODO: can child object can only use center anchor
+// change to allow better calculation of objects based on parents and anchors
+Vector2<float> Transform::RecalculateEntityPosition(Vector2<float> ParentSize, 
+    Vector2<float> ParentPosition, const UIAnchorType& Anchor) {
   Vector2<float> calculatedPosition;
 
   switch (Anchor) {
     case UIAnchorType::Center:
-      calculatedPosition.x = ParentWidth / 2;
-      calculatedPosition.y = ParentHeight / 2;
+      calculatedPosition.x = ParentSize.x / 2;
+      calculatedPosition.y = ParentSize.y / 2;
       break;
     case UIAnchorType::Top:
-      calculatedPosition.x = ParentWidth / 2;
+      calculatedPosition.x = ParentSize.x / 2;
+      calculatedPosition.y = 0;
       break;
     case UIAnchorType::Left:
-      calculatedPosition.y = ParentHeight / 2;
+      calculatedPosition.x = 0;
+      calculatedPosition.y = ParentSize.y / 2;
       break;
     case UIAnchorType::Right:
-      calculatedPosition.x = ParentWidth;
-      calculatedPosition.y = ParentHeight / 2;
+      calculatedPosition.x = ParentSize.x;
+      calculatedPosition.y = ParentSize.y / 2;
       break;
     case UIAnchorType::Bottom:
-      calculatedPosition.x = ParentWidth / 2;
-      calculatedPosition.y = ParentHeight;
+      calculatedPosition.x = ParentSize.x / 2;
+      calculatedPosition.y = ParentSize.y;
       break;
-    case UIAnchorType::TopLeft:         
-      // Already relative to 0, 0 so no changes needed
+    case UIAnchorType::TopLeft:
+      calculatedPosition.x = 0;
+      calculatedPosition.y = 0;
       break;
     case UIAnchorType::TopRight:
-      calculatedPosition.x = ParentWidth;
+      calculatedPosition.x = ParentSize.x;
+      calculatedPosition.y = 0;
       break;
     case UIAnchorType::BottomLeft:
-      calculatedPosition.y = ParentHeight;
+      calculatedPosition.x = 0;
+      calculatedPosition.y = ParentSize.y;
       break;
     case UIAnchorType::BottomRight:
-      calculatedPosition.x = ParentWidth;
-      calculatedPosition.y = ParentHeight;
+      calculatedPosition.x = ParentSize.x;
+      calculatedPosition.y = ParentSize.y;
       break;
   }
 
   if (m_position.x.Mode == SizeMode::Proportional) {
-    calculatedPosition.x += ParentWidth * m_position.x.Value;
+    calculatedPosition.x = ParentPosition.x + m_position.x.Value;
   } else { calculatedPosition.x += m_position.x.Value; }
 
+
   if (m_position.y.Mode == SizeMode::Proportional) {
-    calculatedPosition.y += ParentHeight * m_position.y.Value;
+    calculatedPosition.y = ParentPosition.y + m_position.y.Value;
   } else { calculatedPosition.y += m_position.y.Value; }
 
+
+  m_pixelPosition = calculatedPosition;
   return calculatedPosition;
 }
 
-void UIImage::Render(EntityManager& Manager,
-                     const Transform* Transform,
-                     Vector2<float> DrawArea) {
+void UIImage::Render(EntityManager& Manager, const Transform* Transform) {
   Rect<float, float> result = Rect<float, float>(
-      Transform->GetPixelSize(DrawArea.x, DrawArea.y),
-      Transform->GetPixelPosition(DrawArea.x, DrawArea.y),
+      Transform->GetPixelSize(),
+      Transform->GetPixelPosition(),
       m_colour,
       m_drawDepth
     );
@@ -78,9 +88,7 @@ void UIImage::Render(EntityManager& Manager,
   Manager.AddGeometry(result);
 }
 
-void IText::Render(EntityManager& Manager,
-                   const Transform* Transform,
-                   Vector2<float> DrawArea) {
+void IText::Render(EntityManager& Manager, const Transform* Transform) {
   // calculate size of each character based on font
   Font font = GetFont();
   Vector2 textObjPos = Transform->GetPixelPosition();
@@ -138,9 +146,7 @@ void IText::Render(EntityManager& Manager,
   }
 }
 
-void TextBox::Render(EntityManager& Manager,
-                     const Transform* Transform,
-                     Vector2<float> DrawArea) {
+void TextBox::Render(EntityManager& Manager, const Transform* Transform) {
   // calculate size of each character based on font
   Font font = GetFont();
   Vector2 textObjPos = Transform->GetPixelPosition();

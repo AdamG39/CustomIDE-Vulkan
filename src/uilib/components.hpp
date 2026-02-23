@@ -7,9 +7,6 @@
 #include "ui.hpp"
 #include "text.hpp"
 
-extern int framebufferWidth;
-extern int framebufferHeight;
-
 enum ComponentTypes{
   TypeTransform,
   TypeImage,
@@ -35,8 +32,7 @@ public:
   void SetDrawDepth(int DrawDepth) { m_drawDepth = DrawDepth; }
   int GetDrawDepth() { return m_drawDepth; }
 
-  virtual void Render(EntityManager& Manager,
-      const Transform* Transform, Vector2<float> DrawArea) = 0;
+  virtual void Render(EntityManager& Manager, const Transform* Transform) = 0;
 };
 
 class IText : public IRenderable {
@@ -45,8 +41,7 @@ protected:
   bool m_wordWrap;
 
 public:
-  virtual void Render(EntityManager& Manager, 
-      const Transform* Transform, Vector2<float> DrawArea) override;
+  virtual void Render(EntityManager& Manager, const Transform* Transform) override;
 
   Font GetFont() const { return m_font; }
 
@@ -63,9 +58,8 @@ private:
   Vector2<UISize<float>> m_position;
   UIAnchorType m_anchor = UIAnchorType::Center;
 
-  Vector2<float> CalculateEntitySize(float ParentWidth, float ParentHeight) const;
-
-  Vector2<float> CalculateEntityPosition(float ParentWidth, float ParentHeight, const UIAnchorType& Anchor) const;
+  Vector2<float> m_pixelSize;
+  Vector2<float> m_pixelPosition;
 
 public:
   static int TypeValue() { return TypeTransform; }
@@ -73,15 +67,16 @@ public:
 
   Transform() = default;
   Transform(Vector2<UISize<float>> Size, Vector2<UISize<float>> Position)
-  : m_size(Size), m_position(Position) {}
+  : m_size(Size), m_position(Position), m_anchor(UIAnchorType::Center) {}
 
   void SetSize(const Vector2<UISize<float>>& Size) { m_size = Size; }
 
   Vector2<UISize<float>> GetSize() const { return m_size; }
 
-  Vector2<float> GetPixelSize(float ParentWidth = (float)framebufferWidth,
-                              float ParentHeight = (float)framebufferHeight) const {
-    return CalculateEntitySize(ParentWidth, ParentHeight);
+  Vector2<float> RecalculateEntitySize(float ParentWidth, float ParentHeight);
+
+  Vector2<float> GetPixelSize() const {
+    return m_pixelSize;
   }
 
   void SetPosition(const Vector2<UISize<float>>& Position) {
@@ -90,9 +85,11 @@ public:
 
   Vector2<UISize<float>> GetPosition() const { return m_position; }
 
-  Vector2<float> GetPixelPosition(float ParentWidth = (float)framebufferWidth,
-                                  float ParentHeight = (float)framebufferHeight) const {
-    return CalculateEntityPosition(ParentWidth, ParentHeight, m_anchor);
+  Vector2<float> RecalculateEntityPosition(Vector2<float> ParentSize, 
+    Vector2<float> ParentPosition, const UIAnchorType& Anchor);
+
+  Vector2<float> GetPixelPosition() const {
+    return m_pixelPosition;
   }
 
   void SetAnchor(const UIAnchorType& AnchorValue) {
@@ -116,8 +113,7 @@ public:
   UIImage(const Colour<float>& _Colour = Colour<float>(), int TextureCoords = -1)
   : m_colour(_Colour), m_textureIndex(TextureCoords) {}
 
-  void Render(EntityManager& Manager,
-      const Transform* Transform, Vector2<float> DrawArea) override;
+  void Render(EntityManager& Manager, const Transform* Transform) override;
 
   void SetColour(const Colour<float>& Colour) { m_colour = Colour; }
   Colour<float> GetColour() const { return m_colour; }
@@ -219,8 +215,7 @@ public:
     m_cursor.Colour = Font.colour;
   }
 
-  void Render(EntityManager& Manager,
-      const Transform* Transform, Vector2<float> DrawArea) override;
+  void Render(EntityManager& Manager, const Transform* Transform) override;
 
   char Index(unsigned Position) { return m_table.Index(Position); }
 
