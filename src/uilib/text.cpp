@@ -41,6 +41,9 @@ char PieceTable::Index(unsigned Position) const {
 void PieceTable::Insert(char Character, int Position) {
   m_add.push_back(Character);
 
+  m_recalculateContent = true;
+  m_recalculateNewLines = true;
+
   // Need to find which entry to add to
   unsigned counter = 0;
   auto it = m_entries.begin();
@@ -98,6 +101,9 @@ void PieceTable::Insert(char Character, int Position) {
 }
 
 void PieceTable::Delete(int Position) {
+  m_recalculateContent = true;
+  m_recalculateNewLines = true;
+
   unsigned counter = 0;
   long long entryIndex = -1;
   auto it = m_entries.begin();
@@ -150,6 +156,26 @@ void PieceTable::Delete(int Position) {
   if (entry.Length == 0) m_entries.erase(it);
 }
 
+std::string PieceTable::GetContent() {
+  // Recalculates content if contents state changed otherwise returns cached result
+  if (!m_recalculateContent) return m_content;
+
+  // Recalculate content
+  m_content.clear();
+
+  for (auto entry : m_entries) {
+    if (entry.Type == PieceTableBufferType::Original) {
+      m_content.append(m_original.substr(entry.Start, entry.Length));
+    } else {
+      m_content.append(m_add.substr(entry.Start, entry.Length));
+    }
+  }
+
+  m_recalculateContent = false;
+
+  return m_content;
+}
+
 std::string PieceTable::GetContent() const {
   std::string result;
 
@@ -162,6 +188,24 @@ std::string PieceTable::GetContent() const {
   }
 
   return result;
+}
+
+const std::vector<int>& PieceTable::GetNewLines() {
+  // Recalculates new line positions if content state changed otherwise returns cached result
+  if (!m_recalculateNewLines) return m_newLines;
+
+  m_newLines.clear();
+  // Recalculate newlines
+  int counter = 0;
+  for (char c : GetContent()) {
+    if (c == '\n')
+      m_newLines.push_back(counter);
+
+    counter++;
+  }
+  m_recalculateNewLines = false;
+
+  return m_newLines;
 }
 
 #ifdef _DEBUG

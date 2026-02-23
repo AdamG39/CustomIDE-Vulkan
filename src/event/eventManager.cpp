@@ -45,26 +45,23 @@ bool EventHandler::HandleKeyboardEvent(const EventInfo& Info) {
     if (textBox != nullptr) {
       switch (Info.KeyboardInfo.Key) {
       case GLFW_KEY_LEFT:
-        textBox->MoveCursorBy(1, TextCursorMoveDirection::Left);
+        textBox->MoveCursorLeft();
         break;
       case GLFW_KEY_RIGHT:
-        textBox->MoveCursorBy(1, TextCursorMoveDirection::Right);
+        textBox->MoveCursorRight();
         break;
       case GLFW_KEY_UP:
-        textBox->MoveCursorBy(1, TextCursorMoveDirection::Up);
+        textBox->MoveCursorUp();
         break;
       case GLFW_KEY_DOWN:
-        textBox->MoveCursorBy(1, TextCursorMoveDirection::Down);
+        textBox->MoveCursorDown();
         break;
       case GLFW_KEY_BACKSPACE:
         textBox->Delete(textBox->GetCursorPosition() - 1);
-        textBox->MoveCursorBy(1, Left);
+        textBox->MoveCursorLeft();
         break;
       case GLFW_KEY_DELETE:
         textBox->Delete(textBox->GetCursorPosition());
-        break;
-      case GLFW_KEY_SPACE:
-        textBox->Insert(' ', textBox->GetCursorPosition());
         break;
       case GLFW_KEY_TAB:
         textBox->Insert('\t', textBox->GetCursorPosition());

@@ -236,7 +236,7 @@ void TextBox::Render(EntityManager& Manager,
 
 void TextBox::Insert(char Character, int Position) {
    m_table.Insert(Character, Position);
-   MoveCursorBy(1, Right);
+   MoveCursorRight();
 }
 
 void TextBox::Insert(std::string Content, int Position) {
@@ -247,20 +247,73 @@ void TextBox::Delete(int Position, int Count) {
 
 }
 
-void TextBox::MoveCursorBy(int Amount, TextCursorMoveDirection Direction) {
-  switch (Direction) {
-    case Left:
-      m_cursor.Position = std::max(0, m_cursor.Position - Amount);
-      break;
-    case Right:
-      m_cursor.Position = std::min(static_cast<size_t>(m_cursor.Position + Amount), GetContent().size());
-      break;
-    case Up:
-      puts("unimplemented");
-      break;
-    case Down:
-      puts("unimplemented");
-      break;
+void TextBox::MoveCursorLeft() {
+  m_cursor.Position = std::max(0, m_cursor.Position - 1);
+}
+
+void TextBox::MoveCursorRight() {
+  m_cursor.Position = std::min(static_cast<size_t>(m_cursor.Position + 1), GetContent().size());
+}
+
+void TextBox::MoveCursorUp() {
+  const std::vector<int>& newLines = m_table.GetNewLines();
+
+  // if only 1 line (aka no new lines) just jump to start of line
+  if (newLines.empty()) {
+    m_cursor.Position = 0;
+    return;
   }
+  // if on the first line just jump to start of line
+  if (newLines.front() >= m_cursor.Position) {
+    m_cursor.Position = 0;
+    return;
+  }
+
+  // Looks for start of line that cursor is on if not found assumes on first line
+  int startOfLine = -1;
+  for (int i = newLines.size() - 1; i >= 0; i--) {
+    if (newLines[i] < m_cursor.Position) {
+      startOfLine = i;
+      break;
+    }
+  }
+
+  int previousLine = ((startOfLine - 1) >= 0) ? newLines[startOfLine - 1] + 1 : 0; // Add one to account for newline character
+  int cursorLineOffset = m_cursor.Position - ((startOfLine < 0) ? 0 : newLines[startOfLine] + 1);
+  m_cursor.Position = std::min(newLines[startOfLine], previousLine + cursorLineOffset);
+}
+
+void TextBox::MoveCursorDown() {
+  const std::vector<int>& newLines = m_table.GetNewLines();
+  int contentSize = GetContent().size();
+
+  // if only 1 line (aka no new lines) just jump to end of line
+  if (newLines.empty()) {
+    m_cursor.Position = contentSize;
+    return;
+  }
+  // if on the last line just jump to end of line
+  if (newLines.back() < m_cursor.Position) {
+    m_cursor.Position = contentSize;
+    return;
+  }
+
+  // Looks for start of line that cursor is on if not found assumes on first line
+  int startOfLine = -1;
+  for (int i = newLines.size() - 1; i >= 0; i--) {
+    if (newLines[i] < m_cursor.Position) {
+      startOfLine = i;
+      break;
+    }
+  }
+
+  int nextLine = newLines[startOfLine + 1];
+  int cursorLineOffset = m_cursor.Position - ((startOfLine < 0) ? 0 : newLines[startOfLine]);
+  int lineAfter = ((startOfLine + 2) >= newLines.size()) ? contentSize : newLines[startOfLine + 2];
+  int lineLength = lineAfter - nextLine + 1; // Add 1 to account for newline character
+  if (m_cursor.Position == 0)
+    m_cursor.Position = nextLine + 1;
+  else
+    m_cursor.Position = nextLine + std::min(lineLength, cursorLineOffset);
 }
 

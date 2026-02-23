@@ -204,7 +204,6 @@ void CustomIDEApplication::CreateUIElements() {
 
   closeButtonCross->AddComponent<UIImage>(COLOUR_WHITE, 2);
 
-
   Entity& titleLabel = m_tree->AddEntity(Vector2<UISize<float>>({600.f, 40.f}),
                                          Vector2<UISize<float>>({20.f, 20.f}));
 

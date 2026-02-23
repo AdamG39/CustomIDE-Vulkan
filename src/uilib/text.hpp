@@ -3,6 +3,7 @@
 
 #include <string>
 #include <list>
+#include <vector>
 #include "../renderer/shapes.hpp"
 
 
@@ -44,10 +45,15 @@ struct PieceTableEntry {
 
 class PieceTable {
 private:
+  bool m_recalculateContent;
+  std::string m_content;
+
   const std::string m_original;
   std::string m_add;
 
   std::list<PieceTableEntry> m_entries;
+  bool m_recalculateNewLines;
+  std::vector<int> m_newLines;
 
 public:
   PieceTable(std::string FileContents) : m_original(std::move(FileContents)) {
@@ -58,6 +64,9 @@ public:
     };
 
     m_entries.push_back(initialEntry);
+
+    m_recalculateContent = true;
+    m_recalculateNewLines = true;
   }
 
   char Index(unsigned Position) const;
@@ -66,7 +75,10 @@ public:
 
   void Delete(int Position);
 
+  std::string GetContent();
   std::string GetContent() const;
+
+  const std::vector<int>& GetNewLines();
 
 #ifdef _DEBUG
   void Print();

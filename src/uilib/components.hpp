@@ -53,6 +53,7 @@ public:
   void SetWordWrap(bool Value) { m_wordWrap = Value; }
   bool GetWordWrap() { return m_wordWrap; }
 
+  virtual std::string GetContent() = 0;
   virtual std::string GetContent() const = 0;
 };
 
@@ -197,9 +198,8 @@ public:
     m_wordWrap = WordWrap;
   }
 
-  std::string GetContent() const override {
-    return m_content;
-  }
+  std::string GetContent() override { return m_content; }
+  std::string GetContent() const override { return m_content; }
 };
 
 // Mutable text box
@@ -231,11 +231,15 @@ public:
   void Delete(int Position, int Count);
 
   int GetCursorPosition() const { return m_cursor.Position; }
-  void MoveCursorBy(int Amount, TextCursorMoveDirection Direction);
+  void MoveCursorLeft();
+  void MoveCursorRight();
+  void MoveCursorUp();
+  void MoveCursorDown();
 
   Colour<float> GetCursorColour() const { return m_cursor.Colour; }
   void SetCursorColour(const Colour<float>& NewColour) { m_cursor.Colour = NewColour; }
 
+  std::string GetContent() override { return m_table.GetContent(); }
   std::string GetContent() const override { return m_table.GetContent(); }
 
 #ifdef _DEBUG
