@@ -1,11 +1,12 @@
 - Implement text editing
+	- Handle text selection
+	- Handle mouse interaction with text box
 	- Allow for text copy and paste
 	- Handle undo/redo
 - Rework ECS system
-	- Rewrite render loop should walk all tree nodes computing root nodes first to determine child nodes size and position
 	- Make it so that entities can only have 1 "IRenderable" component
 	- Create new components
 		- Canvas component that contains renderspace (child entities use parents size and position instead of framebuffer size)
 	- Create helper functions for complex elements
-		- Panel simple 
+		- Panel
 		- Dropdown (button that shows/hides a panel)

@@ -230,6 +230,8 @@ public:
   void MoveCursorRight();
   void MoveCursorUp();
   void MoveCursorDown();
+  void MoveBackWord();
+  void MoveForwardWord();
 
   Colour<float> GetCursorColour() const { return m_cursor.Colour; }
   void SetCursorColour(const Colour<float>& NewColour) { m_cursor.Colour = NewColour; }

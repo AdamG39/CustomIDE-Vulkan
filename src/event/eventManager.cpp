@@ -45,10 +45,14 @@ bool EventHandler::HandleKeyboardEvent(const EventInfo& Info) {
     if (textBox != nullptr) {
       switch (Info.KeyboardInfo.Key) {
       case GLFW_KEY_LEFT:
-        textBox->MoveCursorLeft();
+        if (Info.KeyboardInfo.Modifications & GLFW_MOD_CONTROL)
+          textBox->MoveBackWord();
+        else textBox->MoveCursorLeft();
         break;
       case GLFW_KEY_RIGHT:
-        textBox->MoveCursorRight();
+        if (Info.KeyboardInfo.Modifications & GLFW_MOD_CONTROL)
+          textBox->MoveForwardWord();
+        else textBox->MoveCursorRight();
         break;
       case GLFW_KEY_UP:
         textBox->MoveCursorUp();

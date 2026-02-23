@@ -323,3 +323,67 @@ void TextBox::MoveCursorDown() {
     m_cursor.Position = nextLine + std::min(lineLength, cursorLineOffset);
 }
 
+void TextBox::MoveBackWord() {
+  MoveCursorLeft();
+
+  // find end of previous word
+  while (isspace(GetContent()[m_cursor.Position])) {
+    MoveCursorLeft();
+
+    if (m_cursor.Position == 0) return;
+  }
+
+  // find start of previous word
+  if (isalnum(GetContent()[m_cursor.Position])) {
+    MoveCursorLeft();
+    while (isalnum(GetContent()[m_cursor.Position])) {
+      // while cursor is on a alphanumeric character
+      MoveCursorLeft();
+
+      if (m_cursor.Position == 0) return;
+    }
+  } else if (!isspace(GetContent()[m_cursor.Position])) {
+    MoveCursorLeft();
+
+    while (!isspace(GetContent()[m_cursor.Position]) &&
+        !isalnum(GetContent()[m_cursor.Position])) {
+      // while cursor is on a alphanumeric character
+      MoveCursorLeft();
+
+      if (m_cursor.Position == 0) return;
+    }
+  }
+
+  MoveCursorRight();
+}
+
+void TextBox::MoveForwardWord() {
+  if (isalnum(GetContent()[m_cursor.Position])) {
+    MoveCursorRight();
+    // find end of this word
+    while (isalnum(GetContent()[m_cursor.Position])) {
+      // while cursor is on a alphanumeric character
+      MoveCursorRight();
+
+      if (m_cursor.Position == GetContent().size()) return;
+    }
+  } else if (!isspace(GetContent()[m_cursor.Position])) {
+    MoveCursorRight();
+
+    while (!isspace(GetContent()[m_cursor.Position]) &&
+        !isalnum(GetContent()[m_cursor.Position])) {
+      // while cursor is on a alphanumeric character
+      MoveCursorRight();
+
+      if (m_cursor.Position == GetContent().size()) return;
+    }
+  }
+
+  // find start of next word
+  while (isspace(GetContent()[m_cursor.Position])) {
+    MoveCursorRight();
+
+    if (m_cursor.Position == GetContent().size()) return;
+  }
+}
+
