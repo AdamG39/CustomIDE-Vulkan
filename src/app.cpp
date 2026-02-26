@@ -209,7 +209,7 @@ void CustomIDEApplication::CreateUIElements() {
 
   titleLabel.GetComponent<Transform>()->SetAnchor(UIAnchorType::TopLeft);
 
-  Font font = CreateFont("../assets/unscii-alt-font-16.png", COLOUR_WHITE);
+  Font font = CreateFont("../assets/unscii-alt-font-16.png", Colour(0xD4D6DE, 1.f));
 
   titleLabel.AddComponent<Label>(font, "CustomIDE | File | Edit");
 
@@ -217,13 +217,15 @@ void CustomIDEApplication::CreateUIElements() {
                                                 Vector2<UISize<float>>({0.f, 20.f}));
 
   textBoxBackground.AddComponent<UIImage>(THEME_DARK_COLOUR_1);
+
+  textBoxBackground.AddChild(Entity(Vector2<UISize<float>>({600.f, 600.f}),
+                                    Vector2<UISize<float>>({30.f, 80.f})));
+
+  std::shared_ptr textBox = textBoxBackground.GetChild(0);
+
+  textBox->GetComponent<Transform>()->SetAnchor(UIAnchorType::TopLeft);
   
-  Entity& textBox = m_tree->AddEntity(Vector2<UISize<float>>({600.f, 600.f}),
-                                      Vector2<UISize<float>>({30.f, 80.f}));
-
-  textBox.GetComponent<Transform>()->SetAnchor(UIAnchorType::TopLeft);
-
-  textBox.AddComponent<TextBox>(font, "../src/app.cpp");
+  textBox->AddComponent<TextBox>(font, "../src/app.cpp");
 }
 
 bool CursorAtHorizontalBorder(double xpos, ResizeSide& side) {

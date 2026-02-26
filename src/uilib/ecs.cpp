@@ -4,6 +4,25 @@ std::vector<std::shared_ptr<Entity>>& EntityManager::GetEntityTree() {
   return m_entityTree;
 }
 
+const std::list<std::shared_ptr<Entity>> EntityManager::GetAllEntities() const {
+  std::list<std::shared_ptr<Entity>> result;
+
+  for (auto& entity : m_entityTree) {
+    result.push_back(entity);
+  }
+
+  auto it = result.begin();
+  while (it != result.end()) {
+    if ((*it)->GetChildCount() > 0) {
+      for (auto& entity : (*it)->GetChildren())
+        result.push_back(entity);
+    }
+    it++;
+  }
+
+  return result;
+}
+
 Entity& EntityManager::AddEntity() {
   return *m_entityTree.emplace_back(std::make_shared<Entity>());
 }
@@ -43,11 +62,7 @@ void EntityManager::RenderTree(float framebufferWidth, float framebufferHeight) 
 
   m_geometries.clear();
 
-  std::vector<TextureArrayBounds> textureIndexArrayBounds;
-  // Order each triangle based on its zIndex then convert each triangle into its vertices
-  auto vertices = TriVectorToSortedVertexVector(tris, textureIndexArrayBounds);
-
   if (vertices.size() != 0)
-    m_renderer.FillVertexBuffer(vertices, textureIndexArrayBounds);
+    m_renderer.FillVertexBuffer(vertices, drawBatches);
 }
 

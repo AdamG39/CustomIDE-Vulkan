@@ -13,7 +13,7 @@ bool CursorOverlap(const Vector2<float>& CursorPos, const Vector2<float>& Size, 
 
 bool EventHandler::HandleMouseEvent(const EventInfo& Info) {
   if (Info.MouseInfo.Button == GLFW_MOUSE_BUTTON_LEFT) {
-    auto& entityTree = Info.EntityManager->GetEntityTree();
+    auto& entityTree = Info.EntityManager->GetAllEntities();
 
     for (auto entity : entityTree) {
       Transform* transform = entity->GetComponent<Transform>();
@@ -37,7 +37,7 @@ bool EventHandler::HandleWindowEvent(const EventInfo& Info) {
 
 bool EventHandler::HandleKeyboardEvent(const EventInfo& Info) {
   if (Info.KeyboardInfo.Action == GLFW_RELEASE) return true;
-  auto& entityTree = Info.EntityManager->GetEntityTree();
+  auto& entityTree = Info.EntityManager->GetAllEntities();
 
   for (auto entity : entityTree) {
     TextBox* textBox = entity->GetComponent<TextBox>();
@@ -135,7 +135,7 @@ bool EventHandler::HandleKeyboardEvent(const EventInfo& Info) {
 bool EventHandler::HandleCharacterEvent(const EventInfo& Info) {
   // TODO: add handling of any UFT-8 character
 
-  auto& entityTree = Info.EntityManager->GetEntityTree();
+  auto& entityTree = Info.EntityManager->GetAllEntities();
 
   for (auto entity : entityTree) {
     TextBox* textBox = entity->GetComponent<TextBox>();
