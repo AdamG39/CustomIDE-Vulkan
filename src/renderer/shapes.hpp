@@ -119,10 +119,6 @@ struct Triangle {
   Triangle(const Vertex<T, C>& V0, const Vertex<T, C>& V1, const Vertex<T, C>& V2, int Z_Index)
   : vertices{ V0, V1, V2 }, zIndex(Z_Index) {}
 
-  bool operator < (const Triangle<T, C>& That) {
-    return (zIndex < That.zIndex);
-  }
-
   void SetTextureIndex(int TextureIndex) {
     textureIndex = TextureIndex;
   }
@@ -160,15 +156,22 @@ public:
                 Vertex<T, C>(Vector2<T>(Position.x - (Size.x / 2), Position.y + (Size.y / 2)), RectColour),
                 Vertex<T, C>(Vector2<T>(Position.x + (Size.x / 2), Position.y + (Size.y / 2)), RectColour) } {}
 
+  bool operator < (const Rect<T, C>& That) {
+    return (m_zIndex < That.GetZIndex());
+  }
+
   void SetTextureCoords(const std::array<Vector2<T>, 4>& TextureCoords) {
     for (size_t i = 0; i < TextureCoords.size(); i++) {
       m_vertices[i].SetTextureCoords(TextureCoords[i]);
     }
   }
 
+  int GetTextureIndex() { return m_textureIndex; }
   void SetTextureIndex(int TextureIndex) {
     m_textureIndex = TextureIndex;
   }
+
+  int GetZIndex() const { return m_zIndex; }
 
   std::array<Vertex<T, C>, 6> GetVertices() const {
     std::array<Vertex<T, C>, 6> vertices;
@@ -205,14 +208,16 @@ public:
   Vector2<T> GetPosition() const { return m_position; }
 };
 
-struct ArrayBounds {
-  size_t start;
-  size_t count;
+struct ClipRect {
+  int32_t xOffset, yOffset;
+  uint32_t width, height;
 };
 
-struct TextureArrayBounds {
-  ArrayBounds bounds;
+struct DrawBatch {
   int textureIndex;
+  uint32_t vertexOffset;
+  uint32_t vertexCount;
+  ClipRect clipRect;
 };
 
 #endif

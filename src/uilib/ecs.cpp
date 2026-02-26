@@ -52,13 +52,10 @@ void EntityManager::RenderTree(float framebufferWidth, float framebufferHeight) 
     entity->RenderEntityAndChildren(*this, transform, renderableComponent, Vector2(framebufferWidth, framebufferHeight), {0, 0});
   }
 
-  std::vector<Triangle<float, float>> tris;
-
-  for (auto it = m_geometries.begin(); it != m_geometries.end(); it++) {
-    std::array<Triangle<float, float>, 2> temp = it->GetTris();
-    tris.push_back(temp[0]);
-    tris.push_back(temp[1]);
-  }
+  std::list<DrawBatch> drawBatches;
+  // Order each triangle based on its zIndex then convert each triangle into its vertices
+  auto vertices = RectVectorToSortedVertexVector(m_geometries, drawBatches, Vector2<uint32_t>(
+        static_cast<uint32_t>(framebufferWidth), static_cast<uint32_t>(framebufferHeight)));
 
   m_geometries.clear();
 

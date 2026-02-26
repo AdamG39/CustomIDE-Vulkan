@@ -19,6 +19,8 @@ public:
 
   std::vector<std::shared_ptr<Entity>>& GetEntityTree();
 
+  const std::list<std::shared_ptr<Entity>> GetAllEntities() const;
+
   void AddGeometry(Rect<float, float> Geometry);
 
   Rect<float, float> GetLastGeometry();

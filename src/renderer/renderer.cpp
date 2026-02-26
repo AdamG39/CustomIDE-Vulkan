@@ -616,8 +616,57 @@ void VulkanRenderer::UploadVertexData() {
   vkUnmapMemory(m_device, m_vertexBufferMemory);
 }
 
-void VulkanRenderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex,
-                                         const std::vector<TextureArrayBounds>& bounds) {
+void VulkanRenderer::RecordCommandBuffer(VkCommandBuffer commandBuffer,
+                                         const std::list<DrawBatch>& batches) {
+  VkExtent2D extent = m_swapchain->GetExtent();
+
+  vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipeline);
+
+  VkViewport viewport{
+    .x = 0.0f,
+    .y = 0.0f,
+    .width = static_cast<float>(extent.width),
+    .height = static_cast<float>(extent.height),
+    .minDepth = 0.0f,
+    .maxDepth = 1.0f
+  };
+  vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+
+  VkBuffer vertexBuffers[] = { m_vertexBuffer };
+  VkDeviceSize offsets[] = { 0 };
+
+  int framebufferWidth, framebufferHeight;
+  glfwGetFramebufferSize(m_window, &framebufferWidth, &framebufferHeight);
+
+  PushConstants pc{};
+  pc.width = static_cast<float>(framebufferWidth);
+  pc.height = static_cast<float>(framebufferHeight);
+
+  vkCmdPushConstants(commandBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT,
+      0, sizeof(PushConstants), &pc);
+
+
+  vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+  vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout,
+                          0, 1, &m_descriptorSets[0], 0, nullptr);
+
+  for (const DrawBatch& batch: batches) {
+    int textureIndex = batch.textureIndex;
+    vkCmdPushConstants(commandBuffer, m_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT,
+        sizeof(PushConstants), sizeof(int), (void *)&textureIndex);
+
+    VkRect2D scissor {
+      .offset = { batch.clipRect.xOffset, batch.clipRect.yOffset },
+      .extent = { batch.clipRect.width, batch.clipRect.height }
+    };
+
+    vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+    vkCmdDraw(commandBuffer, batch.vertexCount, 1, batch.vertexOffset, 0);
+  }
+}
+
+void VulkanRenderer::StartRenderPass(VkCommandBuffer& commandBuffer, uint32_t imageIndex) {
   VkCommandBufferBeginInfo beginInfo{};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   beginInfo.flags = 0;
@@ -639,51 +688,9 @@ void VulkanRenderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
   renderPassInfo.pClearValues = &m_clearColour;
 
   vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+}
 
-    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipeline);
-
-    VkViewport viewport{
-      .x = 0.0f,
-      .y = 0.0f,
-      .width = static_cast<float>(extent.width),
-      .height = static_cast<float>(extent.height),
-      .minDepth = 0.0f,
-      .maxDepth = 1.0f
-    };
-    vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-
-    VkRect2D scissor{
-      .offset = {0, 0},
-      .extent = extent
-    };
-    vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
-
-    VkBuffer vertexBuffers[] = { m_vertexBuffer };
-    VkDeviceSize offsets[] = { 0 };
-
-    int framebufferWidth, framebufferHeight;
-    glfwGetFramebufferSize(m_window, &framebufferWidth, &framebufferHeight);
-
-    PushConstants pc{};
-    pc.width = static_cast<float>(framebufferWidth);
-    pc.height = static_cast<float>(framebufferHeight);
-
-    vkCmdPushConstants(commandBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT,
-        0, sizeof(PushConstants), &pc);
-
-
-    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout,
-                            0, 1, &m_descriptorSets[0], 0, nullptr);
-
-    for (TextureArrayBounds bound : bounds) {
-      int textureIndex = bound.textureIndex;
-      vkCmdPushConstants(commandBuffer, m_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT,
-          sizeof(PushConstants), sizeof(int), (void *)&textureIndex);
-
-      vkCmdDraw(commandBuffer, bound.bounds.count, 1, bound.bounds.start, 0);
-    }
-
+void VulkanRenderer::EndRenderPass(VkCommandBuffer& commandBuffer) {
   vkCmdEndRenderPass(commandBuffer);
 
   if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
@@ -735,7 +742,9 @@ void VulkanRenderer::DrawFrame() {
   if (m_vertexArray.size() != 0) {
     UploadVertexData();
 
-    RecordCommandBuffer(m_commandBuffers[m_currentFrame], imageIndex, m_textureIndexArrayBounds);
+    StartRenderPass(m_commandBuffers[m_currentFrame], imageIndex);
+    RecordCommandBuffer(m_commandBuffers[m_currentFrame], m_drawBatches);
+    EndRenderPass(m_commandBuffers[m_currentFrame]);
   }
 
   VkSubmitInfo submitInfo{};
@@ -780,9 +789,9 @@ void VulkanRenderer::DrawFrame() {
 }
 
 void VulkanRenderer::FillVertexBuffer(std::vector<Vertex<float, float>> Vertices,
-                                      std::vector<TextureArrayBounds> textureIndexArrayBounds) {
+                                      std::list<DrawBatch> drawBatches) {
   m_vertexArray = std::move(Vertices);
-  m_textureIndexArrayBounds = std::move(textureIndexArrayBounds);
+  m_drawBatches = std::move(drawBatches);
 }
 
 void VulkanRenderer::Cleanup() {
@@ -794,9 +803,6 @@ void VulkanRenderer::Cleanup() {
   vkDestroyCommandPool(m_device, m_commandPool, nullptr);
   delete m_swapchain;
   vkDestroyPipeline(m_device, m_graphicsPipeline, nullptr);
-  /*for (auto tex : m_textures) {
-    tex.Destroy(m_device);
-  }*/
   m_textures.Destroy(m_device);
   vkDestroySampler(m_device, m_sampler, nullptr);
   vkDestroyPipelineLayout(m_device, m_pipelineLayout, nullptr);

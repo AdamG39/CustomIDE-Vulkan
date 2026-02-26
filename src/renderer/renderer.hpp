@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 #include <string>
 #include <vector>
+#include <list>
 #include "swapChain.hpp"
 #include "shapes.hpp"
 #include "texture.hpp"
@@ -28,7 +29,7 @@ public:
   void DrawFrame();
 
   void FillVertexBuffer(std::vector<Vertex<float, float>> Vertices,
-                        std::vector<TextureArrayBounds> textureIndexArrayBounds);
+                        std::list<DrawBatch> textureIndexArrayBounds);
 
   GLFWwindow* GetWindow() const { return m_window; }
 
@@ -100,7 +101,7 @@ private:
 
   size_t m_vertexBufferCapacity = 0;
   std::vector<Vertex<float, float>> m_vertexArray;
-  std::vector<TextureArrayBounds> m_textureIndexArrayBounds;
+  std::list<DrawBatch> m_drawBatches;
   VkDeviceMemory m_vertexBufferMemory;
   VkBuffer m_vertexBuffer = VK_NULL_HANDLE;
 
@@ -152,8 +153,12 @@ private:
 
   void UploadVertexData();
 
-  void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex,
-                           const std::vector<TextureArrayBounds>& bounds);
+  void StartRenderPass(VkCommandBuffer& commandBuffer, uint32_t imageIndex);
+
+  void RecordCommandBuffer(VkCommandBuffer commandBuffer,
+                           const std::list<DrawBatch>& batches);
+
+  void EndRenderPass(VkCommandBuffer& commandBuffer);
 
   void CreateSyncObjects();
 

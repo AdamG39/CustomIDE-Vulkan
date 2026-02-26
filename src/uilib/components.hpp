@@ -268,5 +268,9 @@ public:
 #endif // _DEBUG
 };
 
+class ScrollContainer : public IRenderable {
+  
+};
+
 #endif
 
