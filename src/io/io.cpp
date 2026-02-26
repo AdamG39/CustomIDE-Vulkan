@@ -1,5 +1,6 @@
 #include "../helpers/errors/errors.hpp"
 #include "io.hpp"
+#include <iostream>
 #include <fstream>
 #include <cmath>
 #include <assert.h>
@@ -29,6 +30,46 @@ std::vector<char> ReadBinaryFile(const std::string& filename) {
   file.close();
 
   return buffer;
+}
+
+std::string ReadTextFile(const std::string& filename) {
+  std::ifstream file(filename);
+
+  if (!file.is_open()) {
+    if (file.fail()) {
+      std::cerr << "Error details: " << strerror(errno)
+           << std::endl;
+    }
+    ExitWithError("Failed to open file", -5);
+  }
+
+  std::string fileContents;
+
+  std::string line;
+  while (getline(file, line)) {
+    fileContents.append(line);
+    fileContents.push_back('\n');
+  }
+
+  file.close();
+
+  return fileContents;
+}
+
+void WriteTextFile(const std::string& filename, const std::string& content) {
+  std::ofstream file(filename);
+
+  if (!file.is_open()) {
+    if (file.fail()) {
+      std::cerr << "Error details: " << strerror(errno)
+           << std::endl;
+    }
+    ExitWithError("Failed to open file", -5);
+  }
+
+  file.write(content.c_str(), content.size());
+
+  file.close();
 }
 
 bool CompareByteValues(const std::vector<char>& Obj1, const uint8_t* Obj2, size_t BytesToCompare) {

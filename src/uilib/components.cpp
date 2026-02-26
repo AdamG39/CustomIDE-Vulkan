@@ -1,5 +1,6 @@
 #include "components.hpp"
 #include "../helpers/errors/errors.hpp"
+#include "../io/io.hpp"
 #include "ecs.hpp"
 
 Vector2<float> Transform::RecalculateEntitySize(float ParentWidth, float ParentHeight) {
@@ -217,12 +218,36 @@ void TextBox::Render(EntityManager& Manager, const Transform* Transform) {
     result.SetTextureCoords(CalculateCharTextureCoords(fontAtlasSize, content[i]));
     Manager.AddGeometry(result);
   }
+  if (GetSelectionState()) {
+    int start = m_textSelection.start;
+    int length = m_textSelection.length;
+
+    Vector2<float> selectionSize {
+      static_cast<float>(font.size.x * length),
+      static_cast<float>(font.size.y) * 1.25f
+    };
+
+    Vector2<float> selectionPosition {
+      textObjPos.x + (font.size.x * start) + (selectionSize.x / 2.f) - (font.size.x / 2.f),
+      textObjPos.y
+    };
+
+    Rect<float, float> result = Rect<float, float>(
+      selectionSize,
+      selectionPosition,
+      Colour(0x90D5FF, 0.5f),
+      m_drawDepth
+    );
+
+    Manager.AddGeometry(result);
+  }
+
   if (cursorIndexPosition == content.size())
     cursorPosition = { linePosition, lineCount };
 
   Vector2<float> finalCursorSize {
     static_cast<float>(font.size.x),
-    static_cast<float>(font.size.y) * 1.25f
+    static_cast<float>(font.size.y) * 1.5f
   };
 
   Vector2<float> finalCursorPosition {
@@ -245,12 +270,24 @@ void TextBox::Insert(char Character, int Position) {
    MoveCursorRight();
 }
 
-void TextBox::Insert(std::string Content, int Position) {
+void TextBox::PasteText(GLFWwindow* Window) {
+  std::string text = glfwGetClipboardString(Window);
 
+  if (text.empty()) return;
+
+  for (char c : text) {
+    Insert(c, m_cursor.Position);
+  }
 }
 
-void TextBox::Delete(int Position, int Count) {
+void TextBox::DeleteSelection() {
+  for (int i = 0; i < m_textSelection.length; i++) {
+    Delete(m_textSelection.start);
+  }
 
+  m_cursor.Position = m_textSelection.start;
+
+  EndSelection();
 }
 
 void TextBox::MoveCursorLeft() {
@@ -385,5 +422,87 @@ void TextBox::MoveForwardWord() {
 
     if (m_cursor.Position == GetContent().size()) return;
   }
+}
+
+void TextBox::StartSelection() {
+  m_textSelection = {
+    .start = static_cast<size_t>(m_cursor.Position),
+    .length = 0ull
+  };
+
+  m_selectionState = true;
+  m_selectionDirection = None;
+}
+
+void TextBox::SelectLeft() {
+  if (m_cursor.Position == 0) return;
+  if (!m_selectionState) StartSelection();
+
+  MoveCursorLeft();
+
+  if (m_selectionDirection == Right) {
+    if (m_textSelection.length == 0) {
+      m_textSelection.start = static_cast<size_t>(m_cursor.Position);
+      m_textSelection.length++;
+      m_selectionDirection = Left;
+    }
+    else
+      m_textSelection.length--;
+    return;
+  }
+
+  m_textSelection.start = static_cast<size_t>(m_cursor.Position);
+  m_textSelection.length++;
+  m_selectionDirection = Left;
+}
+
+void TextBox::SelectRight() {
+  if (m_cursor.Position == GetContent().size()) return;
+  if (!m_selectionState) StartSelection();
+
+  MoveCursorRight();
+
+  if (m_selectionDirection == Left) {
+    m_textSelection.start = static_cast<size_t>(m_cursor.Position);
+    if (m_textSelection.length == 0) {
+      m_textSelection.start--;
+      m_textSelection.length++;
+      m_selectionDirection = Right;
+    }
+    else
+      m_textSelection.length--;
+    return;
+  }
+
+  m_textSelection.length++;
+  m_selectionDirection = Right;
+}
+
+void TextBox::EndSelection() {
+  m_selectionState = false;
+  m_selectionDirection = None;
+}
+
+void TextBox::CopySelection(GLFWwindow* Window) {
+  if (!m_selectionState) {
+    if (m_cursor.Position == GetContent().size()) return;
+    std::string currentCharacter;
+    currentCharacter.push_back(GetContent()[m_cursor.Position]);
+    glfwSetClipboardString(Window, currentCharacter.c_str());
+    return;
+  }
+
+  std::string selectedText = GetContent().substr(m_textSelection.start, m_textSelection.length);
+  glfwSetClipboardString(Window, selectedText.c_str());
+}
+
+void TextBox::LoadFile() {
+  m_table = PieceTable(ReadTextFile(m_filepath));
+}
+
+void TextBox::SaveFile() {
+  WriteTextFile(m_filepath, GetContent());
+
+  LoadFile();
 }
 

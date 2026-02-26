@@ -25,6 +25,11 @@ struct TextCursor {
   Colour<float> Colour;
 };
 
+struct TextSelection {
+  size_t start;
+  size_t length;
+};
+
 enum TextCursorMoveDirection : int {
   Up,
   Down,
@@ -48,7 +53,7 @@ private:
   bool m_recalculateContent;
   std::string m_content;
 
-  const std::string m_original;
+  std::string m_original;
   std::string m_add;
 
   std::list<PieceTableEntry> m_entries;
@@ -56,6 +61,7 @@ private:
   std::vector<int> m_newLines;
 
 public:
+  PieceTable() = default;
   PieceTable(std::string FileContents) : m_original(std::move(FileContents)) {
     PieceTableEntry initialEntry {
       .Type = Original,

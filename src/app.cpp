@@ -212,13 +212,18 @@ void CustomIDEApplication::CreateUIElements() {
   Font font = CreateFont("../assets/unscii-alt-font-16.png", COLOUR_WHITE);
 
   titleLabel.AddComponent<Label>(font, "CustomIDE | File | Edit");
+
+  Entity& textBoxBackground = m_tree->AddEntity(Vector2<UISize<float>>({0.99f, SizeMode::Proportional}, {0.95f, SizeMode::Proportional}),
+                                                Vector2<UISize<float>>({0.f, 20.f}));
+
+  textBoxBackground.AddComponent<UIImage>(THEME_DARK_COLOUR_1);
   
   Entity& textBox = m_tree->AddEntity(Vector2<UISize<float>>({600.f, 600.f}),
-                                      Vector2<UISize<float>>({20.f, 60.f}));
+                                      Vector2<UISize<float>>({30.f, 80.f}));
 
   textBox.GetComponent<Transform>()->SetAnchor(UIAnchorType::TopLeft);
-  
-  textBox.AddComponent<TextBox>(font, "some test text");
+
+  textBox.AddComponent<TextBox>(font, "../src/app.cpp");
 }
 
 bool CursorAtHorizontalBorder(double xpos, ResizeSide& side) {
@@ -369,8 +374,7 @@ void KeyCallback(GLFWwindow* Window, int Key, int Scancode, int Action, int Mods
     },
   };
 
-  if (glfwGetKeyName(Key, 0) == nullptr)
-    CustomIDEApplication::GetInstance()->GetEventManager()->AddEvent(EventType::Keyboard, &info);
+  CustomIDEApplication::GetInstance()->GetEventManager()->AddEvent(EventType::Keyboard, &info);
 }
 
 void CharacterCallback(GLFWwindow *Window, unsigned int Codepoint) {

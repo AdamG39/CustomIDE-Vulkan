@@ -108,6 +108,10 @@ struct Image {
 
 std::vector<char> ReadBinaryFile(const std::string& filename);
 
+std::string ReadTextFile(const std::string& filename);
+
+void WriteTextFile(const std::string& filename, const std::string& content);
+
 bool CompareByteValues(const std::vector<uint8_t>& Obj1, const uint8_t* Obj2, size_t BytesToCompare);
 
 bool ReadImageFile(const std::string &filename, std::vector<std::shared_ptr<Image>>& OutImages);

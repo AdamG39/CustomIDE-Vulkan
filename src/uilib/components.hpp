@@ -6,6 +6,7 @@
 #include "../renderer/shapes.hpp"
 #include "ui.hpp"
 #include "text.hpp"
+#include <GLFW/glfw3.h>
 
 enum ComponentTypes{
   TypeTransform,
@@ -201,15 +202,28 @@ public:
 // Mutable text box
 class TextBox : public IText {
 private:
+  enum SelectionDirection {
+    None,
+    Left,
+    Right
+  };
+
+  std::string m_filepath;
+
   TextCursor m_cursor{};
   PieceTable m_table;
+
+  bool m_selectionState = false;
+  SelectionDirection m_selectionDirection = None;
+  TextSelection m_textSelection;
 
 public:
   static int TypeValue() { return TypeTextBox; }
   int GetType() override { return TypeValue(); }
 
-  TextBox(Font Font, std::string FileContents = "", bool WordWrap = false)
-  : m_table(FileContents) {
+  TextBox(Font Font, std::string Filepath = "", bool WordWrap = false)
+  : m_filepath(Filepath) {
+    LoadFile();
     m_font = Font;
     m_wordWrap = WordWrap;
     m_cursor.Colour = Font.colour;
@@ -218,12 +232,8 @@ public:
   void Render(EntityManager& Manager, const Transform* Transform) override;
 
   char Index(unsigned Position) { return m_table.Index(Position); }
-
   void Insert(char Character, int Position);
-  void Insert(std::string Content, int Position);
-
   void Delete(int Position) { m_table.Delete(Position); }
-  void Delete(int Position, int Count);
 
   int GetCursorPosition() const { return m_cursor.Position; }
   void MoveCursorLeft();
@@ -232,6 +242,18 @@ public:
   void MoveCursorDown();
   void MoveBackWord();
   void MoveForwardWord();
+
+  bool GetSelectionState() const { return m_selectionState; }
+  void StartSelection();
+  void SelectLeft();
+  void SelectRight();
+  void EndSelection();
+  void CopySelection(GLFWwindow* Window);
+  void PasteText(GLFWwindow* Window);
+  void DeleteSelection();
+
+  void SaveFile();
+  void LoadFile();
 
   Colour<float> GetCursorColour() const { return m_cursor.Colour; }
   void SetCursorColour(const Colour<float>& NewColour) { m_cursor.Colour = NewColour; }
