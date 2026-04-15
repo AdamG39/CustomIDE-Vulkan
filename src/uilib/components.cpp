@@ -418,10 +418,13 @@ void TextBox::MoveForwardWord() {
 
       if (m_cursor.Position == GetContent().size()) return;
     }
+  } else if (GetContent()[m_cursor.Position] == '\n') {
+    MoveCursorRight();
+    return;
   }
 
   // find start of next word
-  while (isspace(GetContent()[m_cursor.Position])) {
+  while (isspace(GetContent()[m_cursor.Position]) && GetContent()[m_cursor.Position] != '\n') {
     MoveCursorRight();
 
     if (m_cursor.Position == GetContent().size()) return;
