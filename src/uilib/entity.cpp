@@ -23,8 +23,14 @@ void Entity::RenderEntityAndChildren(EntityManager& Manager, Transform* Transfor
   for (auto entity : m_children) {
     Transform* transform = entity->GetComponent<Transform>();
     IRenderable* renderableComponent = entity->GetRenderableComponent();
+    Mask* maskComponent = entity->GetComponent<Mask>();
+
+    if (maskComponent != nullptr)
+      Manager.GetClipStack().push(maskComponent->GetClipArea());
 
     entity->RenderEntityAndChildren(Manager, transform, renderableComponent, parentSize, parentPos);
 
+    if (maskComponent != nullptr)
+      Manager.GetClipStack().pop();
   }
 }

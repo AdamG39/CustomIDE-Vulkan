@@ -14,6 +14,7 @@ enum ComponentTypes{
   TypeButton,
   TypeLabel,
   TypeTextBox,
+  TypeMask
 };
 
 class Transform;
@@ -261,6 +262,19 @@ public:
 
   void DebugPrint() { m_table.DebugPrint(); }
 #endif // _DEBUG
+};
+
+class Mask : public IComponent {
+private:
+  ClipRect m_clipRect;
+
+public:
+  static int TypeValue() { return TypeMask; }
+  int GetType() override { return TypeValue(); }
+
+  Mask(ClipRect Rect = {}) : m_clipRect(Rect) {}
+
+  ClipRect GetClipArea() { return m_clipRect; }
 };
 
 class ScrollContainer : public IRenderable {

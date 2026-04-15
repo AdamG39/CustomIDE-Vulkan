@@ -3,12 +3,14 @@
 
 #include <vector>
 #include <memory>
+#include <stack>
 #include "entity.hpp"
 #include "../renderer/renderer.hpp"
 
 class EntityManager {
 private:
   std::vector<std::shared_ptr<Entity>> m_entityTree;
+  std::stack<ClipRect> m_clipStack;
   VulkanRenderer& m_renderer;
 
 public:
@@ -20,6 +22,7 @@ public:
 
   const std::list<std::shared_ptr<Entity>> GetAllEntities() const;
 
+  std::stack<ClipRect>& GetClipStack() { return m_clipStack; }
 
   Entity& AddEntity();
 

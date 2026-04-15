@@ -41,10 +41,15 @@ void EntityManager::RenderTree(float framebufferWidth, float framebufferHeight) 
   for (auto entity : m_entityTree) {
     Transform* transform = entity->GetComponent<Transform>();
     IRenderable* renderableComponent = entity->GetRenderableComponent();
+    Mask* maskComponent = entity->GetComponent<Mask>();
 
+    if (maskComponent != nullptr)
+      m_clipStack.push(maskComponent->GetClipArea());
 
     entity->RenderEntityAndChildren(*this, transform, renderableComponent, Vector2(framebufferWidth, framebufferHeight), {0, 0});
 
+    if (maskComponent != nullptr)
+      m_clipStack.pop();
   }
 }
 

@@ -82,6 +82,8 @@ void UIImage::Render(EntityManager& Manager, const Transform* Transform) {
   auto size = Transform->GetPixelSize();
 
   ClipRect clipRect {.clippingEnabled = false};
+  if (!Manager.GetClipStack().empty())
+    clipRect = Manager.GetClipStack().top();
 
   Manager.GetRenderer().DrawTexturedRectEx(
       Rect2D{ static_cast<int32_t>(pos.x), static_cast<int32_t>(pos.y),
@@ -137,6 +139,8 @@ void IText::Render(EntityManager& Manager, const Transform* Transform) {
     if (imageIndex < 0) ExitWithError("No image with that name found", -35);
 
     ClipRect clipRect {.clippingEnabled = false};
+    if (!Manager.GetClipStack().empty())
+      clipRect = Manager.GetClipStack().top();
 
     Manager.GetRenderer().DrawTexturedRectEx(
         Rect2D{ static_cast<int32_t>(charPosition.x), static_cast<int32_t>(charPosition.y),
@@ -209,6 +213,8 @@ void TextBox::Render(EntityManager& Manager, const Transform* Transform) {
     if (imageIndex < 0) ExitWithError("No image with that name found", -35);
 
     ClipRect clipRect {.clippingEnabled = false};
+    if (!Manager.GetClipStack().empty())
+      clipRect = Manager.GetClipStack().top();
 
     Manager.GetRenderer().DrawTexturedRectEx(
         Rect2D{ static_cast<int32_t>(charPosition.x), static_cast<int32_t>(charPosition.y),
