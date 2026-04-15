@@ -1,20 +1,14 @@
 #include "../helpers/errors/errors.hpp"
 #include "text.hpp"
 
-std::array<Vector2<float>, 4> CalculateCharTextureCoords(Vector2<float> FontAtlasSize, char Character) {
-  Vector2 textureCoordsMax { 1.f / FontAtlasSize.x, 1.f / FontAtlasSize.y };
+UVRect2D CalculateCharUV(Vector2<float> FontAtlasSize, char Character) {
+  Vector2 characterAtlasSize { 1.f / FontAtlasSize.x, 1.f / FontAtlasSize.y };
 
   return {
-    Vector2<float>(textureCoordsMax.x * (Character % static_cast<int>(FontAtlasSize.x)),
-                   textureCoordsMax.y * int(Character / FontAtlasSize.x)),
-    Vector2<float>((textureCoordsMax.x * (Character % static_cast<int>(FontAtlasSize.x))) + textureCoordsMax.x,
-                   textureCoordsMax.y * int(Character / FontAtlasSize.x)),
-    Vector2<float>(textureCoordsMax.x * (Character % static_cast<int>(FontAtlasSize.x)),
-                   (textureCoordsMax.y * int(Character / FontAtlasSize.x)) +
-                   textureCoordsMax.y),
-    Vector2<float>((textureCoordsMax.x * (Character % static_cast<int>(FontAtlasSize.x))) + textureCoordsMax.x,
-                   (textureCoordsMax.y * int(Character / FontAtlasSize.x)) +
-                   textureCoordsMax.y)
+    (characterAtlasSize.x / 2) + characterAtlasSize.x * (Character % static_cast<int>(FontAtlasSize.x)),
+    characterAtlasSize.y * int(Character / FontAtlasSize.x) + (characterAtlasSize.y / 2),
+    characterAtlasSize.x,
+    characterAtlasSize.y
   };
 }
 

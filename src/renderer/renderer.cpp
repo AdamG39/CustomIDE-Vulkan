@@ -358,7 +358,7 @@ void VulkanRenderer::CreateGraphicsPipeline() {
   };
   LoadImages(filePaths);
 
-  CreateDescriptorSets(m_textures, MAX_TEXTURES/*MAX_FRAMES_IN_FLIGHT*/);
+  CreateDescriptorSets(m_textures, MAX_TEXTURES);
 
   auto vertShaderCode = ReadBinaryFile("../shaders/vert.spv");
   auto fragShaderCode = ReadBinaryFile("../shaders/frag.spv");
@@ -381,7 +381,7 @@ void VulkanRenderer::CreateGraphicsPipeline() {
     }
   };
 
-  using VertexF = Vertex<float, float>;
+  using VertexF = Vertex<float>;
 
   VkVertexInputBindingDescription bindingDescription{};
   bindingDescription.binding = 0;
@@ -564,7 +564,7 @@ uint32_t VulkanRenderer::FindMemoryType(uint32_t TypeFilter, VkMemoryPropertyFla
 
 void VulkanRenderer::CreateVertexBuffer() {
   if (m_vertexArray.empty()) {
-    ExitWithError("Vertex array is empty!", -1);
+    ExitWithError("No vertices in vertex array!", -1);
   }
 
   // Increase the total size by double to reduce calls
@@ -575,7 +575,7 @@ void VulkanRenderer::CreateVertexBuffer() {
     vkFreeMemory(m_device, m_vertexBufferMemory, nullptr);
   }
 
-  VkDeviceSize bufferSize = requiredVertexCount * sizeof(Vertex<float, float>);
+  VkDeviceSize bufferSize = requiredVertexCount * sizeof(Vertex<float>);
 
   VkBufferCreateInfo bufferInfo{};
   bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -608,7 +608,7 @@ void VulkanRenderer::CreateVertexBuffer() {
 }
 
 void VulkanRenderer::UploadVertexData() {
-  VkDeviceSize bufferSize = m_vertexArray.size() * sizeof(Vertex<int, float>);
+  VkDeviceSize bufferSize = m_vertexArray.size() * sizeof(Vertex<float>);
 
   void* data;
   vkMapMemory(m_device, m_vertexBufferMemory, 0, bufferSize, 0, &data);
@@ -617,7 +617,7 @@ void VulkanRenderer::UploadVertexData() {
 }
 
 void VulkanRenderer::RecordCommandBuffer(VkCommandBuffer commandBuffer,
-                                         const std::list<DrawBatch>& batches) {
+                                         const std::vector<DrawBatch>& batches) {
   VkExtent2D extent = m_swapchain->GetExtent();
 
   vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipeline);
@@ -630,39 +630,47 @@ void VulkanRenderer::RecordCommandBuffer(VkCommandBuffer commandBuffer,
     .minDepth = 0.0f,
     .maxDepth = 1.0f
   };
+
   vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
   VkBuffer vertexBuffers[] = { m_vertexBuffer };
   VkDeviceSize offsets[] = { 0 };
 
-  int framebufferWidth, framebufferHeight;
-  glfwGetFramebufferSize(m_window, &framebufferWidth, &framebufferHeight);
-
   PushConstants pc{};
-  pc.width = static_cast<float>(framebufferWidth);
-  pc.height = static_cast<float>(framebufferHeight);
+  pc.width = static_cast<float>(extent.width);
+  pc.height = static_cast<float>(extent.height);
 
   vkCmdPushConstants(commandBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT,
       0, sizeof(PushConstants), &pc);
-
 
   vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
   vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout,
                           0, 1, &m_descriptorSets[0], 0, nullptr);
 
+  uint32_t vertexOffset = 0;
   for (const DrawBatch& batch: batches) {
-    int textureIndex = batch.textureIndex;
+    uint32_t vertexCount = batch.size() * 6;
+    int textureIndex = batch.back().texture;
     vkCmdPushConstants(commandBuffer, m_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT,
         sizeof(PushConstants), sizeof(int), (void *)&textureIndex);
 
     VkRect2D scissor {
-      .offset = { batch.clipRect.xOffset, batch.clipRect.yOffset },
-      .extent = { batch.clipRect.width, batch.clipRect.height }
+      .offset = { 0, 0 },
+      .extent = { extent.width, extent.height }
     };
+
+    if (batch.back().clipRect.clippingEnabled) {
+      scissor.offset = { batch.back().clipRect.rect.xOffset - int32_t(batch.back().clipRect.rect.width / 2),
+                         batch.back().clipRect.rect.yOffset - int32_t(batch.back().clipRect.rect.height / 2) };
+      scissor.extent = { batch.back().clipRect.rect.width,
+                          batch.back().clipRect.rect.height };
+    }
 
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-    vkCmdDraw(commandBuffer, batch.vertexCount, 1, batch.vertexOffset, 0);
+    vkCmdDraw(commandBuffer, vertexCount, 1, vertexOffset, 0);
+
+    vertexOffset += vertexCount;
   }
 }
 
@@ -729,8 +737,12 @@ void VulkanRenderer::DrawFrame() {
 
   if (result == VK_ERROR_OUT_OF_DATE_KHR) {
     RecreateSwapChain();
+    m_commands.clear();
     return;
   }
+
+  BatchDrawCommands();
+  FillVertexArray();
 
   vkResetCommandBuffer(m_commandBuffers[m_currentFrame], 0);
 
@@ -783,15 +795,171 @@ void VulkanRenderer::DrawFrame() {
     RecreateSwapChain();
   }
 
+  // Clear old frame data
   m_vertexArray.clear();
+  m_drawBatches.clear();
+  m_commands.clear();
 
   m_currentFrame = (m_currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
-void VulkanRenderer::FillVertexBuffer(std::vector<Vertex<float, float>> Vertices,
-                                      std::list<DrawBatch> drawBatches) {
-  m_vertexArray = std::move(Vertices);
-  m_drawBatches = std::move(drawBatches);
+void VulkanRenderer::DrawRect(
+    Rect2D Rect,
+    int ZIndex,
+    Colour Colour
+  ) {
+  DrawCommand cmd {
+    .texture = -1,
+    .transformRect = Rect,
+    .uvRect = UVRect2D{},
+    .colour = Colour,
+    .clipRect = ClipRect{.clippingEnabled = false},
+    .zIndex = ZIndex
+  };
+
+  m_commands.push_back(cmd);
+}
+
+void VulkanRenderer::DrawRectEx(
+    Rect2D Rect,
+    int ZIndex,
+    ClipRect ClipArea,
+    Colour Colour
+  ) {
+  // If rect not within the clip area dont need to do any rendering
+  if (ClipArea.clippingEnabled)
+    if (!(ClipArea.rect.PointIntersection({ Rect.xOffset - (Rect.width / 2.f), Rect.yOffset - (Rect.height / 2.f) }) && // Top left
+          ClipArea.rect.PointIntersection({ Rect.xOffset + (Rect.width / 2.f), Rect.yOffset - (Rect.height / 2.f) }) && // Top right
+          ClipArea.rect.PointIntersection({ Rect.xOffset - (Rect.width / 2.f), Rect.yOffset + (Rect.height / 2.f) }) && // Bottom left
+          ClipArea.rect.PointIntersection({ Rect.xOffset + (Rect.width / 2.f), Rect.yOffset + (Rect.height / 2.f) })))  // Bottom right
+      return;
+
+  DrawCommand cmd {
+    .texture = -1,
+    .transformRect = Rect,
+    .uvRect = UVRect2D{},
+    .colour = Colour,
+    .clipRect = ClipArea,
+    .zIndex = ZIndex
+  };
+
+  m_commands.push_back(cmd);
+}
+
+void VulkanRenderer::DrawTexturedRect(
+    Rect2D Rect,
+    UVRect2D UVRect,
+    int ZIndex,
+    TextureID TextureIndex
+  ) {
+  DrawCommand cmd {
+    .texture = TextureIndex,
+    .transformRect = Rect,
+    .uvRect = UVRect,
+    .colour = COLOUR_WHITE,
+    .clipRect = ClipRect{.clippingEnabled = false},
+    .zIndex = ZIndex
+  };
+
+  m_commands.push_back(cmd);
+}
+
+void VulkanRenderer::DrawTexturedRectEx(
+    Rect2D Rect,
+    UVRect2D UVRect,
+    int ZIndex,
+    TextureID TextureIndex,
+    ClipRect ClipArea,
+    Colour Colour
+  ) {
+  // If rect not within the clip area dont need to do any rendering
+  if (ClipArea.clippingEnabled)
+    if (!(ClipArea.rect.PointIntersection({ Rect.xOffset - (Rect.width / 2.f), Rect.yOffset - (Rect.height / 2.f) }) && // Top left
+          ClipArea.rect.PointIntersection({ Rect.xOffset + (Rect.width / 2.f), Rect.yOffset - (Rect.height / 2.f) }) && // Top right
+          ClipArea.rect.PointIntersection({ Rect.xOffset - (Rect.width / 2.f), Rect.yOffset + (Rect.height / 2.f) }) && // Bottom left
+          ClipArea.rect.PointIntersection({ Rect.xOffset + (Rect.width / 2.f), Rect.yOffset + (Rect.height / 2.f) })))  // Bottom right
+      return;
+
+  DrawCommand cmd {
+    .texture = TextureIndex,
+    .transformRect = Rect,
+    .uvRect = UVRect,
+    .colour = Colour,
+    .clipRect = ClipArea,
+    .zIndex = ZIndex
+  };
+
+  m_commands.push_back(cmd);
+}
+
+void VulkanRenderer::BatchDrawCommands() {
+  // Order draw commands based on zIndex
+  m_commands.sort([](DrawCommand A, DrawCommand B) {
+    return A.zIndex < B.zIndex;
+  });
+
+  auto canMerge = [](DrawCommand A, DrawCommand B) { return A.texture == B.texture && A.clipRect == B.clipRect; };
+
+  if (m_commands.empty()) return;
+
+  m_drawBatches.push_back(DrawBatch(1, *(m_commands.begin()))); // Push initial batch
+  auto prevIt = m_drawBatches.rbegin(); // current batch to check against
+  auto currIt = m_commands.begin();
+  currIt++;
+
+  for (; currIt != m_commands.end(); currIt++) {
+    if (canMerge((*prevIt).back(), *currIt)) {
+      // merge
+      (*prevIt).push_back(*currIt);
+    } else {
+      // Create new batch using curr
+      m_drawBatches.push_back(DrawBatch(1, *currIt));
+      prevIt = m_drawBatches.rbegin(); // Update previous
+    }
+  }
+
+
+void VulkanRenderer::FillVertexArray() {
+  for (auto batch : m_drawBatches) {
+    for (auto cmd : batch) {
+      Vector2D topLeft { cmd.transformRect.xOffset - (cmd.transformRect.width / 2.f),
+                         cmd.transformRect.yOffset + (cmd.transformRect.height / 2.f) };
+      Vector2D topRight { cmd.transformRect.xOffset + (cmd.transformRect.width / 2.f),
+                          cmd.transformRect.yOffset + (cmd.transformRect.height / 2.f) };
+      Vector2D bottomLeft { cmd.transformRect.xOffset - (cmd.transformRect.width / 2.f),
+                            cmd.transformRect.yOffset - (cmd.transformRect.height / 2.f) };
+      Vector2D bottomRight { cmd.transformRect.xOffset + (cmd.transformRect.width / 2.f),
+                             cmd.transformRect.yOffset - (cmd.transformRect.height / 2.f) };
+      Vertex<float> V0 = Vertex<float>(topLeft, cmd.colour);
+      Vertex<float> V1 = Vertex<float>(topRight, cmd.colour);
+      Vertex<float> V2 = Vertex<float>(bottomLeft, cmd.colour);
+      Vertex<float> V3 = Vertex<float>(bottomRight, cmd.colour);
+
+      if (cmd.texture >= 0) {
+        Vector2D textureTopLeft { cmd.uvRect.xOffset - (cmd.uvRect.width / 2.f),
+                                  cmd.uvRect.yOffset + (cmd.uvRect.height / 2.f) };
+        Vector2D textureTopRight { cmd.uvRect.xOffset + (cmd.uvRect.width / 2.f),
+                                   cmd.uvRect.yOffset + (cmd.uvRect.height / 2.f) };
+        Vector2D textureBottomLeft { cmd.uvRect.xOffset - (cmd.uvRect.width / 2.f),
+                                     cmd.uvRect.yOffset - (cmd.uvRect.height / 2.f) };
+        Vector2D textureBottomRight { cmd.uvRect.xOffset + (cmd.uvRect.width / 2.f),
+                                      cmd.uvRect.yOffset - (cmd.uvRect.height / 2.f) };
+        V0.SetTextureCoords(textureTopLeft);
+        V1.SetTextureCoords(textureTopRight);
+        V2.SetTextureCoords(textureBottomLeft);
+        V3.SetTextureCoords(textureBottomRight);
+      }
+      // Push first triangle
+      m_vertexArray.push_back(V0);
+      m_vertexArray.push_back(V1);
+      m_vertexArray.push_back(V2);
+
+      // Push second triangle
+      m_vertexArray.push_back(V1);
+      m_vertexArray.push_back(V2);
+      m_vertexArray.push_back(V3);
+    }
+  }
 }
 
 void VulkanRenderer::Cleanup() {

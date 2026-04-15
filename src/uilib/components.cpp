@@ -78,15 +78,15 @@ Vector2<float> Transform::RecalculateEntityPosition(Vector2<float> ParentSize,
 }
 
 void UIImage::Render(EntityManager& Manager, const Transform* Transform) {
-  Rect<float, float> result = Rect<float, float>(
-      Transform->GetPixelSize(),
-      Transform->GetPixelPosition(),
-      m_colour,
-      m_drawDepth
-    );
-  result.SetTextureCoords(m_textureCoords);
-  result.SetTextureIndex(m_textureIndex);
-  Manager.AddGeometry(result);
+  auto pos = Transform->GetPixelPosition();
+  auto size = Transform->GetPixelSize();
+
+  ClipRect clipRect {.clippingEnabled = false};
+
+  Manager.GetRenderer().DrawTexturedRectEx(
+      Rect2D{ static_cast<int32_t>(pos.x), static_cast<int32_t>(pos.y),
+              static_cast<uint32_t>(size.x), static_cast<uint32_t>(size.y) },
+      m_uvRect, m_drawDepth, m_textureIndex, clipRect, m_colour);
 }
 
 void IText::Render(EntityManager& Manager, const Transform* Transform) {
@@ -132,18 +132,17 @@ void IText::Render(EntityManager& Manager, const Transform* Transform) {
       }
     }
 
-    Colour<float> textColour = font.colour;
-    Rect<float, float> result = Rect<float, float>(
-        font.size,
-        charPosition,
-        textColour,
-        m_drawDepth
-      );
+    Colour textColour = font.colour;
     auto imageIndex = Manager.GetRenderer().GetImageIndexFromName(font.familyName);
     if (imageIndex < 0) ExitWithError("No image with that name found", -35);
-    result.SetTextureIndex(imageIndex);
-    result.SetTextureCoords(CalculateCharTextureCoords(fontAtlasSize, content[i]));
-    Manager.AddGeometry(result);
+
+    ClipRect clipRect {.clippingEnabled = false};
+
+    Manager.GetRenderer().DrawTexturedRectEx(
+        Rect2D{ static_cast<int32_t>(charPosition.x), static_cast<int32_t>(charPosition.y),
+                static_cast<uint32_t>(font.size.x), static_cast<uint32_t>(font.size.y) },
+        CalculateCharUV(fontAtlasSize, content[i]), m_drawDepth, imageIndex, clipRect,
+        textColour);
   }
 }
 
@@ -200,24 +199,24 @@ void TextBox::Render(EntityManager& Manager, const Transform* Transform) {
       }
     }
 
-    Colour<float> textColour = font.colour;
+    Colour textColour = font.colour;
     if (cursorIndexPosition == i) {
       textColour.r = 1.f - textColour.r;
       textColour.g = 1.f - textColour.g;
       textColour.b = 1.f - textColour.b;
     }
-    Rect<float, float> result = Rect<float, float>(
-      font.size,
-      charPosition,
-      textColour,
-      m_drawDepth
-    );
     auto imageIndex = Manager.GetRenderer().GetImageIndexFromName(font.familyName);
     if (imageIndex < 0) ExitWithError("No image with that name found", -35);
-    result.SetTextureIndex(imageIndex);
-    result.SetTextureCoords(CalculateCharTextureCoords(fontAtlasSize, content[i]));
-    Manager.AddGeometry(result);
+
+    ClipRect clipRect {.clippingEnabled = false};
+
+    Manager.GetRenderer().DrawTexturedRectEx(
+        Rect2D{ static_cast<int32_t>(charPosition.x), static_cast<int32_t>(charPosition.y),
+                static_cast<uint32_t>(font.size.x), static_cast<uint32_t>(font.size.y) },
+        CalculateCharUV(fontAtlasSize, content[i]), m_drawDepth + 1, imageIndex, clipRect,
+        textColour);
   }
+  /*
   if (GetSelectionState()) {
     int start = m_textSelection.start;
     int length = m_textSelection.length;
@@ -232,7 +231,7 @@ void TextBox::Render(EntityManager& Manager, const Transform* Transform) {
       textObjPos.y
     };
 
-    Rect<float, float> result = Rect<float, float>(
+    Rect<float> result = Rect<float>(
       selectionSize,
       selectionPosition,
       Colour(0x90D5FF, 0.5f),
@@ -240,7 +239,7 @@ void TextBox::Render(EntityManager& Manager, const Transform* Transform) {
     );
 
     Manager.AddGeometry(result);
-  }
+  }*/
 
   if (cursorIndexPosition == content.size())
     cursorPosition = { linePosition, lineCount };
@@ -255,14 +254,10 @@ void TextBox::Render(EntityManager& Manager, const Transform* Transform) {
     textObjPos.y + (font.size.y * cursorPosition.y)
   };
 
-  Rect<float, float> result = Rect<float, float>(
-    finalCursorSize,
-    finalCursorPosition,
-    GetCursorColour(),
-    m_drawDepth
-  );
-
-  Manager.AddGeometry(result);
+  Manager.GetRenderer().DrawRect(
+      Rect2D{ static_cast<int32_t>(finalCursorPosition.x), static_cast<int32_t>(finalCursorPosition.y),
+              static_cast<uint32_t>(finalCursorSize.x), static_cast<uint32_t>(finalCursorSize.y) },
+      m_drawDepth, GetCursorColour());
 }
 
 void TextBox::Insert(char Character, int Position) {

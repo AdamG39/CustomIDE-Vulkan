@@ -16,13 +16,13 @@ enum TextType {
 struct Font {
   Vector2<int> size;
   std::string familyName;
-  Colour<float> colour;
+  Colour colour;
   TextType type = Normal;
 };
 
 struct TextCursor {
   int Position;
-  Colour<float> Colour;
+  Colour Colour;
 };
 
 struct TextSelection {
@@ -93,7 +93,7 @@ public:
 #endif // _DEBUG
 };
 
-std::array<Vector2<float>, 4> CalculateCharTextureCoords(Vector2<float> FontAtlasSize, char Character);
+UVRect2D CalculateCharUV(Vector2<float> FontAtlasSize, char Character);
 
 #endif
 

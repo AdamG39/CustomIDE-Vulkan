@@ -15,7 +15,7 @@ const int MAX_TEXTURES = 100;
 
 class VulkanRenderer {
 public:
-  VulkanRenderer(std::string AppName, Colour<float> ClearColour)
+  VulkanRenderer(std::string AppName, Colour ClearColour)
   : m_appName(AppName)
   {
     SetClearColour(ClearColour);
@@ -26,10 +26,15 @@ public:
     Cleanup();
   }
 
-  void DrawFrame();
+  void DrawRect(Rect2D Rect, int ZIndex, Colour Colour = {0x000000, 1.f});
+  void DrawRectEx(Rect2D Rect, int ZIndex, ClipRect ClipArea,
+                  Colour Colour = {0x000000, 1.f});
 
-  void FillVertexBuffer(std::vector<Vertex<float, float>> Vertices,
-                        std::list<DrawBatch> textureIndexArrayBounds);
+  void DrawTexturedRect(Rect2D Rect, UVRect2D UVRect, int ZIndex, TextureID TextureIndex);
+  void DrawTexturedRectEx(Rect2D Rect, UVRect2D UVRect, int ZIndex, TextureID TextureIndex,
+                          ClipRect ClipArea, Colour Colour = {0x000000, 1.f});
+
+  void DrawFrame();
 
   GLFWwindow* GetWindow() const { return m_window; }
 
@@ -37,7 +42,7 @@ public:
 
   void RecreateSwapChain();
 
-  void SetClearColour(const Colour<float> ClearColour) {
+  void SetClearColour(const Colour ClearColour) {
     m_clearColour = {{{ClearColour.r, ClearColour.g, ClearColour.b, ClearColour.a}}};
   }
 
@@ -100,8 +105,9 @@ private:
   std::vector<VkCommandBuffer> m_commandBuffers;
 
   size_t m_vertexBufferCapacity = 0;
-  std::vector<Vertex<float, float>> m_vertexArray;
-  std::list<DrawBatch> m_drawBatches;
+  std::vector<Vertex<float>> m_vertexArray;
+  std::list<DrawCommand> m_commands;
+  std::vector<DrawBatch> m_drawBatches;
   VkDeviceMemory m_vertexBufferMemory;
   VkBuffer m_vertexBuffer = VK_NULL_HANDLE;
 
@@ -156,11 +162,15 @@ private:
   void StartRenderPass(VkCommandBuffer& commandBuffer, uint32_t imageIndex);
 
   void RecordCommandBuffer(VkCommandBuffer commandBuffer,
-                           const std::list<DrawBatch>& batches);
+                           const std::vector<DrawBatch>& batches);
 
   void EndRenderPass(VkCommandBuffer& commandBuffer);
 
   void CreateSyncObjects();
+
+  void BatchDrawCommands();
+
+  void FillVertexArray();
 
   void Cleanup();
 };

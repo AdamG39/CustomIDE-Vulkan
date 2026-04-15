@@ -9,7 +9,6 @@
 class EntityManager {
 private:
   std::vector<std::shared_ptr<Entity>> m_entityTree;
-  std::list<Rect<float, float>> m_geometries;
   VulkanRenderer& m_renderer;
 
 public:
@@ -21,9 +20,6 @@ public:
 
   const std::list<std::shared_ptr<Entity>> GetAllEntities() const;
 
-  void AddGeometry(Rect<float, float> Geometry);
-
-  Rect<float, float> GetLastGeometry();
 
   Entity& AddEntity();
 

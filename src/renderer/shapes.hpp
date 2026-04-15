@@ -4,6 +4,7 @@
 #include <array>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 // Standard colours
 #define COLOUR_CLEAR  Colour(0xFFFFFF, 0.f)
@@ -38,6 +39,8 @@ struct Vector2 {
   Vector2(T X, T Y) : x(X), y(Y) {}
 };
 
+typedef Vector2<float> Vector2D;
+
 template <typename T>
 struct Vector3 {
   T x, y, z;
@@ -53,28 +56,23 @@ struct Vector3 {
   Vector3(T X, T Y, T Z) : x(X), y(Y), z(Z) {}
 };
 
-template <typename T>
+typedef Vector3<float> Vector3D;
+
 struct Colour {
-  T r, g, b, a;
+  float r, g, b, a;
 
   Colour() : r(0), g(0), b(0), a(1) {}
 
-  Colour(int HexColour, T Alpha)
-  : r(static_cast<T>(static_cast<float>((HexColour & 0xFF0000) >> 0x10) / 255.0f)),
-    g(static_cast<T>(static_cast<float>((HexColour & 0x00FF00) >> 0x8) / 255.0f)),
-    b(static_cast<T>(static_cast<float>(HexColour & 0x0000FF) / 255.0f)), a(Alpha) {}
+  Colour(int HexColour, float Alpha)
+  : r(((HexColour & 0xFF0000) >> 0x10) / 255.0f),
+    g(((HexColour & 0x00FF00) >> 0x8) / 255.0f),
+    b((HexColour & 0x0000FF) / 255.0f),
+    a(Alpha) {}
 
-  template<typename U, typename = std::enable_if_t<!std::is_same_v<T, U>>>
-  Colour(const Colour<U>& That)
-  : r(static_cast<T>(That.r)),
-    g(static_cast<T>(That.g)),
-    b(static_cast<T>(That.b)),
-    a(static_cast<T>(That.a)) {}
+  Colour(float R, float G, float B, float A) : r(R), g(G), b(B), a(A) {}
 
-  Colour(T R, T G, T B, T A) : r(R), g(G), b(B), a(A) {}
-
-  Colour<float> ConvertSRGBToLinear() const {
-    return Colour<float>(
+  Colour ConvertSRGBToLinear() const {
+    return Colour(
         (r < 0.04045f) ? r * 0.773993808f : pow(r * 0.9478672986f + 0.0521327014f, 2.4f),
         (g < 0.04045f) ? g * 0.773993808f : pow(g * 0.9478672986f + 0.0521327014f, 2.4f),
         (b < 0.04045f) ? b * 0.773993808f : pow(b * 0.9478672986f + 0.0521327014f, 2.4f),
@@ -82,22 +80,22 @@ struct Colour {
   }
 };
 
-template <typename T, typename C>
+template <typename T>
 struct Vertex {
   Vector3<T> position;
-  Colour<C> colour;
+  Colour colour;
   Vector2<T> textureCoords;
 
   Vertex() : position(), colour(), textureCoords() {}
   
-  Vertex(const Vector2<T>& Position, const Colour<C>& Colour)
+  Vertex(const Vector2<T>& Position, const Colour& Colour)
   : position(Vector3(Position)), colour(Colour) {}
 
-  Vertex(const Vector3<T>& Position, const Colour<C>& Colour)
+  Vertex(const Vector3<T>& Position, const Colour& Colour)
   : position(Position), colour(Colour) {}
 
-  template <typename Ut, typename Uc, typename = std::enable_if_t<!std::is_same_v<T, Ut> || !std::is_same_v<C, Uc>>>
-  Vertex(const Vertex<Ut, Uc>& That)
+  template <typename Ut, typename = std::enable_if_t<!std::is_same_v<T, Ut>>>
+  Vertex(const Vertex<Ut>& That)
   : position(That.position), colour(That.colour) {}
 
   void SetTextureCoords(const Vector2<T>& TextureCoords) {
@@ -105,120 +103,58 @@ struct Vertex {
   }
 };
 
-template <typename T, typename C>
-struct Triangle {
-  std::array<Vertex<T, C>, 3> vertices;
-  int zIndex;
-  int textureIndex = -1;
+typedef int TextureID;
 
-  Triangle() : vertices(), zIndex(0) {}
+struct Rect2D {
+  int32_t xOffset, yOffset;
+  uint32_t width, height;
 
-  Triangle(std::array<Vertex<T, C>, 3> Vertices, int Z_Index)
-  : vertices(Vertices), zIndex(Z_Index) {}
+  bool operator==(const Rect2D& Other) {
+    return this->xOffset == Other.xOffset && this->yOffset == Other.yOffset &&
+           this->width == Other.width && this->height == Other.height;
+  }
 
-  Triangle(const Vertex<T, C>& V0, const Vertex<T, C>& V1, const Vertex<T, C>& V2, int Z_Index)
-  : vertices{ V0, V1, V2 }, zIndex(Z_Index) {}
+  bool PointIntersection(Vector2D Point) {
+    int top = yOffset - (height / 2);
+    int bottom = yOffset + (height / 2);
+    int left = xOffset - (width / 2);
+    int right = xOffset + (width / 2);
 
-  void SetTextureIndex(int TextureIndex) {
-    textureIndex = TextureIndex;
+    return Point.x >= left && Point.x <= right &&
+           Point.y >= top && Point.y <= bottom;
   }
 };
 
-template <typename T, typename C>
-class Rect {
-private:
-  Vector2<T> m_position;
-  Vector2<T> m_size;
-  Colour<C> m_colour;
-  int m_zIndex;
-  int m_textureIndex = -1;
+struct UVRect2D {
+  float xOffset, yOffset;
+  float width, height;
 
-  std::array<Vertex<T, C>, 4> m_vertices;
-
-public:
-  Rect(Vector3<T> TopLeft, Vector3<T> BotRight, Colour<C> RectColour = COLOUR_BLACK, int zIndex = 0)
-  : m_position(Vector2<T>((BotRight.x - TopLeft.x) / 2, (BotRight.y - TopLeft.y) / 2)),
-    m_size(Vector2<T>(BotRight.x - TopLeft.x, BotRight.y - TopLeft.y)),
-    m_colour(RectColour),
-    m_zIndex(0),
-    m_vertices{ Vertex<T, C>(TopLeft, RectColour),
-                Vertex<T, C>(BotRight.x, TopLeft.y, RectColour), 
-                Vertex<T, C>(TopLeft.x, BotRight.y, RectColour), 
-                Vertex<T, C>(BotRight, RectColour) } {}
-
-  Rect(Vector2<T> Size, Vector2<T> Position, Colour<C> RectColour = COLOUR_BLACK, int zIndex = 0)
-  : m_position(Position),
-    m_size(Size),
-    m_colour(RectColour),
-    m_zIndex(zIndex),
-    m_vertices{ Vertex<T, C>(Vector2<T>(Position.x - (Size.x / 2), Position.y - (Size.y / 2)), RectColour),
-                Vertex<T, C>(Vector2<T>(Position.x + (Size.x / 2), Position.y - (Size.y / 2)), RectColour),
-                Vertex<T, C>(Vector2<T>(Position.x - (Size.x / 2), Position.y + (Size.y / 2)), RectColour),
-                Vertex<T, C>(Vector2<T>(Position.x + (Size.x / 2), Position.y + (Size.y / 2)), RectColour) } {}
-
-  bool operator < (const Rect<T, C>& That) {
-    return (m_zIndex < That.GetZIndex());
+  bool operator==(const UVRect2D& Other) {
+    return this->xOffset == Other.xOffset && this->yOffset == Other.yOffset &&
+           this->width == Other.width && this->height == Other.height;
   }
-
-  void SetTextureCoords(const std::array<Vector2<T>, 4>& TextureCoords) {
-    for (size_t i = 0; i < TextureCoords.size(); i++) {
-      m_vertices[i].SetTextureCoords(TextureCoords[i]);
-    }
-  }
-
-  int GetTextureIndex() { return m_textureIndex; }
-  void SetTextureIndex(int TextureIndex) {
-    m_textureIndex = TextureIndex;
-  }
-
-  int GetZIndex() const { return m_zIndex; }
-
-  std::array<Vertex<T, C>, 6> GetVertices() const {
-    std::array<Vertex<T, C>, 6> vertices;
-
-    // Triangle 1
-    vertices[0] = m_vertices[0];
-    vertices[1] = m_vertices[1];
-    vertices[2] = m_vertices[2];
-
-    // Triangle 2
-    vertices[3] = m_vertices[1];
-    vertices[4] = m_vertices[2];
-    vertices[5] = m_vertices[3];
-
-    return vertices;
-  }
-
-  std::array<Triangle<T, C>, 2> GetTris() const {
-    std::array<Triangle<T, C>, 2> tris;
-
-    tris[0] = Triangle<T, C>(m_vertices[0], m_vertices[1], m_vertices[2], m_zIndex);
-    tris[1] = Triangle<T, C>(m_vertices[1], m_vertices[2], m_vertices[3], m_zIndex);
-
-    if (m_textureIndex >= 0) {
-      tris[0].SetTextureIndex(m_textureIndex);
-      tris[1].SetTextureIndex(m_textureIndex);
-    }
-
-    return tris;
-  }
-
-  Vector2<T> GetSize() const { return m_size; }
-
-  Vector2<T> GetPosition() const { return m_position; }
 };
 
 struct ClipRect {
-  int32_t xOffset, yOffset;
-  uint32_t width, height;
+  bool clippingEnabled;
+  Rect2D rect;
+
+  bool operator==(const ClipRect& Other) {
+    return this->clippingEnabled == Other.clippingEnabled && this->rect == Other.rect;
+  }
 };
 
-struct DrawBatch {
-  int textureIndex;
-  uint32_t vertexOffset;
-  uint32_t vertexCount;
+struct DrawCommand {
+  TextureID texture;
+  Rect2D transformRect;
+  UVRect2D uvRect;
+  Colour colour;
+
   ClipRect clipRect;
+  int zIndex;
 };
+
+typedef std::vector<DrawCommand> DrawBatch;
 
 #endif
 

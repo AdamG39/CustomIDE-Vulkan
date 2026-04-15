@@ -3,6 +3,7 @@
 #include "helpers/errors/errors.hpp"
 #include "renderer/vulkanCore.hpp"
 #include <GLFW/glfw3.h>
+#include <chrono>
 
 /*\ ---- TODO: ----
  *  [ ] Dim or change colour of title bar when window is unfocused
@@ -193,11 +194,11 @@ void CustomIDEApplication::CreateUIElements() {
 
   closeButton.GetComponent<Transform>()->SetAnchor(UIAnchorType::TopRight);
 
-  closeButton.AddComponent<UIImage>(COLOUR_RED);
+  closeButton.AddComponent<UIImage>(Colour(0xe81123, 1.f));
   closeButton.AddComponent<Button>();
   closeButton.GetComponent<Button>()->SetOnRelease(&glfwSetWindowShouldClose, m_renderer->GetWindow(), GLFW_TRUE);
 
-  closeButton.AddChild(Entity(Vector2<UISize<float>>({40.f}, {40.f}),
+  closeButton.AddChild(Entity(Vector2<UISize<float>>({10.f}, {10.f}),
                               Vector2<UISize<float>>({0.f, SizeMode::Proportional}, {0.f, SizeMode::Proportional})));
 
   std::shared_ptr closeButtonCross = closeButton.GetChild(0);
@@ -391,7 +392,7 @@ void CharacterCallback(GLFWwindow *Window, unsigned int Codepoint) {
   CustomIDEApplication::GetInstance()->GetEventManager()->AddEvent(EventType::Character, &info);
 }
 
-Font CreateFont(const std::string& Filepath, const Colour<float>& FontColour) {
+Font CreateFont(const std::string& Filepath, const Colour& FontColour) {
   Font font;
 
   font.colour = FontColour;

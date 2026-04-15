@@ -37,29 +37,14 @@ void EntityManager::RemoveEntity(const size_t Index) {
   m_entityTree.erase(m_entityTree.begin() + Index);
 }
 
-void EntityManager::AddGeometry(Rect<float, float> Geometry) {
-  m_geometries.push_back(Geometry);
-}
-
-Rect<float, float> EntityManager::GetLastGeometry() {
-  return m_geometries.back();
-}
-
 void EntityManager::RenderTree(float framebufferWidth, float framebufferHeight) {
   for (auto entity : m_entityTree) {
     Transform* transform = entity->GetComponent<Transform>();
     IRenderable* renderableComponent = entity->GetRenderableComponent();
+
+
     entity->RenderEntityAndChildren(*this, transform, renderableComponent, Vector2(framebufferWidth, framebufferHeight), {0, 0});
+
   }
-
-  std::list<DrawBatch> drawBatches;
-  // Order each triangle based on its zIndex then convert each triangle into its vertices
-  auto vertices = RectVectorToSortedVertexVector(m_geometries, drawBatches, Vector2<uint32_t>(
-        static_cast<uint32_t>(framebufferWidth), static_cast<uint32_t>(framebufferHeight)));
-
-  m_geometries.clear();
-
-  if (vertices.size() != 0)
-    m_renderer.FillVertexBuffer(vertices, drawBatches);
 }
 

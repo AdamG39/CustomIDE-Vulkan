@@ -13,7 +13,7 @@ enum ComponentTypes{
   TypeImage,
   TypeButton,
   TypeLabel,
-  TypeTextBox
+  TypeTextBox,
 };
 
 class Transform;
@@ -102,29 +102,24 @@ public:
 
 class UIImage : public IRenderable {
 private:
-  Colour<float> m_colour;
-  std::array<Vector2<float>, 4> m_textureCoords = { Vector2<float>(0.f, 0.f), Vector2<float>(1.f, 0.f),
-                                                    Vector2<float>(0.f, 1.f), Vector2<float>(1.f, 1.f) };
+  Colour m_colour;
+  UVRect2D m_uvRect = { 0.5f, 0.5f, 1.f, 1.f };
   int m_textureIndex;
 
 public:
   static int TypeValue() { return TypeImage; }
   int GetType() override { return TypeValue(); }
 
-  UIImage(const Colour<float>& _Colour = Colour<float>(), int TextureCoords = -1)
+  UIImage(const Colour& _Colour = Colour(), int TextureCoords = -1)
   : m_colour(_Colour), m_textureIndex(TextureCoords) {}
 
   void Render(EntityManager& Manager, const Transform* Transform) override;
 
-  void SetColour(const Colour<float>& Colour) { m_colour = Colour; }
-  Colour<float> GetColour() const { return m_colour; }
+  void SetColour(const Colour& Colour) { m_colour = Colour; }
+  Colour GetColour() const { return m_colour; }
 
-  void SetTextureCoords(std::array<Vector2<float>, 4> TextureCoords) {
-    m_textureCoords = TextureCoords;
-  }
-  const std::array<Vector2<float>, 4>& GetTextureCoords() const {
-    return m_textureCoords;
-  }
+  void SetUVRect(UVRect2D UVRect) { m_uvRect = UVRect; }
+  const UVRect2D& GetUVRect() const { return m_uvRect; }
 
   void SetTextureIndex(int TextureIndex) { m_textureIndex = TextureIndex; }
   int GetTextureIndex() const { return m_textureIndex; }
@@ -255,8 +250,8 @@ public:
   void SaveFile();
   void LoadFile();
 
-  Colour<float> GetCursorColour() const { return m_cursor.Colour; }
-  void SetCursorColour(const Colour<float>& NewColour) { m_cursor.Colour = NewColour; }
+  Colour GetCursorColour() const { return m_cursor.Colour; }
+  void SetCursorColour(const Colour& NewColour) { m_cursor.Colour = NewColour; }
 
   std::string GetContent() override { return m_table.GetContent(); }
   std::string GetContent() const override { return m_table.GetContent(); }
