@@ -36,7 +36,7 @@ void PieceTable::Insert(char Character, int Position) {
   m_add.push_back(Character);
 
   m_recalculateContent = true;
-  m_recalculateNewLines = true;
+  m_recalculateStartOfLines = true;
 
   // Need to find which entry to add to
   unsigned counter = 0;
@@ -96,7 +96,7 @@ void PieceTable::Insert(char Character, int Position) {
 
 void PieceTable::Delete(int Position) {
   m_recalculateContent = true;
-  m_recalculateNewLines = true;
+  m_recalculateStartOfLines = true;
 
   unsigned counter = 0;
   long long entryIndex = -1;
@@ -184,22 +184,24 @@ std::string PieceTable::GetContent() const {
   return result;
 }
 
-const std::vector<int>& PieceTable::GetNewLines() {
+const std::vector<int>& PieceTable::GetStartOfLines() {
   // Recalculates new line positions if content state changed otherwise returns cached result
-  if (!m_recalculateNewLines) return m_newLines;
+  if (!m_recalculateStartOfLines) return m_startOfLines;
 
-  m_newLines.clear();
+  m_startOfLines.clear();
+
+  m_startOfLines.push_back(0); // Make sure to push start of first line
   // Recalculate newlines
   int counter = 0;
   for (char c : GetContent()) {
     if (c == '\n')
-      m_newLines.push_back(counter);
+      m_startOfLines.push_back(counter + 1); // Push the index after the newline
 
     counter++;
   }
-  m_recalculateNewLines = false;
+  m_recalculateStartOfLines = false;
 
-  return m_newLines;
+  return m_startOfLines;
 }
 
 #ifdef _DEBUG

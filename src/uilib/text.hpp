@@ -57,8 +57,8 @@ private:
   std::string m_add;
 
   std::list<PieceTableEntry> m_entries;
-  bool m_recalculateNewLines;
-  std::vector<int> m_newLines;
+  bool m_recalculateStartOfLines;
+  std::vector<int> m_startOfLines;
 
 public:
   PieceTable() = default;
@@ -72,7 +72,7 @@ public:
     m_entries.push_back(initialEntry);
 
     m_recalculateContent = true;
-    m_recalculateNewLines = true;
+    m_recalculateStartOfLines = true;
   }
 
   char Index(unsigned Position) const;
@@ -84,7 +84,7 @@ public:
   std::string GetContent();
   std::string GetContent() const;
 
-  const std::vector<int>& GetNewLines();
+  const std::vector<int>& GetStartOfLines();
 
 #ifdef _DEBUG
   void Print();
