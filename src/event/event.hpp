@@ -37,7 +37,7 @@ struct CharacterEventInfo {
 
 struct EventInfo {
   // Application manager pointers
-  EntityManager* EntityManager;
+  EntityManager* Manager;
   GLFWwindow* Window;
   
   union {

@@ -5,6 +5,8 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
+#include <cmath>
+#include <cstdint>
 
 // Standard colours
 #define COLOUR_CLEAR  Colour(0xFFFFFF, 0.f)

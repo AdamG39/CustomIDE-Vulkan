@@ -5,6 +5,7 @@
 #include "texture.hpp"
 #include "../io/io.hpp"
 #include <set>
+#include <cstring>
 
 #define APP_VERSION VK_MAKE_VERSION(0, 1, 0)
 
@@ -917,7 +918,7 @@ void VulkanRenderer::BatchDrawCommands() {
       prevIt = m_drawBatches.rbegin(); // Update previous
     }
   }
-
+}
 
 void VulkanRenderer::FillVertexArray() {
   for (auto batch : m_drawBatches) {

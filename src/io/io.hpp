@@ -142,6 +142,7 @@ namespace PNG {
         return 4 * BitsPerChannel;
     }
     ExitWithError("Invalid PNG Colour type", -23);
+    return -1;
   }
 
   constexpr uint8_t ReconA(size_t ScanLine, size_t LineByteOffset, size_t Stride, int BytesPerPixel, const uint8_t* Output);

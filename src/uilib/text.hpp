@@ -22,7 +22,7 @@ struct Font {
 
 struct TextCursor {
   int Position;
-  Colour Colour;
+  Colour _Colour;
 };
 
 struct TextSelection {

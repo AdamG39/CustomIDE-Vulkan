@@ -222,7 +222,7 @@ public:
     LoadFile();
     m_font = Font;
     m_wordWrap = WordWrap;
-    m_cursor.Colour = Font.colour;
+    m_cursor._Colour = Font.colour;
   }
 
   void Render(EntityManager& Manager, const Transform* Transform) override;
@@ -251,8 +251,8 @@ public:
   void SaveFile();
   void LoadFile();
 
-  Colour GetCursorColour() const { return m_cursor.Colour; }
-  void SetCursorColour(const Colour& NewColour) { m_cursor.Colour = NewColour; }
+  Colour GetCursorColour() const { return m_cursor._Colour; }
+  void SetCursorColour(const Colour& NewColour) { m_cursor._Colour = NewColour; }
 
   std::string GetContent() override { return m_table.GetContent(); }
   std::string GetContent() const override { return m_table.GetContent(); }

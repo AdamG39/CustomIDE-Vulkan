@@ -258,7 +258,7 @@ void MouseButtonCallback(GLFWwindow* Window, int Button, int Action, int Mods) {
   glfwGetCursorPos(Window, &xPos, &yPos);
 
   EventInfo info {
-    .EntityManager = CustomIDEApplication::GetInstance()->GetEntityManager(),
+    .Manager = CustomIDEApplication::GetInstance()->GetEntityManager(),
     .MouseInfo = {
       .Position = Vector2<float>((float)xPos, (float)yPos),
       .Button = Button,
@@ -367,7 +367,7 @@ void MinimiseCallback(GLFWwindow* Window) {
 
 void KeyCallback(GLFWwindow* Window, int Key, int Scancode, int Action, int Mods) {
   EventInfo info {
-    .EntityManager = CustomIDEApplication::GetInstance()->GetEntityManager(),
+    .Manager = CustomIDEApplication::GetInstance()->GetEntityManager(),
     .Window = Window,
     .KeyboardInfo {
       .Key = Key,
@@ -382,7 +382,7 @@ void KeyCallback(GLFWwindow* Window, int Key, int Scancode, int Action, int Mods
 
 void CharacterCallback(GLFWwindow *Window, unsigned int Codepoint) {
   EventInfo info {
-    .EntityManager = CustomIDEApplication::GetInstance()->GetEntityManager(),
+    .Manager = CustomIDEApplication::GetInstance()->GetEntityManager(),
     .Window = Window,
     .CharacterInfo {
       .Codepoint = Codepoint

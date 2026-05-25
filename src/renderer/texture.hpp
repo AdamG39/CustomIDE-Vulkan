@@ -25,8 +25,8 @@ struct VulkanTexture {
 class TextureBufferMap {
 private:
   std::vector<VulkanTexture> m_textures;
-  size_t m_maxCapacity = NULL;
-  size_t m_size = NULL;
+  size_t m_maxCapacity{};
+  size_t m_size{};
   std::vector<std::string> m_fileNames;
 
 public:

@@ -3,6 +3,8 @@
 #include <set>
 #include <string>
 #include <algorithm>
+#include <cstring>
+#include <limits>
 
 bool CheckValidationLayerSupport(const char* const* ValidationLayers, size_t LayersSize) {
   uint32_t layerCount;
@@ -147,23 +149,23 @@ VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& Avai
 VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& Capabilities, GLFWwindow* Window) {
   if (Capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
     return Capabilities.currentExtent;
-  } else {
-    int width = 0;
-    int height = 0;
-    glfwGetFramebufferSize(Window, &width, &height);
+  } 
 
-    VkExtent2D actualExtent = {
-      static_cast<uint32_t>(width),
-      static_cast<uint32_t>(height)
-    };
+  int width = 0;
+  int height = 0;
+  glfwGetFramebufferSize(Window, &width, &height);
 
-    actualExtent.width = std::clamp(actualExtent.width, 
-        Capabilities.minImageExtent.width, Capabilities.maxImageExtent.width);
-    actualExtent.height = std::clamp(actualExtent.height, 
-        Capabilities.minImageExtent.height, Capabilities.maxImageExtent.height);
+  VkExtent2D actualExtent = {
+    static_cast<uint32_t>(width),
+    static_cast<uint32_t>(height)
+  };
 
-    return actualExtent;
-  }
+  actualExtent.width = std::clamp(actualExtent.width, 
+      Capabilities.minImageExtent.width, Capabilities.maxImageExtent.width);
+  actualExtent.height = std::clamp(actualExtent.height, 
+      Capabilities.minImageExtent.height, Capabilities.maxImageExtent.height);
+
+  return actualExtent;
 }
 
 void BeginCommandBuffer(VkCommandBuffer CommandBuffer, VkCommandBufferUsageFlags UsageFlags) {
