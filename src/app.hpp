@@ -238,16 +238,12 @@ public:
   }
 
   void InitApplication();
-
   void RunApplication();
-
   void EndApplication();
 
-  VulkanRenderer* GetRenderer() const { return m_renderer; }
-
-  EntityManager* GetEntityManager() const { return m_tree; }
-
-  EventManager* GetEventManager() const { return m_eventManager; }
+  std::weak_ptr<VulkanRenderer> GetRenderer() const;
+  std::weak_ptr<EntityManager> GetEntityManager() const;
+  std::weak_ptr<EventManager> GetEventManager() const;
 
   void CreateUIElements();
 
@@ -266,19 +262,14 @@ private:
   int m_windowWidth;
   int m_windowHeight;
 
-  CustomIDEApplication() {}
+  CustomIDEApplication() = default;
+  ~CustomIDEApplication() = default;
 
-  VulkanRenderer* m_renderer;
-
-  EntityManager* m_tree;
-
-  EventManager* m_eventManager;
+  std::shared_ptr<VulkanRenderer> m_renderer;
+  std::shared_ptr<EntityManager> m_entityManager;
+  std::shared_ptr<EventManager> m_eventManager;
 
   std::map<std::string, GLFWcursor*> m_cursorObjects;
-
-  void CreateRenderer(std::string AppName);
-
-  void DestroyRenderer();
 
   GLFWcursor* GetCursorObject(std::string Index);
 

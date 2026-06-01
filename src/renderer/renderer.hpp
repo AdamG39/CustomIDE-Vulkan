@@ -57,6 +57,10 @@ public:
     return m_textures[ImageIndex].metadata.dimensions;
   }
 
+  Vector2<float> GetWindowContentScale();
+
+  void SetWindowContentScale(float xScale, float yScale);
+
 private:
   const uint32_t WIDTH = 1920;
   const uint32_t HEIGHT = 1080;
@@ -78,6 +82,8 @@ private:
   std::string m_appName;
 
   GLFWwindow* m_window;
+
+  Vector2<float> m_windowContentScale = { 1.f, 1.f };
 
   VkInstance m_instance;
   VkSurfaceKHR m_surface;

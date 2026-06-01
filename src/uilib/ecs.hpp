@@ -11,18 +11,18 @@ class EntityManager {
 private:
   std::vector<std::shared_ptr<Entity>> m_entityTree;
   std::stack<ClipRect> m_clipStack;
-  VulkanRenderer& m_renderer;
+  std::weak_ptr<VulkanRenderer> m_renderer;
 
 public:
-  EntityManager(VulkanRenderer& Renderer) : m_renderer(Renderer) {}
+  EntityManager(std::weak_ptr<VulkanRenderer> Renderer);
 
-  VulkanRenderer& GetRenderer() { return m_renderer; }
+  std::weak_ptr<VulkanRenderer> GetRenderer();
 
   std::vector<std::shared_ptr<Entity>>& GetEntityTree();
 
   const std::list<std::shared_ptr<Entity>> GetAllEntities() const;
 
-  std::stack<ClipRect>& GetClipStack() { return m_clipStack; }
+  std::stack<ClipRect>& GetClipStack();
 
   Entity& AddEntity();
 

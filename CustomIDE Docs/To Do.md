@@ -9,3 +9,7 @@
 	- Create helper functions for complex elements
 		- Panel
 		- Dropdown (button that shows/hides a panel)
+- Improve event system
+	- Allow entities to subscribe to specific events
+	- Keep a list of all the entities subscribed on each channel
+	- Use the list of subscribed entities for the specific channel for which an event is produced

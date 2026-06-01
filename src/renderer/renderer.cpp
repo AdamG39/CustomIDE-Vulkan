@@ -963,6 +963,15 @@ void VulkanRenderer::FillVertexArray() {
   }
 }
 
+Vector2<float> VulkanRenderer::GetWindowContentScale() {
+  return m_windowContentScale;
+}
+
+void VulkanRenderer::SetWindowContentScale(float xScale, float yScale) {
+  m_windowContentScale = Vector2<float>(xScale, yScale);
+  printf("xScale: %f, yScale: %f\n", xScale, yScale);
+}
+
 void VulkanRenderer::Cleanup() {
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     vkDestroySemaphore(m_device, m_imageAvailableSemaphores[i], nullptr);

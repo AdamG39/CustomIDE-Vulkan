@@ -1,5 +1,13 @@
 #include "ecs.hpp"
 
+EntityManager::EntityManager(std::weak_ptr<VulkanRenderer> Renderer) {
+  m_renderer = Renderer;
+}
+
+std::weak_ptr<VulkanRenderer> EntityManager::GetRenderer() {
+  return m_renderer;
+}
+
 std::vector<std::shared_ptr<Entity>>& EntityManager::GetEntityTree() {
   return m_entityTree;
 }
@@ -21,6 +29,10 @@ const std::list<std::shared_ptr<Entity>> EntityManager::GetAllEntities() const {
   }
 
   return result;
+}
+
+std::stack<ClipRect>& EntityManager::GetClipStack() {
+  return m_clipStack;
 }
 
 Entity& EntityManager::AddEntity() {

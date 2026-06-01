@@ -11,17 +11,17 @@ enum EventType {
   Character
 };
 
-enum WindowEventAction {
-  Maximise,
-  Restore,
-  Minimise,
-};
-
 struct MouseEventInfo {
   Vector2<float> Position;
   int Button;
   int Action;
   int Modifications;
+};
+
+enum WindowEventInfo {
+  Maximise,
+  Restore,
+  Minimise,
 };
 
 struct KeyboardEventInfo {
@@ -37,14 +37,14 @@ struct CharacterEventInfo {
 
 struct EventInfo {
   // Application manager pointers
-  EntityManager* Manager;
+  std::shared_ptr<EntityManager> Manager;
   GLFWwindow* Window;
   
   union {
     MouseEventInfo MouseInfo;
+    WindowEventInfo WindowInfo;
     KeyboardEventInfo KeyboardInfo;
     CharacterEventInfo CharacterInfo;
-    WindowEventAction WindowAction;
   };
 };
 

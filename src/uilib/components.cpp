@@ -85,7 +85,7 @@ void UIImage::Render(EntityManager& Manager, const Transform* Transform) {
   if (!Manager.GetClipStack().empty())
     clipRect = Manager.GetClipStack().top();
 
-  Manager.GetRenderer().DrawTexturedRectEx(
+  Manager.GetRenderer().lock()->DrawTexturedRectEx(
       Rect2D{ static_cast<int32_t>(pos.x), static_cast<int32_t>(pos.y),
               static_cast<uint32_t>(size.x), static_cast<uint32_t>(size.y) },
       m_uvRect, m_drawDepth, m_textureIndex, clipRect, m_colour);
@@ -135,14 +135,14 @@ void IText::Render(EntityManager& Manager, const Transform* Transform) {
     }
 
     Colour textColour = font.colour;
-    auto imageIndex = Manager.GetRenderer().GetImageIndexFromName(font.familyName);
+    auto imageIndex = Manager.GetRenderer().lock()->GetImageIndexFromName(font.familyName);
     if (imageIndex < 0) ExitWithError("No image with that name found", -35);
 
     ClipRect clipRect {.clippingEnabled = false};
     if (!Manager.GetClipStack().empty())
       clipRect = Manager.GetClipStack().top();
 
-    Manager.GetRenderer().DrawTexturedRectEx(
+    Manager.GetRenderer().lock()->DrawTexturedRectEx(
         Rect2D{ static_cast<int32_t>(charPosition.x), static_cast<int32_t>(charPosition.y),
                 static_cast<uint32_t>(font.size.x), static_cast<uint32_t>(font.size.y) },
         CalculateCharUV(fontAtlasSize, content[i]), m_drawDepth, imageIndex, clipRect,
@@ -209,20 +209,19 @@ void TextBox::Render(EntityManager& Manager, const Transform* Transform) {
       textColour.g = 1.f - textColour.g;
       textColour.b = 1.f - textColour.b;
     }
-    auto imageIndex = Manager.GetRenderer().GetImageIndexFromName(font.familyName);
+    auto imageIndex = Manager.GetRenderer().lock()->GetImageIndexFromName(font.familyName);
     if (imageIndex < 0) ExitWithError("No image with that name found", -35);
 
     ClipRect clipRect {.clippingEnabled = false};
     if (!Manager.GetClipStack().empty())
       clipRect = Manager.GetClipStack().top();
 
-    Manager.GetRenderer().DrawTexturedRectEx(
+    Manager.GetRenderer().lock()->DrawTexturedRectEx(
         Rect2D{ static_cast<int32_t>(charPosition.x), static_cast<int32_t>(charPosition.y),
                 static_cast<uint32_t>(font.size.x), static_cast<uint32_t>(font.size.y) },
         CalculateCharUV(fontAtlasSize, content[i]), m_drawDepth + 1, imageIndex, clipRect,
         textColour);
   }
-  /*
   if (GetSelectionState()) {
     int start = m_textSelection.start;
     int length = m_textSelection.length;
@@ -260,7 +259,7 @@ void TextBox::Render(EntityManager& Manager, const Transform* Transform) {
     textObjPos.y + (font.size.y * cursorPosition.y)
   };
 
-  Manager.GetRenderer().DrawRect(
+  Manager.GetRenderer().lock()->DrawRect(
       Rect2D{ static_cast<int32_t>(finalCursorPosition.x), static_cast<int32_t>(finalCursorPosition.y),
               static_cast<uint32_t>(finalCursorSize.x), static_cast<uint32_t>(finalCursorSize.y) },
       m_drawDepth, GetCursorColour());
