@@ -226,25 +226,56 @@ void TextBox::Render(EntityManager& Manager, const Transform* Transform) {
     int start = m_textSelection.start;
     int length = m_textSelection.length;
 
-    Vector2<float> selectionSize {
-      static_cast<float>(font.size.x * length),
-      static_cast<float>(font.size.y) * 1.25f
+    int firstLineStart = -1;
+    for (int i = 0; i < m_table.GetStartOfLines().size(); i++) {
+      if (m_table.GetStartOfLines()[i] > start) {
+        firstLineStart = i - 1;
+        break;
+      }
+    }
+
+    if (firstLineStart < 0) firstLineStart = 0;
+
+    int startOffsetIntoLine = start - m_table.GetStartOfLines()[firstLineStart];
+
+    std::vector<Rect2D> selectionRects;
+    // Start with first character
+    Rect2D first {
+      .xOffset = font.size.x * startOffsetIntoLine,
+      .yOffset = font.size.y * firstLineStart,
+      .width = static_cast<uint32_t>(font.size.x),
+      .height = static_cast<uint32_t>(font.size.y)
     };
 
-    Vector2<float> selectionPosition {
-      textObjPos.x + (font.size.x * start) + (selectionSize.x / 2.f) - (font.size.x / 2.f),
-      textObjPos.y
-    };
+    selectionRects.push_back(first);
 
-    Rect<float> result = Rect<float>(
-      selectionSize,
-      selectionPosition,
-      Colour(0x90D5FF, 0.5f),
-      m_drawDepth
-    );
+    int currentLine = firstLineStart;
+    for (int i = start + 1; i < (start + length); i++) {
+      if (m_table.GetContent()[i] != '\n') {
+        auto rectIt = selectionRects.rbegin();
+        // Adjust the width and xOffset to include the next element
+        rectIt->xOffset += font.size.x / 2;
+        rectIt->width += static_cast<uint32_t>(font.size.x);
+      } else {
+        currentLine++;
+        Rect2D newSelectionLine {
+          .xOffset = 0, // Already at start of line so simplify calculation
+          .yOffset = font.size.y * currentLine,
+          .width = static_cast<uint32_t>(font.size.x),
+          .height = static_cast<uint32_t>(font.size.y)
+        };
+        selectionRects.push_back(newSelectionLine);
+      }
+    }
 
-    Manager.AddGeometry(result);
-  }*/
+    for (auto rect : selectionRects) {
+      rect.xOffset += textObjPos.x;
+      rect.yOffset += textObjPos.y;
+      Manager.GetRenderer().lock()->DrawRect(
+          rect,
+          m_drawDepth, Colour(0x90D5FF, 0.5f));
+    }
+  }
 
   if (cursorIndexPosition == content.size())
     cursorPosition = { linePosition, lineCount };
