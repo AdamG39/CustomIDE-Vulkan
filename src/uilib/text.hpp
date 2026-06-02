@@ -77,9 +77,9 @@ public:
 
   char Index(unsigned Position) const;
 
-  void Insert(char Character, int Position);
+  void Insert(char Character, unsigned Position);
 
-  void Delete(int Position);
+  void Delete(unsigned Position);
 
   std::string GetContent();
   std::string GetContent() const;

@@ -29,10 +29,10 @@ char PieceTable::Index(unsigned Position) const {
 
   ExitWithError("Index out of bounds of PieceTable", -45);
 
-  return NULL;
+  return 0;
 }
 
-void PieceTable::Insert(char Character, int Position) {
+void PieceTable::Insert(char Character, unsigned Position) {
   m_add.push_back(Character);
 
   m_recalculateContent = true;
@@ -94,7 +94,7 @@ void PieceTable::Insert(char Character, int Position) {
   } 
 }
 
-void PieceTable::Delete(int Position) {
+void PieceTable::Delete(unsigned Position) {
   m_recalculateContent = true;
   m_recalculateStartOfLines = true;
 
@@ -138,7 +138,7 @@ void PieceTable::Delete(int Position) {
       .Length = previousLength - (entry.Length + 1)
     };
 
-    if (entryIndex + 1 == m_entries.size())
+    if (size_t(entryIndex + 1) == m_entries.size())
       m_entries.push_back(secondPart);
     else {
       it++;
