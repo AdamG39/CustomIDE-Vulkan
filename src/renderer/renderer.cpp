@@ -974,8 +974,7 @@ Vector2<float> VulkanRenderer::GetWindowContentScale() {
 }
 
 void VulkanRenderer::SetWindowContentScale(float xScale, float yScale) {
-  m_windowContentScale = Vector2<float>(xScale, yScale);
-  printf("xScale: %f, yScale: %f\n", xScale, yScale);
+  m_windowContentScale = Vector2D(xScale, yScale);
 }
 
 void VulkanRenderer::Cleanup() {

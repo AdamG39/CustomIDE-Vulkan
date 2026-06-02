@@ -267,11 +267,13 @@ void CloseWindowCallback(GLFWwindow* Window){
 void MouseButtonCallback(GLFWwindow* Window, int Button, int Action, int Mods) { 
   double xPos, yPos;
   glfwGetCursorPos(Window, &xPos, &yPos);
+  Vector2D cursorPos = Vector2D((float)xPos, (float)yPos);
+  Vector2D windowScale = CustomIDEApplication::GetInstance()->GetRenderer().lock()->GetWindowContentScale();
 
   EventInfo info {
     .Manager = CustomIDEApplication::GetInstance()->GetEntityManager().lock(),
     .MouseInfo = {
-      .Position = Vector2<float>((float)xPos, (float)yPos),
+      .Position = cursorPos * windowScale,
       .Button = Button,
       .Action = Action,
       .Modifications = Mods

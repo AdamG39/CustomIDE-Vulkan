@@ -38,6 +38,12 @@ struct Vector2 {
   Vector2(const Vector2<U>& That)
   : x(static_cast<T>(That.x)), y(static_cast<T>(That.y)) {}
 
+  Vector2 operator*(Vector2 Other) {
+    this->x *= Other.x;
+    this->y *= Other.y;
+    return *this;
+  }
+
   Vector2(T X, T Y) : x(X), y(Y) {}
 };
 
