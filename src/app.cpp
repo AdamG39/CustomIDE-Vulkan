@@ -75,9 +75,6 @@ void CustomIDEApplication::RunApplication() {
     m_entityManager->RenderTree(m_windowWidth, m_windowHeight);
 
     m_renderer->DrawFrame();
-
-    counter++;
-
   }
 
   vkDeviceWaitIdle(m_renderer->GetDevice());

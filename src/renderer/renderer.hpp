@@ -10,8 +10,6 @@
 #include "shapes.hpp"
 #include "texture.hpp"
 
-const int MAX_FRAMES_IN_FLIGHT = 2;
-const int MAX_TEXTURES = 100;
 
 class VulkanRenderer {
 public:
@@ -62,8 +60,9 @@ public:
   void SetWindowContentScale(float xScale, float yScale);
 
 private:
-  const uint32_t WIDTH = 1920;
-  const uint32_t HEIGHT = 1080;
+  static const uint32_t WIDTH = 1920;
+  static const uint32_t HEIGHT = 1080;
+  static const uint32_t MAX_TEXTURES = 100;
 
   const std::vector<const char*> m_validationLayers = {
     "VK_LAYER_KHRONOS_validation"
@@ -82,6 +81,8 @@ private:
   std::string m_appName;
 
   GLFWwindow* m_window;
+
+  uint32_t m_maxFramesInFlight = 2;
 
   Vector2<float> m_windowContentScale = { 1.f, 1.f };
 

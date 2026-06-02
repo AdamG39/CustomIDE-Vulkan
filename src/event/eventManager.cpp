@@ -160,6 +160,8 @@ bool EventHandler::HandleEvent(const Event& Event) {
     case Character:
       return HandleCharacterEvent(Event.Info);
   }
+
+  return false;
 }
 
 void EventManager::PushEvent(const Event& Event) {
