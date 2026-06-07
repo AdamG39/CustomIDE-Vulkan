@@ -83,10 +83,28 @@ bool EventHandler::HandleKeyboardEvent(const EventInfo& Info) {
         }
         break;
       case GLFW_KEY_UP:
-        textBox->MoveCursorUp();
+        if (Info.KeyboardInfo.Modifications & GLFW_MOD_SHIFT) {
+          textBox->SelectUp();
+        }
+        else {
+          if (textBox->GetSelectionState()) { 
+            textBox->EndSelection();
+            break;
+          }
+          textBox->MoveCursorUp();
+        }
         break;
       case GLFW_KEY_DOWN:
-        textBox->MoveCursorDown();
+        if (Info.KeyboardInfo.Modifications & GLFW_MOD_SHIFT) {
+          textBox->SelectDown();
+        }
+        else {
+          if (textBox->GetSelectionState()) { 
+            textBox->EndSelection();
+            break;
+          }
+          textBox->MoveCursorDown();
+        }
         break;
       case GLFW_KEY_BACKSPACE:
         if (textBox->GetSelectionState())

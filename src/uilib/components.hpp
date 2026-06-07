@@ -243,6 +243,8 @@ public:
   void StartSelection();
   void SelectLeft();
   void SelectRight();
+  void SelectUp();
+  void SelectDown();
   void EndSelection();
   void CopySelection(GLFWwindow* Window);
   void PasteText(GLFWwindow* Window);

@@ -250,7 +250,7 @@ void TextBox::Render(EntityManager& Manager, const Transform* Transform) {
     selectionRects.push_back(first);
 
     int currentLine = firstLineStart;
-    for (int i = start + 1; i < (start + length); i++) {
+    for (int i = start; i < (start + length); i++) {
       if (m_table.GetContent()[i] != '\n') {
         auto rectIt = selectionRects.rbegin();
         // Adjust the width and xOffset to include the next element
@@ -513,6 +513,35 @@ void TextBox::SelectRight() {
 
   m_textSelection.length++;
   m_selectionDirection = Right;
+}
+
+void TextBox::SelectUp() {
+  const std::vector<int>& startOfLines = m_table.GetStartOfLines();
+  // Looks for start of line that cursor is on if not found assumes on first line
+  int startOfLineIndex = -1;
+  for (int i = startOfLines.size() - 1; i >= 0; i--) {
+    if (startOfLines[i] <= m_cursor.Position) {
+      startOfLineIndex = i;
+      break;
+    }
+  }
+
+  assert(startOfLineIndex != -1);
+
+  int previousLineStartIndex = (startOfLineIndex == 0) ? 0 : startOfLineIndex - 1;
+  int relativePosition = m_cursor.Position - startOfLines[startOfLineIndex];
+  int previousLineLength = startOfLines[startOfLineIndex] - startOfLines[previousLineStartIndex];
+  int goalPosition = startOfLines[previousLineStartIndex] + std::max(std::min(previousLineLength - 1, relativePosition), 0);
+  
+  assert(goalPosition >= 0);
+  assert(goalPosition < m_table.GetContent().size());
+
+  while (m_cursor.Position != goalPosition)
+    SelectLeft();
+}
+
+void TextBox::SelectDown() {
+
 }
 
 void TextBox::EndSelection() {
