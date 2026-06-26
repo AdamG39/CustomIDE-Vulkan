@@ -59,6 +59,8 @@ void CustomIDEApplication::InitApplication() {
 }
 
 void CustomIDEApplication::RunApplication() {
+  std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+  size_t counter = 0;
   while (!glfwWindowShouldClose(m_renderer->GetWindow())) {
     glfwWaitEventsTimeout(0.5f);
 
@@ -75,6 +77,15 @@ void CustomIDEApplication::RunApplication() {
     m_entityManager->RenderTree(m_windowWidth, m_windowHeight);
 
     m_renderer->DrawFrame();
+
+    counter++;
+
+    std::chrono::steady_clock::time_point check = std::chrono::steady_clock::now();
+    if (std::chrono::duration_cast<std::chrono::duration<double>>(check - start).count() >= 1.0) {
+      printf("fps: %llu\n", counter);
+      counter = 0;
+      start = std::chrono::steady_clock::now();
+    }
   }
 
   vkDeviceWaitIdle(m_renderer->GetDevice());

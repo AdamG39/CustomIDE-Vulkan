@@ -1,4 +1,7 @@
 #include "eventManager.hpp"
+#include "../uilib/components/transform.hpp"
+#include "../uilib/components/button.hpp"
+#include "../uilib/components/textBox.hpp"
 #include "GLFW/glfw3.h"
 
 bool CursorOverlap(const Vector2<float>& CursorPos, const Vector2<float>& Size, const Vector2<float>& Position) {
@@ -42,109 +45,104 @@ bool EventHandler::HandleKeyboardEvent(const EventInfo& Info) {
   for (auto entity : entityTree) {
     TextBox* textBox = entity->GetComponent<TextBox>();
 
-    if (textBox != nullptr) {
-      switch (Info.KeyboardInfo.Key) {
-      case GLFW_KEY_LEFT:
-        if (Info.KeyboardInfo.Modifications & GLFW_MOD_CONTROL) {
-          if (textBox->GetSelectionState()) { 
-            textBox->EndSelection();
-            break;
-          }
-          textBox->MoveBackWord();
-        }
-        else if (Info.KeyboardInfo.Modifications & GLFW_MOD_SHIFT) {
-          textBox->SelectLeft();
-        }
-        else {
-          if (textBox->GetSelectionState()) { 
-            textBox->EndSelection();
-            break;
-          }
-          textBox->MoveCursorLeft();
-        }
-        break;
-      case GLFW_KEY_RIGHT:
-        if (Info.KeyboardInfo.Modifications & GLFW_MOD_CONTROL) {
-          if (textBox->GetSelectionState()) { 
-            textBox->EndSelection();
-            break;
-          }
-          textBox->MoveForwardWord();
-        }
-        else if (Info.KeyboardInfo.Modifications & GLFW_MOD_SHIFT) {
-          textBox->SelectRight();
-        }
-        else {
-          if (textBox->GetSelectionState()) { 
-            textBox->EndSelection();
-            break;
-          }
-          textBox->MoveCursorRight();
-        }
-        break;
-      case GLFW_KEY_UP:
-        if (Info.KeyboardInfo.Modifications & GLFW_MOD_SHIFT) {
-          textBox->SelectUp();
-        }
-        else {
-          if (textBox->GetSelectionState()) { 
-            textBox->EndSelection();
-            break;
-          }
-          textBox->MoveCursorUp();
-        }
-        break;
-      case GLFW_KEY_DOWN:
-        if (Info.KeyboardInfo.Modifications & GLFW_MOD_SHIFT) {
-          textBox->SelectDown();
-        }
-        else {
-          if (textBox->GetSelectionState()) { 
-            textBox->EndSelection();
-            break;
-          }
-          textBox->MoveCursorDown();
-        }
-        break;
-      case GLFW_KEY_BACKSPACE:
-        if (textBox->GetSelectionState())
-          textBox->DeleteSelection();
-        else {
-          textBox->Delete(textBox->GetCursorPosition() - 1);
-          textBox->MoveCursorLeft();
-        }
-        break;
-      case GLFW_KEY_DELETE:
-        if (textBox->GetSelectionState())
-          textBox->DeleteSelection();
-        else
-          textBox->Delete(textBox->GetCursorPosition());
-        break;
-      case GLFW_KEY_TAB:
-        textBox->Insert('\t', textBox->GetCursorPosition());
-        break;
-      case GLFW_KEY_ENTER:
-        textBox->Insert('\n', textBox->GetCursorPosition());
-        break;
-      case GLFW_KEY_ESCAPE:
-        textBox->EndSelection();
-        break;
-      case GLFW_KEY_C:
-        if (Info.KeyboardInfo.Modifications & GLFW_MOD_CONTROL)
-          textBox->CopySelection(Info.Window);
-        break;
-      case GLFW_KEY_V:
-        if (Info.KeyboardInfo.Modifications & GLFW_MOD_CONTROL)
-          textBox->PasteText(Info.Window);
-        break;
-      case GLFW_KEY_S:
-        if (Info.KeyboardInfo.Modifications & GLFW_MOD_CONTROL)
-          textBox->SaveFile();
+    if (textBox == nullptr) continue;
+
+    int previousPosition = textBox->GetCursorPosition();
+
+    switch (Info.KeyboardInfo.Key) {
+    case GLFW_KEY_LEFT:
+      if (textBox->GetSelectionState() && !(Info.KeyboardInfo.Modifications & GLFW_MOD_SHIFT)) { 
+        textBox->CancelSelection();
         break;
       }
 
-      return true;
+      if (Info.KeyboardInfo.Modifications & GLFW_MOD_SHIFT && !textBox->GetSelectionState())
+        textBox->StartSelection();
+
+      if (Info.KeyboardInfo.Modifications & GLFW_MOD_CONTROL)
+        textBox->MoveBackWord();
+
+      else textBox->MoveCursorLeft();
+
+      break;
+    case GLFW_KEY_RIGHT:
+      if (textBox->GetSelectionState() && !(Info.KeyboardInfo.Modifications & GLFW_MOD_SHIFT)) { 
+        textBox->CancelSelection();
+        break;
+      }
+
+      if (Info.KeyboardInfo.Modifications & GLFW_MOD_SHIFT && !textBox->GetSelectionState())
+        textBox->StartSelection();
+
+      if (Info.KeyboardInfo.Modifications & GLFW_MOD_CONTROL)
+        textBox->MoveForwardWord();
+
+      else textBox->MoveCursorRight();
+
+      break;
+    case GLFW_KEY_UP:
+      if (textBox->GetSelectionState() && !(Info.KeyboardInfo.Modifications & GLFW_MOD_SHIFT)) { 
+        textBox->CancelSelection();
+        break;
+      }
+
+      if (Info.KeyboardInfo.Modifications & GLFW_MOD_SHIFT && !textBox->GetSelectionState())
+        textBox->StartSelection();
+
+      textBox->MoveCursorUp();
+
+      break;
+    case GLFW_KEY_DOWN:
+      if (textBox->GetSelectionState() && !(Info.KeyboardInfo.Modifications & GLFW_MOD_SHIFT)) { 
+        textBox->CancelSelection();
+        break;
+      }
+
+      if (Info.KeyboardInfo.Modifications & GLFW_MOD_SHIFT && !textBox->GetSelectionState())
+        textBox->StartSelection();
+
+      textBox->MoveCursorDown();
+
+      break;
+    case GLFW_KEY_BACKSPACE:
+      if (textBox->GetSelectionState())
+        textBox->DeleteSelection();
+      else {
+        textBox->Delete(textBox->GetCursorPosition() - 1);
+        textBox->MoveCursorLeft();
+      }
+      break;
+    case GLFW_KEY_DELETE:
+      if (textBox->GetSelectionState())
+        textBox->DeleteSelection();
+      else
+        textBox->Delete(textBox->GetCursorPosition());
+      break;
+    case GLFW_KEY_TAB:
+      textBox->Insert('\t', textBox->GetCursorPosition());
+      break;
+    case GLFW_KEY_ENTER:
+      textBox->Insert('\n', textBox->GetCursorPosition());
+      break;
+    case GLFW_KEY_ESCAPE:
+      textBox->CancelSelection();
+      break;
+    case GLFW_KEY_C:
+      if (Info.KeyboardInfo.Modifications & GLFW_MOD_CONTROL)
+        textBox->CopySelection(Info.Window);
+      break;
+    case GLFW_KEY_V:
+      if (Info.KeyboardInfo.Modifications & GLFW_MOD_CONTROL)
+        textBox->PasteText(Info.Window);
+      break;
+    case GLFW_KEY_S:
+      if (Info.KeyboardInfo.Modifications & GLFW_MOD_CONTROL)
+        textBox->SaveFile();
+      break;
     }
+
+    if (textBox->GetSelectionState()) textBox->UpdateSelection(previousPosition);
+    return true;
   }
 
   return false;

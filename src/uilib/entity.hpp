@@ -3,7 +3,18 @@
 
 #include <vector>
 #include <memory>
-#include "components.hpp"
+#include "components/component.hpp"
+
+// Need to include all types of component headers to know that they inherit from IComponent
+// so that AddComponent can create a new component pointer by pointing to the base IComponent class
+#include "components/transform.hpp"
+#include "components/image.hpp"
+#include "components/button.hpp"
+#include "components/label.hpp"
+#include "components/textBox.hpp"
+#include "components/mask.hpp"
+
+#include "ui.hpp"
 
 class Entity {
 private:

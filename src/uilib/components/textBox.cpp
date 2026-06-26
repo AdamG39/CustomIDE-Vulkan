@@ -1,153 +1,16 @@
-#include "components.hpp"
-#include "../helpers/errors/errors.hpp"
-#include "../io/io.hpp"
-#include "ecs.hpp"
+#include "textBox.hpp"
+#include "transform.hpp"
+#include "../ecs.hpp"
+#include "../../io/io.hpp"
 
-Vector2<float> Transform::RecalculateEntitySize(float ParentWidth, float ParentHeight) {
-  Vector2<float> calculatedSize;
+int TextBox::GetType() { return TypeValue(); }
 
-  if (m_size.x.Mode == SizeMode::Proportional) {
-    calculatedSize.x = ParentWidth * m_size.x.Value;
-  } else { calculatedSize.x = m_size.x.Value; }
-
-  if (m_size.y.Mode == SizeMode::Proportional) {
-    calculatedSize.y = ParentHeight * m_size.y.Value;
-  } else { calculatedSize.y = m_size.y.Value; }
-
-  m_pixelSize = calculatedSize;
-  return calculatedSize;
-}
-
-// TODO: can child object can only use center anchor
-// change to allow better calculation of objects based on parents and anchors
-Vector2<float> Transform::RecalculateEntityPosition(Vector2<float> ParentSize, 
-    Vector2<float> ParentPosition, const UIAnchorType& Anchor) {
-  Vector2<float> calculatedPosition;
-
-  switch (Anchor) {
-    case UIAnchorType::Center:
-      calculatedPosition.x = ParentSize.x / 2;
-      calculatedPosition.y = ParentSize.y / 2;
-      break;
-    case UIAnchorType::Top:
-      calculatedPosition.x = ParentSize.x / 2;
-      calculatedPosition.y = 0;
-      break;
-    case UIAnchorType::Left:
-      calculatedPosition.x = 0;
-      calculatedPosition.y = ParentSize.y / 2;
-      break;
-    case UIAnchorType::Right:
-      calculatedPosition.x = ParentSize.x;
-      calculatedPosition.y = ParentSize.y / 2;
-      break;
-    case UIAnchorType::Bottom:
-      calculatedPosition.x = ParentSize.x / 2;
-      calculatedPosition.y = ParentSize.y;
-      break;
-    case UIAnchorType::TopLeft:
-      calculatedPosition.x = 0;
-      calculatedPosition.y = 0;
-      break;
-    case UIAnchorType::TopRight:
-      calculatedPosition.x = ParentSize.x;
-      calculatedPosition.y = 0;
-      break;
-    case UIAnchorType::BottomLeft:
-      calculatedPosition.x = 0;
-      calculatedPosition.y = ParentSize.y;
-      break;
-    case UIAnchorType::BottomRight:
-      calculatedPosition.x = ParentSize.x;
-      calculatedPosition.y = ParentSize.y;
-      break;
-  }
-
-  if (m_position.x.Mode == SizeMode::Proportional) {
-    calculatedPosition.x = ParentPosition.x + m_position.x.Value;
-  } else { calculatedPosition.x += m_position.x.Value; }
-
-
-  if (m_position.y.Mode == SizeMode::Proportional) {
-    calculatedPosition.y = ParentPosition.y + m_position.y.Value;
-  } else { calculatedPosition.y += m_position.y.Value; }
-
-
-  m_pixelPosition = calculatedPosition;
-  return calculatedPosition;
-}
-
-void UIImage::Render(EntityManager& Manager, const Transform* Transform) {
-  auto pos = Transform->GetPixelPosition();
-  auto size = Transform->GetPixelSize();
-
-  ClipRect clipRect {.clippingEnabled = false};
-  if (!Manager.GetClipStack().empty())
-    clipRect = Manager.GetClipStack().top();
-
-  Manager.GetRenderer().lock()->DrawTexturedRectEx(
-      Rect2D{ static_cast<int32_t>(pos.x), static_cast<int32_t>(pos.y),
-              static_cast<uint32_t>(size.x), static_cast<uint32_t>(size.y) },
-      m_uvRect, m_drawDepth, m_textureIndex, clipRect, m_colour);
-}
-
-void IText::Render(EntityManager& Manager, const Transform* Transform) {
-  // calculate size of each character based on font
-  Font font = GetFont();
-  Vector2 textObjPos = Transform->GetPixelPosition();
-  Vector2 fontAtlasSize {64.f, 2.f};
-  std::string content = GetContent();
-
-  int charsPerLine = int(Transform->GetPixelSize().x) / font.size.x;
-  // create a rect for each character
-  int linePosition = 0;
-  int lineCount = 0;
-
-  for (size_t i = 0; i < content.size(); i++) {
-    switch (content[i]) {
-    case '\n':
-      lineCount++;
-      linePosition = 0;
-      continue;
-    case '\t':
-      linePosition += 4;
-      if (GetWordWrap()) {
-        if (linePosition > charsPerLine) { 
-          lineCount++;
-          linePosition = 0;
-        }
-      }
-      continue;
-    }
-
-    Vector2<float> charPosition {
-      textObjPos.x + (font.size.x * linePosition),
-      textObjPos.y + (lineCount * font.size.y)
-    };
-
-    linePosition++;
-
-    if (GetWordWrap()) {
-      if (linePosition > charsPerLine) { 
-        lineCount++;
-        linePosition = 0;
-      }
-    }
-
-    Colour textColour = font.colour;
-    auto imageIndex = Manager.GetRenderer().lock()->GetImageIndexFromName(font.familyName);
-    if (imageIndex < 0) ExitWithError("No image with that name found", -35);
-
-    ClipRect clipRect {.clippingEnabled = false};
-    if (!Manager.GetClipStack().empty())
-      clipRect = Manager.GetClipStack().top();
-
-    Manager.GetRenderer().lock()->DrawTexturedRectEx(
-        Rect2D{ static_cast<int32_t>(charPosition.x), static_cast<int32_t>(charPosition.y),
-                static_cast<uint32_t>(font.size.x), static_cast<uint32_t>(font.size.y) },
-        CalculateCharUV(fontAtlasSize, content[i]), m_drawDepth, imageIndex, clipRect,
-        textColour);
-  }
+TextBox::TextBox(Font Font, std::string Filepath, bool WordWrap)
+  : m_filepath(Filepath) {
+  LoadFile();
+  m_font = Font;
+  m_wordWrap = WordWrap;
+  m_cursor._Colour = Font.colour;
 }
 
 void TextBox::Render(EntityManager& Manager, const Transform* Transform) {
@@ -226,6 +89,7 @@ void TextBox::Render(EntityManager& Manager, const Transform* Transform) {
     int start = m_textSelection.start;
     int length = m_textSelection.length;
 
+    // find which line the selection starts on
     int firstLineStart = -1;
     for (int i = 0; i < m_table.GetStartOfLines().size(); i++) {
       if (m_table.GetStartOfLines()[i] > start) {
@@ -239,24 +103,26 @@ void TextBox::Render(EntityManager& Manager, const Transform* Transform) {
     int startOffsetIntoLine = start - m_table.GetStartOfLines()[firstLineStart];
 
     std::vector<Rect2D> selectionRects;
-    // Start with first character
-    Rect2D first {
-      .xOffset = font.size.x * startOffsetIntoLine,
-      .yOffset = font.size.y * firstLineStart,
-      .width = static_cast<uint32_t>(font.size.x),
-      .height = static_cast<uint32_t>(font.size.y)
-    };
-
-    selectionRects.push_back(first);
 
     int currentLine = firstLineStart;
     for (int i = start; i < (start + length); i++) {
+      if (selectionRects.empty()) {
+        Rect2D first {
+          .xOffset = font.size.x * startOffsetIntoLine,
+          .yOffset = font.size.y * firstLineStart,
+          .width = static_cast<uint32_t>(font.size.x),
+          .height = static_cast<uint32_t>(font.size.y)
+        };
+
+        selectionRects.push_back(first);
+      }
       if (m_table.GetContent()[i] != '\n') {
         auto rectIt = selectionRects.rbegin();
         // Adjust the width and xOffset to include the next element
         rectIt->xOffset += font.size.x / 2;
         rectIt->width += static_cast<uint32_t>(font.size.x);
-      } else {
+      }
+      else {
         currentLine++;
         Rect2D newSelectionLine {
           .xOffset = 0, // Already at start of line so simplify calculation
@@ -264,6 +130,7 @@ void TextBox::Render(EntityManager& Manager, const Transform* Transform) {
           .width = static_cast<uint32_t>(font.size.x),
           .height = static_cast<uint32_t>(font.size.y)
         };
+
         selectionRects.push_back(newSelectionLine);
       }
     }
@@ -296,29 +163,22 @@ void TextBox::Render(EntityManager& Manager, const Transform* Transform) {
       m_drawDepth, GetCursorColour());
 }
 
+char TextBox::Index(unsigned Position) {
+  return m_table.Index(Position);
+}
+
 void TextBox::Insert(char Character, int Position) {
-   m_table.Insert(Character, Position);
-   MoveCursorRight();
+  CancelSelection();
+  m_table.Insert(Character, Position);
+  MoveCursorRight();
 }
 
-void TextBox::PasteText(GLFWwindow* Window) {
-  std::string text = glfwGetClipboardString(Window);
-
-  if (text.empty()) return;
-
-  for (char c : text) {
-    Insert(c, m_cursor.Position);
-  }
+void TextBox::Delete(int Position) {
+  m_table.Delete(Position);
 }
 
-void TextBox::DeleteSelection() {
-  for (int i = 0; i < m_textSelection.length; i++) {
-    Delete(m_textSelection.start);
-  }
-
-  m_cursor.Position = m_textSelection.start;
-
-  EndSelection();
+int TextBox::GetCursorPosition() const {
+  return m_cursor.Position;
 }
 
 void TextBox::MoveCursorLeft() {
@@ -358,7 +218,7 @@ void TextBox::MoveCursorUp() {
 
   int previousLineStart = ((startOfLine - 1) >= 0) ? startOfLines[startOfLine - 1] : 0;
   int cursorLineOffset = m_cursor.Position - startOfLines[startOfLine];
-  m_cursor.Position = std::min(startOfLines[startOfLine] - 1, previousLineStart + cursorLineOffset);
+  m_cursor.Position = std::max(std::min(startOfLines[startOfLine] - 1, previousLineStart + cursorLineOffset), 0);
 }
 
 void TextBox::MoveCursorDown() {
@@ -461,6 +321,10 @@ void TextBox::MoveForwardWord() {
   }
 }
 
+bool TextBox::GetSelectionState() const {
+  return m_selectionState;
+}
+
 void TextBox::StartSelection() {
   m_textSelection = {
     .start = static_cast<size_t>(m_cursor.Position),
@@ -471,80 +335,37 @@ void TextBox::StartSelection() {
   m_selectionDirection = None;
 }
 
-void TextBox::SelectLeft() {
-  if (m_cursor.Position == 0) return;
-  if (!m_selectionState) StartSelection();
+void TextBox::UpdateSelection(int PreviousPosition) {
+  // If called with no selection or no need to update just early return
+  if (!m_selectionState || m_cursor.Position == PreviousPosition) return;
 
-  MoveCursorLeft();
+  switch (m_selectionDirection) {
+    case None:
+      if (m_cursor.Position > PreviousPosition) { // Moved to the right
+        m_selectionDirection = Right;
+        m_textSelection.start = PreviousPosition;
+      }
+      else { // Moved to the left
+        m_selectionDirection = Left;
+        m_textSelection.start = m_cursor.Position;
+      }
 
-  if (m_selectionDirection == Right) {
-    if (m_textSelection.length == 0) {
-      m_textSelection.start = static_cast<size_t>(m_cursor.Position);
-      m_textSelection.length++;
-      m_selectionDirection = Left;
-    }
-    else
-      m_textSelection.length--;
-    return;
-  }
-
-  m_textSelection.start = static_cast<size_t>(m_cursor.Position);
-  m_textSelection.length++;
-  m_selectionDirection = Left;
-}
-
-void TextBox::SelectRight() {
-  if (m_cursor.Position == GetContent().size()) return;
-  if (!m_selectionState) StartSelection();
-
-  MoveCursorRight();
-
-  if (m_selectionDirection == Left) {
-    m_textSelection.start = static_cast<size_t>(m_cursor.Position);
-    if (m_textSelection.length == 0) {
-      m_textSelection.start--;
-      m_textSelection.length++;
-      m_selectionDirection = Right;
-    }
-    else
-      m_textSelection.length--;
-    return;
-  }
-
-  m_textSelection.length++;
-  m_selectionDirection = Right;
-}
-
-void TextBox::SelectUp() {
-  const std::vector<int>& startOfLines = m_table.GetStartOfLines();
-  // Looks for start of line that cursor is on if not found assumes on first line
-  int startOfLineIndex = -1;
-  for (int i = startOfLines.size() - 1; i >= 0; i--) {
-    if (startOfLines[i] <= m_cursor.Position) {
-      startOfLineIndex = i;
+      m_textSelection.length = abs(m_cursor.Position - PreviousPosition);
       break;
-    }
+    case Left:
+      if (m_cursor.Position > m_textSelection.start + m_textSelection.length) m_selectionDirection = Right;
+      m_textSelection.start = m_cursor.Position;
+      m_textSelection.length += PreviousPosition - m_cursor.Position;
+      break;
+    case Right:
+      if (m_cursor.Position < m_textSelection.start) m_selectionDirection = Left;
+      m_textSelection.length += m_cursor.Position - PreviousPosition;
+      break;
   }
-
-  assert(startOfLineIndex != -1);
-
-  int previousLineStartIndex = (startOfLineIndex == 0) ? 0 : startOfLineIndex - 1;
-  int relativePosition = m_cursor.Position - startOfLines[startOfLineIndex];
-  int previousLineLength = startOfLines[startOfLineIndex] - startOfLines[previousLineStartIndex];
-  int goalPosition = startOfLines[previousLineStartIndex] + std::max(std::min(previousLineLength - 1, relativePosition), 0);
-  
-  assert(goalPosition >= 0);
-  assert(goalPosition < m_table.GetContent().size());
-
-  while (m_cursor.Position != goalPosition)
-    SelectLeft();
+  if (m_textSelection.length == 0) CancelSelection();
 }
 
-void TextBox::SelectDown() {
-
-}
-
-void TextBox::EndSelection() {
+void TextBox::CancelSelection() {
   m_selectionState = false;
   m_selectionDirection = None;
 }
@@ -562,6 +383,26 @@ void TextBox::CopySelection(GLFWwindow* Window) {
   glfwSetClipboardString(Window, selectedText.c_str());
 }
 
+void TextBox::PasteText(GLFWwindow* Window) {
+  std::string text = glfwGetClipboardString(Window);
+
+  if (text.empty()) return;
+
+  for (char c : text) {
+    Insert(c, m_cursor.Position);
+  }
+}
+
+void TextBox::DeleteSelection() {
+  for (int i = 0; i < m_textSelection.length; i++) {
+    Delete(m_textSelection.start);
+  }
+
+  m_cursor.Position = m_textSelection.start;
+
+  CancelSelection();
+}
+
 void TextBox::LoadFile() {
   m_table = PieceTable(ReadTextFile(m_filepath));
 }
@@ -571,4 +412,26 @@ void TextBox::SaveFile() {
 
   LoadFile();
 }
+
+Colour TextBox::GetCursorColour() const {
+  return m_cursor._Colour;
+}
+
+void TextBox::SetCursorColour(const Colour& NewColour) {
+  m_cursor._Colour = NewColour;
+}
+
+std::string TextBox::GetContent() {
+  return m_table.GetContent();
+}
+
+std::string TextBox::GetContent() const {
+  return m_table.GetContent();
+}
+
+#ifdef _DEBUG
+  void TextBox::Print() { m_table.Print(); }
+
+  void TextBox::DebugPrint() { m_table.DebugPrint(); }
+#endif // _DEBUG
 

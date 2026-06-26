@@ -1,6 +1,5 @@
 #include "entity.hpp"
 #include "ecs.hpp"
-#include "components.hpp"
 
 void Entity::RenderEntity(EntityManager& Manager, Transform* Transform,
     IRenderable* Renderable, Vector2<float> DrawArea, Vector2<float> DrawAreaOffset) {
