@@ -2,7 +2,6 @@
 #define CUSTOM_COMPONENT_BUTTON_H
 
 #include "component.hpp"
-#include <functional>
 
 class Button : public IInteractable {
 public:

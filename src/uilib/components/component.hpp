@@ -48,7 +48,7 @@ public:
 
   bool HasAction(std::string ActionName) {
     try {
-      m_actions.at(ActionName);
+      (void)m_actions.at(ActionName);
     }
     catch ( std::out_of_range Exception) {
       return false;

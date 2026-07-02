@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <memory>
+#include <optional>
+#include <type_traits>
 #include "components/component.hpp"
 
 // Need to include all types of component headers to know that they inherit from IComponent
@@ -22,6 +24,12 @@ private:
   std::vector<std::shared_ptr<Entity>> m_children;
   Entity* m_parent;
 
+  template <class ComponentType, typename... Args>
+  void CreateComponent(Args&&... Parameters) {
+    m_components.push_back(std::make_shared<ComponentType>(std::forward<Args>(Parameters)...));
+  }
+
+
 public:
   Entity(Vector2<UISize<float>> Size = {}, Vector2<UISize<float>> Position = {}, Entity* Parent = nullptr)
   : m_parent(Parent) {
@@ -32,7 +40,9 @@ public:
 
   template <class ComponentType, typename... Args>
   void AddComponent(Args&&... Parameters) {
-    m_components.push_back(std::make_shared<ComponentType>(std::forward<Args>(Parameters)...));
+    if (std::is_base_of_v<IInteractable, ComponentType>/* && GetInteractableComponent() != nullptr*/) ReplaceComponent<IInteractable, ComponentType>(Parameters...);
+    if (std::is_base_of_v<IRenderable, ComponentType>/* && GetRenderableComponent() != nullptr*/) ReplaceComponent<IRenderable, ComponentType>(Parameters...);
+    CreateComponent<ComponentType>(Parameters...);
   }
 
   template <class ComponentType>
@@ -53,11 +63,55 @@ public:
     return success;
   }
 
+  void RemoveComponentByIndex(size_t Index) {
+    if (Index >= m_components.size()) {
+      printf("[Warning]: Attempt to remove component using out of bounds index, call ignored");
+      return;
+    }
+
+    auto it = m_components.begin();
+    it += Index;
+    m_components.erase(it);
+  }
+
+  template <class PreviousComponent, class NewComponent, typename... NewComponentArgs>
+  void ReplaceComponent(NewComponentArgs... Parameters) {
+    std::optional<size_t> index = FindIndexOfComponentWithBase<PreviousComponent>();
+    // If previous component exists then remove it
+    if (index) RemoveComponentByIndex(index.value());
+    CreateComponent<NewComponent>(Parameters...);
+  }
+
   template <class ComponentType>
   ComponentType* GetComponent() {
     for (auto&& component : m_components) {
       if (component->GetType() == ComponentType::TypeValue()) {
         return static_cast<ComponentType*>(component.get());
+      }
+    }
+
+    return nullptr;
+  }
+
+  template <class BaseType>
+  std::optional<size_t> FindIndexOfComponentWithBase() {
+    size_t index = 0;
+    for (auto&& component : m_components) {
+      if (dynamic_cast<BaseType*>(component.get())) {
+        return index;
+      }
+      index++;
+    }
+
+    // No component found
+    return std::nullopt;
+  }
+
+  IInteractable* GetInteractableComponent() {
+    for (auto&& component : m_components) {
+      auto interactable = dynamic_cast<IInteractable*>(component.get());
+      if (interactable != nullptr) {
+        return interactable ;
       }
     }
 
