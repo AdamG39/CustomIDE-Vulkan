@@ -4,31 +4,26 @@
 #include "component.hpp"
 #include <functional>
 
-class Button : public IComponent {
-private:
-  std::function<void()> m_onPress;
-  std::function<void()> m_onRelease;
-  std::function<void()> m_onHover;
-
+class Button : public IInteractable {
 public:
   static int TypeValue() { return TypeButton; }
   int GetType() override;
 
   Button() = default;
 
-  template <typename Func, typename... Args>
-  void SetOnPress(Func&& Function, Args&&... Arguments) {
-    m_onPress = std::bind(std::forward<Func>(Function), std::decay_t<Args>(Arguments)...);
+  template <typename... FnParams, typename... FnArgs>
+  void SetOnPress(void(*Function)(FnParams... Parameters), FnArgs... Arguments) {
+    AddAction("OnPress", Function, Arguments...);
   }
 
-  template <typename Func, typename... Args>
-  void SetOnRelease(Func&& Function, Args&&... Arguments) {
-    m_onRelease = std::bind(std::forward<Func>(Function), std::decay_t<Args>(Arguments)...);
+  template <typename... FnParams, typename... FnArgs>
+  void SetOnRelease(void(*Function)(FnParams... Parameters), FnArgs... Arguments) {
+    AddAction("OnRelease", Function, Arguments...);
   }
 
-  template <typename Func, typename... Args>
-  void SetOnHover(Func&& Function, Args&&... Arguments) {
-    m_onHover = std::bind(std::forward<Func>(Function), std::decay_t<Args>(Arguments)...);
+  template <typename... FnParams, typename... FnArgs>
+  void SetOnHover(void(*Function)(FnParams... Parameters), FnArgs... Arguments) {
+    AddAction("OnHover", Function, Arguments...);
   }
 
   void OnPress();

@@ -2,6 +2,9 @@
 #define CUSTOM_COMPONENTS_H
 
 #include <string>
+#include <unordered_map>
+#include <functional>
+#include <stdexcept>
 #include "../text.hpp"
 #include <GLFW/glfw3.h>
 
@@ -27,6 +30,45 @@ class IComponent {
 public:
   virtual int GetType() = 0;
   virtual ~IComponent() = default;
+};
+
+class IInteractable : public IComponent {
+private:
+  std::unordered_map<std::string, std::function<void()>> m_actions;
+
+public:
+  template <typename... Params, typename... Args>
+  void AddAction(std::string ActionName, void(*Function)(Params... params), Args... Arguments) {
+    m_actions[ActionName] = [=] () { Function(Arguments...); };
+  }
+
+  bool RemoveAction(std::string ActionName) {
+    return m_actions.erase(ActionName) != 0;
+  }
+
+  bool HasAction(std::string ActionName) {
+    try {
+      m_actions.at(ActionName);
+    }
+    catch ( std::out_of_range Exception) {
+      return false;
+    }
+
+    return true;
+  }
+
+  bool ExecAction(std::string ActionName) {
+    if (!HasAction(ActionName)) return false;
+
+    if (m_actions[ActionName]) {
+      m_actions[ActionName]();
+    } else {
+      printf("[Warning]: No %s() function assigned for object: %p\n", ActionName.c_str(), this);
+      return false;
+    }
+
+    return true;
+  }
 };
 
 class IRenderable : public IComponent {
