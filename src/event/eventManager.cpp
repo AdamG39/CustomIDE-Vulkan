@@ -1,6 +1,5 @@
 #include "eventManager.hpp"
 #include "../uilib/components/transform.hpp"
-#include "../uilib/components/button.hpp"
 #include "../uilib/components/textBox.hpp"
 #include "GLFW/glfw3.h"
 
@@ -20,13 +19,14 @@ bool EventHandler::HandleMouseEvent(const EventInfo& Info) {
 
     for (auto entity : entityTree) {
       Transform* transform = entity->GetComponent<Transform>();
-      Button* button = entity->GetComponent<Button>();
+      IInteractable* button = entity->GetInteractableComponent();
 
-      if (transform != nullptr && button != nullptr) {
-        if (CursorOverlap(Info.MouseInfo.Position, transform->GetPixelSize(), transform->GetPixelPosition())) {
-          (Info.MouseInfo.Action == GLFW_PRESS) ? button->OnPress() : button->OnRelease();
-          return true;
-        }
+      if (transform == nullptr || button == nullptr) continue;
+
+      if (CursorOverlap(Info.MouseInfo.Position, transform->GetPixelSize(), transform->GetPixelPosition())) {
+        if (Info.MouseInfo.Action == GLFW_PRESS && button->HasAction("OnPress")) button->ExecAction("OnPress"); 
+        else if (Info.MouseInfo.Action == GLFW_RELEASE && button->HasAction("OnRelease")) button->ExecAction("OnRelease");
+        return true;
       }
     }
   }

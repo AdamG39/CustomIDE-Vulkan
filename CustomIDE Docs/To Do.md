@@ -5,7 +5,6 @@
 	- Handle undo/redo
 - Rework ECS system
 	- Better setting of size and position of an entity making relative calculations easier (see unity for examples on good implementation)
-	- Make it so that entities can only have 1 "IRenderable" component
 	- Create helper functions for complex elements
 		- Panel
 		- Dropdown (button that shows/hides a panel)
