@@ -6,7 +6,6 @@
 #include <functional>
 #include <stdexcept>
 #include "../text.hpp"
-#include <GLFW/glfw3.h>
 
 enum ComponentTypes{
   TypeTransform,

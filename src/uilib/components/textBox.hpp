@@ -2,6 +2,7 @@
 #define CUSTOM_COMPONENT_TEXT_BOX_H
 
 #include "component.hpp"
+#include "GLFW/glfw3.h"
 
 class TextBox : public IText {
 private:
