@@ -4,15 +4,21 @@
 #include "../renderer/shapes.hpp"
 #include "../uilib/ecs.hpp"
 
-enum EventType {
-  Mouse,
-  Window,
-  Keyboard,
-  Character
+enum EventType : int {
+  Mouse       = (1u << 0),
+  Window      = (1u << 1),
+  Keyboard    = (1u << 2),
+  Character   = (1u << 3),
 };
 
+static constexpr int EventTypeCount = 4;
+
+constexpr int EventTypeEnumToIndex(EventType Type) {
+  return log2<int>(Type);
+}
+
 struct MouseEventInfo {
-  Vector2<float> Position;
+  Vector2D Position;
   int Button;
   int Action;
   int Modifications;

@@ -40,8 +40,12 @@ public:
 
   template <class ComponentType, typename... Args>
   void AddComponent(Args&&... Parameters) {
-    if (std::is_base_of_v<IInteractable, ComponentType>/* && GetInteractableComponent() != nullptr*/) ReplaceComponent<IInteractable, ComponentType>(Parameters...);
-    if (std::is_base_of_v<IRenderable, ComponentType>/* && GetRenderableComponent() != nullptr*/) ReplaceComponent<IRenderable, ComponentType>(Parameters...);
+    if (std::is_base_of_v<IInteractable, ComponentType> && GetInteractableComponent() != nullptr)
+      ReplaceComponent<IInteractable, ComponentType>(Parameters...);
+
+    if (std::is_base_of_v<IRenderable, ComponentType> && GetRenderableComponent() != nullptr)
+      ReplaceComponent<IRenderable, ComponentType>(Parameters...);
+
     CreateComponent<ComponentType>(Parameters...);
   }
 

@@ -216,6 +216,9 @@ void CustomIDEApplication::CreateUIElements() {
   closeButton.AddComponent<Button>();
   closeButton.GetComponent<Button>()->SetOnRelease(&glfwSetWindowShouldClose, m_renderer->GetWindow(), GLFW_TRUE);
 
+  // TODO: find a better solution for registering buttons for mouse events
+  m_eventManager->RegisterEventListener(&closeButton, EventType::Mouse);
+
   closeButton.AddChild(Entity(Vector2<UISize<float>>({10.f}, {10.f}),
                               Vector2<UISize<float>>({0.f, SizeMode::Proportional}, {0.f, SizeMode::Proportional})));
 
@@ -246,6 +249,8 @@ void CustomIDEApplication::CreateUIElements() {
   textBox->GetComponent<Transform>()->SetAnchor(UIAnchorType::TopLeft);
   
   textBox->AddComponent<TextBox>(font, "../src/app.cpp");
+
+  m_eventManager->RegisterEventListener(textBox.get(), EventType::Keyboard | EventType::Character);
 
   textBox->AddComponent<Mask>(ClipRect{.clippingEnabled = true,
       .rect = {.xOffset = 1280, .yOffset = 716, .width = 2534, .height = 1322}});

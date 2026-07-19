@@ -4,8 +4,19 @@
 #include <queue>
 #include "event.hpp"
 
+struct EventListenerHandle {
+  Entity* Object;
+  bool Expired;
+
+  bool IsValid();
+};
+
+using EventChannel = std::list<EventListenerHandle>;
+
 class EventHandler {
 private:
+  std::array<EventChannel, EventTypeCount>& m_eventChannels;
+
   bool HandleMouseEvent(const EventInfo& Info);
   bool HandleWindowEvent(const EventInfo& Info);
   bool HandleKeyboardEvent(const EventInfo& Info);
@@ -13,12 +24,16 @@ private:
 
 public:
   bool HandleEvent(const Event& Event);
+
+  EventHandler(std::array<EventChannel, EventTypeCount>& EventChannels)
+    : m_eventChannels(EventChannels) {}
 };
 
 class EventManager {
 private:
   std::queue<Event> m_eventQueue;
-  EventHandler m_eventHandler = EventHandler();
+  std::array<EventChannel, EventTypeCount> m_eventChannels;
+  EventHandler m_eventHandler = EventHandler(m_eventChannels);
 
 public:
   void PushEvent(const Event& Event);
@@ -30,6 +45,12 @@ public:
   void AddEvent(EventType Type, const EventInfo* Info);
 
   void HandleEvents();
+
+  void RegisterEventListener(Entity* Object, int Channels);
+
+  void ExpireEventListener(Entity* Object);
+
+  void ExpireEventListenerOnChannel(Entity* Object, EventType Channel);
 };
 
 #endif

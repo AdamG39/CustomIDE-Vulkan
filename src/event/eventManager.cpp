@@ -2,6 +2,7 @@
 #include "../uilib/components/transform.hpp"
 #include "../uilib/components/textBox.hpp"
 #include "GLFW/glfw3.h"
+#include <iostream>
 
 bool CursorOverlap(const Vector2<float>& CursorPos, const Vector2<float>& Size, const Vector2<float>& Position) {
   Vector2 min = Vector2(Position.x - (Size.x / 2), Position.y - (Size.y / 2));
@@ -13,11 +14,17 @@ bool CursorOverlap(const Vector2<float>& CursorPos, const Vector2<float>& Size, 
   return false;
 }
 
+bool EventListenerHandle::IsValid() {
+  return !Expired && Object != nullptr;
+}
+
 bool EventHandler::HandleMouseEvent(const EventInfo& Info) {
   if (Info.MouseInfo.Button == GLFW_MOUSE_BUTTON_LEFT) {
-    auto& entityTree = Info.Manager->GetAllEntities();
+    for (auto& handler : m_eventChannels[EventTypeEnumToIndex(EventType::Mouse)]) {
+      if (!handler.IsValid()) continue;
 
-    for (auto entity : entityTree) {
+      auto entity = handler.Object;
+
       Transform* transform = entity->GetComponent<Transform>();
       IInteractable* button = entity->GetInteractableComponent();
 
@@ -40,10 +47,11 @@ bool EventHandler::HandleWindowEvent(const EventInfo& Info) {
 
 bool EventHandler::HandleKeyboardEvent(const EventInfo& Info) {
   if (Info.KeyboardInfo.Action == GLFW_RELEASE) return true;
-  auto& entityTree = Info.Manager->GetAllEntities();
 
-  for (auto entity : entityTree) {
-    TextBox* textBox = entity->GetComponent<TextBox>();
+  for (auto& handler : m_eventChannels[EventTypeEnumToIndex(EventType::Keyboard)]) {
+    if (!handler.IsValid()) continue;
+
+    TextBox* textBox = handler.Object->GetComponent<TextBox>();
 
     if (textBox == nullptr) continue;
 
@@ -151,10 +159,12 @@ bool EventHandler::HandleKeyboardEvent(const EventInfo& Info) {
 bool EventHandler::HandleCharacterEvent(const EventInfo& Info) {
   // TODO: add handling of any UFT-8 character
 
-  auto& entityTree = Info.Manager->GetAllEntities();
 
-  for (auto entity : entityTree) {
-    TextBox* textBox = entity->GetComponent<TextBox>();
+
+  for (auto handler : m_eventChannels[EventTypeEnumToIndex(EventType::Character)]) {
+    if (!handler.IsValid()) continue;
+
+    TextBox* textBox = handler.Object->GetComponent<TextBox>();
 
     if (textBox == nullptr) continue;
 
@@ -217,3 +227,44 @@ void EventManager::HandleEvents() {
   }
 }
 
+void EventManager::RegisterEventListener(Entity* Object, int Channels) {
+  EventListenerHandle handle {
+    .Object = Object,
+    .Expired = false
+  };
+
+  if (Channels & EventType::Mouse) {
+    m_eventChannels[EventTypeEnumToIndex(EventType::Mouse)].push_back(handle);
+  }
+
+  if (Channels & EventType::Window) {
+    m_eventChannels[EventTypeEnumToIndex(EventType::Window)].push_back(handle);
+  }
+
+  if (Channels & EventType::Keyboard) {
+    m_eventChannels[EventTypeEnumToIndex(EventType::Keyboard)].push_back(handle);
+  }
+
+  if (Channels & EventType::Character) {
+    m_eventChannels[EventTypeEnumToIndex(EventType::Character)].push_back(handle);
+  }
+}
+
+void EventManager::ExpireEventListener(Entity* Object) {
+  for (auto& channel : m_eventChannels) {
+    for (auto& listener : channel) {
+      if (listener.Object == Object)
+        listener.Expired = true;
+    }
+  }
+}
+
+void EventManager::ExpireEventListenerOnChannel(Entity* Object, EventType Channel) {
+  int channelIndex = EventTypeEnumToIndex(Channel);
+  if (channelIndex >= EventTypeCount) return;
+
+  for (auto& listener : m_eventChannels[channelIndex]) {
+    if (listener.Object == Object)
+      listener.Expired = true;
+  }
+}
