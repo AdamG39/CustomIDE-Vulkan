@@ -50,6 +50,13 @@ struct PieceTableEntry {
 
 class PieceTable {
 private:
+  static constexpr int    TAB_CHAR_LITERAL    = '\t';  
+  static constexpr int    SPACE_CHAR_LITERAL  = ' ';  
+
+  static constexpr size_t DEFAULT_CHAR_WIDTH  = 1;
+  static constexpr size_t TAB_SPACE_WIDTH     = 4; // FIXME: Should be set using a configuration file instead
+  static constexpr bool   TABS_ARE_SPACES     = false; // FIXME: Should be set using a configuration file instead
+
   bool m_recalculateContent;
   std::string m_content;
 
@@ -77,7 +84,7 @@ public:
 
   char Index(unsigned Position) const;
 
-  void Insert(char Character, unsigned Position);
+  size_t Insert(char Character, unsigned Position);
 
   void Delete(unsigned Position);
 

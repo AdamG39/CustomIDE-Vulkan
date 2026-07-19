@@ -32,8 +32,15 @@ char PieceTable::Index(unsigned Position) const {
   return 0;
 }
 
-void PieceTable::Insert(char Character, unsigned Position) {
+size_t PieceTable::Insert(char Character, unsigned Position) {
   m_add.push_back(Character);
+
+  if (TABS_ARE_SPACES && Character == TAB_CHAR_LITERAL) {
+    for (size_t i{0ull}; i < TAB_SPACE_WIDTH; i++)
+      Insert(SPACE_CHAR_LITERAL, Position);
+
+    return TAB_SPACE_WIDTH;
+  }
 
   m_recalculateContent = true;
   m_recalculateStartOfLines = true;
@@ -59,7 +66,7 @@ void PieceTable::Insert(char Character, unsigned Position) {
   // If position is after all entries add it to the end
   if (it == m_entries.end()) {
     m_entries.push_back(newEntry);
-    return;
+    return DEFAULT_CHAR_WIDTH;
   }
 
   PieceTableEntry& entry = *it;
@@ -68,7 +75,7 @@ void PieceTable::Insert(char Character, unsigned Position) {
   if (counter == Position) { // Character to be inserted at start of this entry
     // Create a new entry and add before the current one
     m_entries.insert(it, newEntry);
-    return;
+    return DEFAULT_CHAR_WIDTH;
   }
 
   else { // Character to be inserted in the middle of this entry
@@ -91,7 +98,9 @@ void PieceTable::Insert(char Character, unsigned Position) {
       m_entries.insert(it, secondPart);
       m_entries.insert(it, newEntry);
     }
-  } 
+  }
+
+  return DEFAULT_CHAR_WIDTH;
 }
 
 void PieceTable::Delete(unsigned Position) {

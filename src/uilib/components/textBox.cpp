@@ -13,11 +13,108 @@ TextBox::TextBox(Font Font, std::string Filepath, bool WordWrap)
   m_cursor._Colour = Font.colour;
 }
 
+void TextBox::RenderSelection(EntityManager& Manager, const Vector2D& TextObjPos) {
+  size_t start = m_textSelection.start;
+  size_t length = m_textSelection.length;
+  size_t end = start + length;
+
+  Font font = GetFont();
+
+  // find which line the selection starts on
+  int firstLineStart = -1;
+  for (size_t i{0ull}; i < m_table.GetStartOfLines().size(); i++) {
+    if (m_table.GetStartOfLines()[i] > start) {
+      firstLineStart = i - 1;
+      break;
+    }
+  }
+
+  if (firstLineStart < 0) firstLineStart = 0;
+
+  int startOffsetIntoLine = start - m_table.GetStartOfLines()[firstLineStart];
+
+  std::vector<Rect2D> selectionRects;
+
+  // Generate render geometry
+  int currentLine = firstLineStart;
+  for (auto i{start}; i < end; i++) {
+    // Create initial selection rect
+    if (selectionRects.empty()) {
+      Rect2D first {
+        .xOffset = font.size.x * startOffsetIntoLine,
+        .yOffset = font.size.y * firstLineStart,
+        .width = static_cast<uint32_t>(font.size.x),
+        .height = static_cast<uint32_t>(font.size.y)
+      };
+
+      selectionRects.push_back(first);
+
+      if (m_table.GetContent()[i] == '\n') {
+        currentLine++;
+        Rect2D newSelectionLine {
+          .xOffset = -(font.size.x / 2), // Line could be empty so needs to start before the line
+          .yOffset = font.size.y * currentLine,
+          .width = 0,
+          .height = static_cast<uint32_t>(font.size.y)
+        };
+
+        selectionRects.push_back(newSelectionLine);
+      }
+      continue;
+    }
+
+    auto& rect = selectionRects.back();
+    // Adjust the width and xOffset to include the next element
+    rect.xOffset += font.size.x / 2;
+    rect.width += static_cast<uint32_t>(font.size.x);
+
+    if (m_table.GetContent()[i] == '\n') {
+      currentLine++;
+      Rect2D newSelectionLine {
+        .xOffset = -(font.size.x / 2), // Line could be empty so needs to start before the line
+        .yOffset = font.size.y * currentLine,
+        .width = 0,
+        .height = static_cast<uint32_t>(font.size.y)
+      };
+
+      selectionRects.push_back(newSelectionLine);
+    }
+  }
+
+  // Render all selection rects
+  for (auto rect : selectionRects) {
+    rect.yOffset += TextObjPos.y;
+    rect.xOffset += TextObjPos.x;
+    Manager.GetRenderer().lock()->DrawRect(
+        rect,
+        m_drawDepth, Colour(0x90D5FF, 0.5f));
+  }
+}
+
+void TextBox::RenderCursor(EntityManager& Manager, const Vector2D& TextObjPos, const Vector2<int>& CursorPosition) {
+  Font font = GetFont();
+
+  Vector2<float> finalCursorSize {
+    static_cast<float>(font.size.x),
+    static_cast<float>(font.size.y) * 1.5f
+  };
+
+  Vector2<float> finalCursorPosition {
+    TextObjPos.x + (font.size.x * CursorPosition.x),
+    TextObjPos.y + (font.size.y * CursorPosition.y)
+  };
+
+  Manager.GetRenderer().lock()->DrawRect(
+      Rect2D{ static_cast<int32_t>(finalCursorPosition.x), static_cast<int32_t>(finalCursorPosition.y),
+              static_cast<uint32_t>(finalCursorSize.x), static_cast<uint32_t>(finalCursorSize.y) },
+      m_drawDepth, GetCursorColour());
+}
+
 void TextBox::Render(EntityManager& Manager, const Transform* Transform) {
   // calculate size of each character based on font
   Font font = GetFont();
-  Vector2 textObjPos = Transform->GetPixelPosition();
-  Vector2 fontAtlasSize {64.f, 2.f};
+  Vector2D textObjPos = Transform->GetPixelPosition();
+  Vector2D fontAtlasSize {64.f, 2.f};
   std::string content = GetContent();
 
   int charsPerLine = int(Transform->GetPixelSize().x) / font.size.x;
@@ -29,17 +126,16 @@ void TextBox::Render(EntityManager& Manager, const Transform* Transform) {
   Vector2<int> cursorPosition;
 
   for (size_t i = 0; i < content.size(); i++) {
+    if (cursorIndexPosition == i)
+      cursorPosition = { linePosition, lineCount };
+
     switch (content[i]) {
     case '\n':
-      if (cursorIndexPosition == i)
-        cursorPosition = { linePosition, lineCount };
       lineCount++;
       linePosition = 0;
       continue;
     case '\t':
-      if (cursorIndexPosition == i)
-        cursorPosition = { linePosition, lineCount };
-      linePosition += 4;
+      linePosition += TAB_WIDTH;
       if (GetWordWrap()) {
         if (linePosition > charsPerLine) { 
           lineCount++;
@@ -53,9 +149,6 @@ void TextBox::Render(EntityManager& Manager, const Transform* Transform) {
       textObjPos.x + (font.size.x * linePosition),
       textObjPos.y + (lineCount * font.size.y)
     };
-
-    if (cursorIndexPosition == i)
-      cursorPosition = { linePosition, lineCount };
 
     linePosition++;
 
@@ -75,7 +168,7 @@ void TextBox::Render(EntityManager& Manager, const Transform* Transform) {
     auto imageIndex = Manager.GetRenderer().lock()->GetImageIndexFromName(font.familyName);
     if (imageIndex < 0) ExitWithError("No image with that name found", -35);
 
-    ClipRect clipRect {.clippingEnabled = false};
+    ClipRect clipRect {};
     if (!Manager.GetClipStack().empty())
       clipRect = Manager.GetClipStack().top();
 
@@ -86,81 +179,13 @@ void TextBox::Render(EntityManager& Manager, const Transform* Transform) {
         textColour);
   }
   if (GetSelectionState()) {
-    int start = m_textSelection.start;
-    int length = m_textSelection.length;
-
-    // find which line the selection starts on
-    int firstLineStart = -1;
-    for (int i = 0; i < m_table.GetStartOfLines().size(); i++) {
-      if (m_table.GetStartOfLines()[i] > start) {
-        firstLineStart = i - 1;
-        break;
-      }
-    }
-
-    if (firstLineStart < 0) firstLineStart = 0;
-
-    int startOffsetIntoLine = start - m_table.GetStartOfLines()[firstLineStart];
-
-    std::vector<Rect2D> selectionRects;
-
-    int currentLine = firstLineStart;
-    for (int i = start; i < (start + length); i++) {
-      if (selectionRects.empty()) {
-        Rect2D first {
-          .xOffset = font.size.x * startOffsetIntoLine,
-          .yOffset = font.size.y * firstLineStart,
-          .width = static_cast<uint32_t>(font.size.x),
-          .height = static_cast<uint32_t>(font.size.y)
-        };
-
-        selectionRects.push_back(first);
-      }
-      if (m_table.GetContent()[i] != '\n') {
-        auto rectIt = selectionRects.rbegin();
-        // Adjust the width and xOffset to include the next element
-        rectIt->xOffset += font.size.x / 2;
-        rectIt->width += static_cast<uint32_t>(font.size.x);
-      }
-      else {
-        currentLine++;
-        Rect2D newSelectionLine {
-          .xOffset = 0, // Already at start of line so simplify calculation
-          .yOffset = font.size.y * currentLine,
-          .width = static_cast<uint32_t>(font.size.x),
-          .height = static_cast<uint32_t>(font.size.y)
-        };
-
-        selectionRects.push_back(newSelectionLine);
-      }
-    }
-
-    for (auto rect : selectionRects) {
-      rect.xOffset += textObjPos.x;
-      rect.yOffset += textObjPos.y;
-      Manager.GetRenderer().lock()->DrawRect(
-          rect,
-          m_drawDepth, Colour(0x90D5FF, 0.5f));
-    }
+    RenderSelection(Manager, textObjPos);
   }
 
-  if (cursorIndexPosition == content.size())
+  if (cursorIndexPosition == GetContent().size())
     cursorPosition = { linePosition, lineCount };
 
-  Vector2<float> finalCursorSize {
-    static_cast<float>(font.size.x),
-    static_cast<float>(font.size.y) * 1.5f
-  };
-
-  Vector2<float> finalCursorPosition {
-    textObjPos.x + (font.size.x * cursorPosition.x),
-    textObjPos.y + (font.size.y * cursorPosition.y)
-  };
-
-  Manager.GetRenderer().lock()->DrawRect(
-      Rect2D{ static_cast<int32_t>(finalCursorPosition.x), static_cast<int32_t>(finalCursorPosition.y),
-              static_cast<uint32_t>(finalCursorSize.x), static_cast<uint32_t>(finalCursorSize.y) },
-      m_drawDepth, GetCursorColour());
+    RenderCursor(Manager, textObjPos, cursorPosition);
 }
 
 char TextBox::Index(unsigned Position) {
@@ -169,8 +194,9 @@ char TextBox::Index(unsigned Position) {
 
 void TextBox::Insert(char Character, int Position) {
   CancelSelection();
-  m_table.Insert(Character, Position);
-  MoveCursorRight();
+  size_t moveAmount = m_table.Insert(Character, Position);
+  while (moveAmount--)
+    MoveCursorRight();
 }
 
 void TextBox::Delete(int Position) {

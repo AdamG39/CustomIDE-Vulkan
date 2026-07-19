@@ -6,6 +6,8 @@
 
 class TextBox : public IText {
 private:
+  static constexpr int TAB_WIDTH = 4; // FIXME: Should be set using a configuration file instead
+
   enum SelectionDirection {
     None,
     Left,
@@ -20,6 +22,9 @@ private:
   bool m_selectionState = false;
   SelectionDirection m_selectionDirection = None;
   TextSelection m_textSelection;
+
+  void RenderSelection(EntityManager& Manager, const Vector2D& TextObjPos);
+  void RenderCursor(EntityManager& Manager, const Vector2D& TextObjPos, const Vector2<int>& CursorPosition);
 
 public:
   static int TypeValue() { return TypeTextBox; }

@@ -1,6 +1,5 @@
 - Add ability to set a custom scissor area for scrollable elements
 - Implement text editing
-	- Handle text selection
 	- Handle mouse interaction with text box
 	- Handle undo/redo
 - Rework ECS system
