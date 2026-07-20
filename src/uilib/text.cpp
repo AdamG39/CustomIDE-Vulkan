@@ -1,7 +1,5 @@
 #include "../helpers/errors/errors.hpp"
 #include "text.hpp"
-#include <string>
-#include <vector>
 
 namespace CustomIDE {
 
@@ -163,7 +161,7 @@ void UI::PieceTable::Delete(unsigned Position) {
   if (entry.Length == 0) m_entries.erase(it);
 }
 
-::std::string UI::PieceTable::GetContent() {
+std::string UI::PieceTable::GetContent() {
   // Recalculates content if contents state changed otherwise returns cached result
   if (!m_recalculateContent) return m_content;
 
@@ -183,8 +181,8 @@ void UI::PieceTable::Delete(unsigned Position) {
   return m_content;
 }
 
-::std::string UI::PieceTable::GetContent() const {
-  ::std::string result;
+std::string UI::PieceTable::GetContent() const {
+  std::string result;
 
   for (auto entry : m_entries) {
     if (entry.Type == PieceTableBufferType::Original) {
@@ -197,7 +195,7 @@ void UI::PieceTable::Delete(unsigned Position) {
   return result;
 }
 
-const ::std::vector<int>& UI::PieceTable::GetStartOfLines() {
+const std::vector<int>& UI::PieceTable::GetStartOfLines() {
   // Recalculates new line positions if content state changed otherwise returns cached result
   if (!m_recalculateStartOfLines) return m_startOfLines;
 
