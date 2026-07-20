@@ -18,6 +18,10 @@ file(GLOB_RECURSE SRC_FILES "src/*.cpp")
 
 add_executable(CustomIDE ${SRC_FILES})
 
+if (WIN32)
+    set_target_properties(CustomIDE PROPERTIES WIN32_EXECUTABLE $<$<CONFIG:Release>:TRUE>)
+endif()
+
 target_include_directories(CustomIDE PRIVATE ${Vulkan_INCLUDE_DIRS})
 target_link_libraries(CustomIDE PRIVATE ${Vulkan_LIBRARIES})
 target_link_libraries(CustomIDE PRIVATE glfw Vulkan::Vulkan)
