@@ -143,6 +143,9 @@ void TextBox::Render(EntityManager& Manager, const Transform* Transform) {
         }
       }
       continue;
+    case ' ':
+      linePosition++;
+      continue;
     }
 
     Vector2<float> charPosition {
