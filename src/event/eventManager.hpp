@@ -4,8 +4,12 @@
 #include <queue>
 #include "event.hpp"
 
+namespace CustomIDE::EventSystem {
+
+bool CursorOverlap(const Vector2D& CursorPos, const Vector2D& Size, const Vector2D& Position);
+
 struct EventListenerHandle {
-  Entity* Object;
+  UI::ECS::Entity* Object;
   bool Expired;
 
   bool IsValid();
@@ -46,12 +50,14 @@ public:
 
   void HandleEvents();
 
-  void RegisterEventListener(Entity* Object, int Channels);
+  void RegisterEventListener(UI::ECS::Entity* Object, int Channels);
 
-  void ExpireEventListener(Entity* Object);
+  void ExpireEventListener(UI::ECS::Entity* Object);
 
-  void ExpireEventListenerOnChannel(Entity* Object, EventType Channel);
+  void ExpireEventListenerOnChannel(UI::ECS::Entity* Object, EventType Channel);
 };
+
+}
 
 #endif
 

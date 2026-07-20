@@ -1,6 +1,8 @@
 - Add ability to set a custom scissor area for scrollable elements
 - Implement text editing
 	- Handle mouse interaction with text box
+		- Handle text cursor move to the closest text position to the mouse
+		- Handle drag selection using the mouse
 	- Handle undo/redo
 - Rework ECS system
 	- Better setting of size and position of an entity making relative calculations easier (see unity for examples on good implementation)

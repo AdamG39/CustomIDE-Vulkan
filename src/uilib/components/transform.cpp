@@ -1,16 +1,18 @@
 #include "transform.hpp"
 
-int Transform::GetType() { return TypeValue(); }
+namespace CustomIDE {
 
-void Transform::SetSize(const Vector2<UISize<float>>& Size) {
+int UI::ECS::Transform::GetType() { return TypeValue(); }
+
+void UI::ECS::Transform::SetSize(const Vector2<UI::Size<float>>& Size) {
   m_size = Size; 
 }
 
-Vector2<UISize<float>> Transform::GetSize() const {
+Vector2<UI::Size<float>> UI::ECS::Transform::GetSize() const {
   return m_size;
 }
 
-Vector2<float> Transform::RecalculateEntitySize(float ParentWidth, float ParentHeight) {
+Vector2<float> UI::ECS::Transform::RecalculateEntitySize(float ParentWidth, float ParentHeight) {
   Vector2<float> calculatedSize;
 
   if (m_size.x.Mode == SizeMode::Proportional) {
@@ -25,58 +27,58 @@ Vector2<float> Transform::RecalculateEntitySize(float ParentWidth, float ParentH
   return calculatedSize;
 }
 
-Vector2<float> Transform::GetPixelSize() const {
+Vector2<float> UI::ECS::Transform::GetPixelSize() const {
   return m_pixelSize;
 }
 
-void Transform::SetPosition(const Vector2<UISize<float>>& Position) {
+void UI::ECS::Transform::SetPosition(const Vector2<UI::Size<float>>& Position) {
   m_position = Position;
 }
 
-Vector2<UISize<float>> Transform::GetPosition() const {
+Vector2<UI::Size<float>> UI::ECS::Transform::GetPosition() const {
   return m_position;
 }
 
 // TODO: can child object can only use center anchor
 // change to allow better calculation of objects based on parents and anchors
-Vector2<float> Transform::RecalculateEntityPosition(Vector2<float> ParentSize, 
-    Vector2<float> ParentPosition, const UIAnchorType& Anchor) {
+Vector2<float> UI::ECS::Transform::RecalculateEntityPosition(Vector2<float> ParentSize, 
+    Vector2<float> ParentPosition, const UI::AnchorType& Anchor) {
   Vector2<float> calculatedPosition;
 
   switch (Anchor) {
-    case UIAnchorType::Center:
+    case UI::AnchorType::Center:
       calculatedPosition.x = ParentSize.x / 2;
       calculatedPosition.y = ParentSize.y / 2;
       break;
-    case UIAnchorType::Top:
+    case UI::AnchorType::Top:
       calculatedPosition.x = ParentSize.x / 2;
       calculatedPosition.y = 0;
       break;
-    case UIAnchorType::Left:
+    case UI::AnchorType::Left:
       calculatedPosition.x = 0;
       calculatedPosition.y = ParentSize.y / 2;
       break;
-    case UIAnchorType::Right:
+    case UI::AnchorType::Right:
       calculatedPosition.x = ParentSize.x;
       calculatedPosition.y = ParentSize.y / 2;
       break;
-    case UIAnchorType::Bottom:
+    case UI::AnchorType::Bottom:
       calculatedPosition.x = ParentSize.x / 2;
       calculatedPosition.y = ParentSize.y;
       break;
-    case UIAnchorType::TopLeft:
+    case UI::AnchorType::TopLeft:
       calculatedPosition.x = 0;
       calculatedPosition.y = 0;
       break;
-    case UIAnchorType::TopRight:
+    case UI::AnchorType::TopRight:
       calculatedPosition.x = ParentSize.x;
       calculatedPosition.y = 0;
       break;
-    case UIAnchorType::BottomLeft:
+    case UI::AnchorType::BottomLeft:
       calculatedPosition.x = 0;
       calculatedPosition.y = ParentSize.y;
       break;
-    case UIAnchorType::BottomRight:
+    case UI::AnchorType::BottomRight:
       calculatedPosition.x = ParentSize.x;
       calculatedPosition.y = ParentSize.y;
       break;
@@ -96,15 +98,17 @@ Vector2<float> Transform::RecalculateEntityPosition(Vector2<float> ParentSize,
   return calculatedPosition;
 }
 
-Vector2<float> Transform::GetPixelPosition() const {
+Vector2<float> UI::ECS::Transform::GetPixelPosition() const {
   return m_pixelPosition;
 }
 
-void Transform::SetAnchor(const UIAnchorType& AnchorValue) {
+void UI::ECS::Transform::SetAnchor(const UI::AnchorType& AnchorValue) {
   m_anchor = AnchorValue;
 }
 
-UIAnchorType Transform::GetAnchor() const {
+UI::AnchorType UI::ECS::Transform::GetAnchor() const {
   return m_anchor;
 }
+
+} // namespace CustomIDE
 

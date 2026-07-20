@@ -1,24 +1,22 @@
 #ifndef CUSTOM_UI_H
 #define CUSTOM_UI_H
 
+namespace CustomIDE::UI {
+
 enum class SizeMode { Fixed, Proportional };
 
 template <typename T>
-struct UISize {
+struct Size {
   T Value{};
   SizeMode Mode{SizeMode::Fixed};
 
-  UISize() = default;
+  Size() = default;
 
-  UISize(T Value, SizeMode Mode = SizeMode::Fixed)
+  Size(T Value, SizeMode Mode = SizeMode::Fixed)
   : Value(Value), Mode(Mode) {}
-
-  template<typename U>
-  UISize(const UISize<U>& That)
-  : Value(static_cast<T>(That.Value)), Mode(That.Mode) {}
 };
 
-enum class UIAnchorType {
+enum class AnchorType {
   Center,
   Top,
   Bottom,
@@ -29,6 +27,8 @@ enum class UIAnchorType {
   BottomLeft,
   BottomRight
 };
+
+} // namespace UI
 
 #endif
 

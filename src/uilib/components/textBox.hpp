@@ -4,6 +4,8 @@
 #include "component.hpp"
 #include "GLFW/glfw3.h"
 
+namespace CustomIDE::UI::ECS {
+
 class TextBox : public IText {
 private:
   static constexpr int TAB_WIDTH = 4; // FIXME: Should be set using a configuration file instead
@@ -69,6 +71,8 @@ public:
   void DebugPrint();
 #endif // _DEBUG
 };
+
+} // namespace UI::ECS
 
 #endif
 

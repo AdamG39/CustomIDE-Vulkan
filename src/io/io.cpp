@@ -15,25 +15,27 @@
   #define SET_BINARY_MODE(file)
 #endif
 
-std::vector<char> ReadBinaryFile(const std::string& filename) {
+namespace CustomIDE {
+
+std::vector<uint8_t> IO::ReadBinaryFile(const std::string& filename) {
   std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
   if (!file.is_open()) {
-    ExitWithError("Failed to open file", -5);
+    Errors::ExitWithError("Failed to open file", -5);
   }
 
   size_t fileSize = (size_t) file.tellg();
-  std::vector<char> buffer(fileSize);
+  std::vector<uint8_t> buffer(fileSize);
 
   file.seekg(0);
-  file.read(buffer.data(), fileSize);
+  file.read(reinterpret_cast<char*>(buffer.data()), fileSize);
 
   file.close();
 
   return buffer;
 }
 
-std::string ReadTextFile(const std::string& filename) {
+std::string IO::ReadTextFile(const std::string& filename) {
   std::ifstream file(filename);
 
   if (!file.is_open()) {
@@ -41,7 +43,7 @@ std::string ReadTextFile(const std::string& filename) {
       std::cerr << "Error details: " << strerror(errno)
            << std::endl;
     }
-    ExitWithError("Failed to open file", -5);
+    Errors::ExitWithError("Failed to open file", -5);
   }
 
   std::string fileContents;
@@ -57,7 +59,7 @@ std::string ReadTextFile(const std::string& filename) {
   return fileContents;
 }
 
-void WriteTextFile(const std::string& filename, const std::string& content) {
+void IO::WriteTextFile(const std::string& filename, const std::string& content) {
   std::ofstream file(filename);
 
   if (!file.is_open()) {
@@ -65,7 +67,7 @@ void WriteTextFile(const std::string& filename, const std::string& content) {
       std::cerr << "Error details: " << strerror(errno)
            << std::endl;
     }
-    ExitWithError("Failed to open file", -5);
+    Errors::ExitWithError("Failed to open file", -5);
   }
 
   file.write(content.c_str(), content.size());
@@ -73,8 +75,8 @@ void WriteTextFile(const std::string& filename, const std::string& content) {
   file.close();
 }
 
-bool CompareByteValues(const std::vector<char>& Obj1, const uint8_t* Obj2, size_t BytesToCompare) {
-  if (Obj1.size() < BytesToCompare) ExitWithError("Not enough bytes to compare", -7);
+bool IO::CompareByteValues(const std::vector<uint8_t>& Obj1, const uint8_t* Obj2, size_t BytesToCompare) {
+  if (Obj1.size() < BytesToCompare) Errors::ExitWithError("Not enough bytes to compare", -7);
 
   for (size_t i = 0; i < BytesToCompare; i++) {
     if (static_cast<uint8_t>(Obj1[i]) != Obj2[i]) return false;
@@ -85,13 +87,13 @@ bool CompareByteValues(const std::vector<char>& Obj1, const uint8_t* Obj2, size_
 
 // TODO: Change to return an array of shared pointers (pointer to pointers)
 // and have return type be the amount of images returned
-bool ReadImageFile(const std::string &filename, std::vector<std::shared_ptr<Image>>& OutImages) {
-  std::vector<char> buffer = ReadBinaryFile(filename);
+bool IO::ReadImageFile(const std::string &filename, std::vector<std::shared_ptr<Image>>& OutImages) {
+  std::vector<uint8_t> buffer = IO::ReadBinaryFile(filename);
 
-  if (buffer.size() == 0) ExitWithError("File buffer size is 0", -6);
+  if (buffer.size() == 0) Errors::ExitWithError("File buffer size is 0", -6);
 
   if (CompareByteValues(buffer, PNG_MAGIC_NUMBERS, PNG_MAGIC_NUMBER_BYTE_AMOUNT)) {
-    OutImages.push_back(ParsePNGData(buffer, 0));
+    OutImages.push_back(IO::ParsePNGData(buffer, 0));
     return true;
   }
 
@@ -128,7 +130,8 @@ bool ReadImageFile(const std::string &filename, std::vector<std::shared_ptr<Imag
   return false;
 }
 
-std::shared_ptr<Image> ParsePNGData(const std::vector<char>& Data, uint32_t Offset) {
+std::shared_ptr<IO::Image> IO::ParsePNGData(const std::vector<uint8_t>& Data, uint32_t Offset) {
+  using namespace IO;
   uint32_t offset = Offset + PNG_MAGIC_NUMBER_BYTE_AMOUNT;
 
   std::shared_ptr<Image> returnPtr = std::make_shared<Image>();
@@ -137,7 +140,7 @@ std::shared_ptr<Image> ParsePNGData(const std::vector<char>& Data, uint32_t Offs
   chunk.chunkSize = u32(Data[offset], Data[offset + 1], Data[offset + 2], Data[offset + 3]);
   chunk.chunkType = u32(Data[offset + 4], Data[offset + 5], Data[offset + 6], Data[offset + 7]);
 
-  if (chunk.chunkType != PNG_IHDR_CHUNK_SIGNATURE) ExitWithError("No PNG image header found", -10);
+  if (chunk.chunkType != PNG_IHDR_CHUNK_SIGNATURE) Errors::ExitWithError("No PNG image header found", -10);
 
   offset += sizeof(chunk.chunkSize) + sizeof(chunk.chunkType);
 
@@ -184,7 +187,7 @@ std::shared_ptr<Image> ParsePNGData(const std::vector<char>& Data, uint32_t Offs
   //int result = InflateDecoder(std::vector(Data.begin() + offset, Data.begin() + offset + chunk.chunkSize), pixelVector);
   int result = InflateDecoder(dataChunks, pixelVector);
   if (result != Z_OK)
-    ExitWithError("Failed to decode PNG file", -24);
+    Errors::ExitWithError("Failed to decode PNG file", -24);
 
   // Then remove filtering
 
@@ -216,7 +219,7 @@ std::shared_ptr<Image> ParsePNGData(const std::vector<char>& Data, uint32_t Offs
   return returnPtr;
 }
 
-int InflateDecoder(const std::vector<uint8_t>& Data, std::vector<uint8_t>& Output) {
+int IO::InflateDecoder(const std::vector<uint8_t>& Data, std::vector<uint8_t>& Output) {
   int ret;
   z_stream stream;
   uint32_t have;
@@ -279,22 +282,38 @@ int InflateDecoder(const std::vector<uint8_t>& Data, std::vector<uint8_t>& Outpu
   return ret == Z_STREAM_END ? Z_OK : Z_DATA_ERROR;
 }
 
-constexpr uint8_t PNG::ReconA(size_t ScanLine, size_t LineByteOffset, size_t Stride,
+constexpr int IO::PNG::GetImageBitsPerPixel(uint8_t BitsPerChannel, ColourType ColourMode) {
+  switch (ColourMode) {
+    case ColourType::Grayscale:
+    case ColourType::Indexed:
+      return 1 * BitsPerChannel;
+    case ColourType::GrayscaleAlpha:
+      return 2 * BitsPerChannel;
+    case ColourType::Truecolour:
+      return 3 * BitsPerChannel;
+    case ColourType::TruecolourAlpha:
+      return 4 * BitsPerChannel;
+  }
+  Errors::ExitWithError("Invalid PNG Colour type", -23);
+  return -1;
+}
+
+constexpr uint8_t IO::PNG::ReconA(size_t ScanLine, size_t LineByteOffset, size_t Stride,
                               int BytesPerPixel, const uint8_t* Output) {
   return (LineByteOffset >= BytesPerPixel) ? Output[ScanLine * Stride + LineByteOffset - BytesPerPixel] : 0;
 }
 
-constexpr uint8_t PNG::ReconB(size_t ScanLine, size_t LineByteOffset, size_t Stride,
+constexpr uint8_t IO::PNG::ReconB(size_t ScanLine, size_t LineByteOffset, size_t Stride,
                               const uint8_t* Output) {
   return (ScanLine > 0) ? Output[(ScanLine - 1) * Stride + LineByteOffset] : 0;
 }
 
-constexpr uint8_t PNG::ReconC(size_t ScanLine, size_t LineByteOffset, size_t Stride,
+constexpr uint8_t IO::PNG::ReconC(size_t ScanLine, size_t LineByteOffset, size_t Stride,
                               int BytesPerPixel, const uint8_t* Output) {
   return (ScanLine > 0 && LineByteOffset >= BytesPerPixel) ? Output[(ScanLine - 1) * Stride + LineByteOffset - BytesPerPixel] : 0;
 }
 
-constexpr uint8_t PNG::PaethPredictor(uint8_t A, uint8_t B, uint8_t C) {
+constexpr uint8_t IO::PNG::PaethPredictor(uint8_t A, uint8_t B, uint8_t C) {
   auto p = A + B - C;
   auto pa = abs(p - A);
   auto pb = abs(p - B);
@@ -307,7 +326,7 @@ constexpr uint8_t PNG::PaethPredictor(uint8_t A, uint8_t B, uint8_t C) {
     return C;
 }
 
-void ParseICOData(const std::vector<char>& Data, std::vector<std::shared_ptr<Image>>& OutImages) {
+void IO::ParseICOData(const std::vector<uint8_t>& Data, std::vector<std::shared_ptr<Image>>& OutImages) {
   uint16_t imageCount = u16LE(Data[4], Data[5]);
 
   OutImages.clear();
@@ -320,7 +339,7 @@ void ParseICOData(const std::vector<char>& Data, std::vector<std::shared_ptr<Ima
     entry.width = Data[entryOffset];
     entry.height = Data[entryOffset + 1];
     entry.paletteColours = Data[entryOffset + 2];
-    if (Data[entryOffset + 3] != 0) ExitWithError("ICO reserved value is invalid", -9);
+    if (Data[entryOffset + 3] != 0) Errors::ExitWithError("ICO reserved value is invalid", -9);
     entry.reserved = 0;
     entry.colourPlanes = u16LE(Data[entryOffset + 4], Data[entryOffset + 5]);
     entry.bitsPerPixel = u16LE(Data[entryOffset + 6], Data[entryOffset + 7]);
@@ -328,12 +347,12 @@ void ParseICOData(const std::vector<char>& Data, std::vector<std::shared_ptr<Ima
     entry.dataOffset = u32LE(Data[entryOffset + 12], Data[entryOffset + 13], Data[entryOffset + 14], Data[entryOffset + 15]);
 
     if (Data[entry.dataOffset] != 0x28) {
-      if (CompareByteValues(std::vector<char>(Data.begin() + entry.dataOffset, Data.end()),
+      if (CompareByteValues(std::vector<uint8_t>(Data.begin() + entry.dataOffset, Data.end()),
                             PNG_MAGIC_NUMBERS, PNG_MAGIC_NUMBER_BYTE_AMOUNT)) {
         // Ignore PNG's until i can figure out how to decode them
         continue;
         //OutImages.push_back(ParsePNGData(Data, entry.dataOffset));
-      } else ExitWithError("Not a valid image format", -10);
+      } else Errors::ExitWithError("Not a valid image format", -10);
     } else {
       BITMAPINFOHEADER bitmapInfoHeader{
         .headerSize = u32LE(Data[entry.dataOffset], Data[entry.dataOffset + 1],
@@ -363,7 +382,7 @@ void ParseICOData(const std::vector<char>& Data, std::vector<std::shared_ptr<Ima
   }
 }
 
-std::shared_ptr<Image> ParseBMPData(const std::vector<char>& Data, BITMAPINFOHEADER BitMapInfo, uint32_t Offset) {
+std::shared_ptr<IO::Image> IO::ParseBMPData(const std::vector<uint8_t>& Data, BITMAPINFOHEADER BitMapInfo, uint32_t Offset) {
   uint32_t rowSize = ceil((BitMapInfo.bitsPerPixel * BitMapInfo.width) / 32.f) * 4;
   uint32_t pixelArraySize = rowSize * BitMapInfo.height;
   std::shared_ptr<Image> returnPtr = std::make_shared<Image>();
@@ -407,14 +426,14 @@ std::shared_ptr<Image> ParseBMPData(const std::vector<char>& Data, BITMAPINFOHEA
   return returnPtr;
 }
 
-int16_t s16(int8_t byte0, int8_t byte1) {
+int16_t IO::s16(int8_t byte0, int8_t byte1) {
   int16_t ret;
   ret = byte0;
   ret = (ret << 8) + byte1;
   return ret;
 }
 
-int32_t s32(int8_t byte0, int8_t byte1, int8_t byte2, int8_t byte3) {
+int32_t IO::s32(int8_t byte0, int8_t byte1, int8_t byte2, int8_t byte3) {
   int32_t ret;
   ret = byte0;
   ret = (ret << 8) + byte1;
@@ -423,22 +442,22 @@ int32_t s32(int8_t byte0, int8_t byte1, int8_t byte2, int8_t byte3) {
   return ret;
 }
 
-int16_t s16LE(int8_t byte1, int8_t byte0) {
+int16_t IO::s16LE(int8_t byte1, int8_t byte0) {
   return u16(byte0, byte1);
 }
 
-int32_t s32LE(int8_t byte3, int8_t byte2, int8_t byte1, int8_t byte0) {
+int32_t IO::s32LE(int8_t byte3, int8_t byte2, int8_t byte1, int8_t byte0) {
   return u32(byte0, byte1, byte2, byte3);
 }
 
-uint16_t u16(uint8_t byte0, uint8_t byte1) {
+uint16_t IO::u16(uint8_t byte0, uint8_t byte1) {
   uint16_t ret;
   ret = byte0;
   ret = (ret << 8) + byte1;
   return ret;
 }
 
-uint32_t u32(uint8_t byte0, uint8_t byte1, uint8_t byte2, uint8_t byte3) {
+uint32_t IO::u32(uint8_t byte0, uint8_t byte1, uint8_t byte2, uint8_t byte3) {
   uint32_t ret;
   ret = byte0;
   ret = (ret << 8) + byte1;
@@ -447,15 +466,17 @@ uint32_t u32(uint8_t byte0, uint8_t byte1, uint8_t byte2, uint8_t byte3) {
   return ret;
 }
 
-uint16_t u16LE(uint8_t byte1, uint8_t byte0) {
+uint16_t IO::u16LE(uint8_t byte1, uint8_t byte0) {
   return u16(byte0, byte1);
 }
 
-uint32_t u32LE(uint8_t byte3, uint8_t byte2, uint8_t byte1, uint8_t byte0) {
+uint32_t IO::u32LE(uint8_t byte3, uint8_t byte2, uint8_t byte1, uint8_t byte0) {
   return u32(byte0, byte1, byte2, byte3);
 }
 
-uint32_t RGBA(uint8_t redByte, uint8_t greenByte, uint8_t blueByte, uint8_t alphaByte) {
+uint32_t IO::RGBA(uint8_t redByte, uint8_t greenByte, uint8_t blueByte, uint8_t alphaByte) {
   return u32(redByte, greenByte, blueByte, alphaByte);
 }
+
+} // namespace CustomIDE
 

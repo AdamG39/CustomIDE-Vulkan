@@ -3,6 +3,8 @@
 
 #include "component.hpp"
 
+namespace CustomIDE::UI::ECS {
+
 class Button : public IInteractable {
 public:
   static int TypeValue() { return TypeButton; }
@@ -31,6 +33,8 @@ public:
 
   void OnHover();
 };
+
+} // namespace UI::ECS
 
 #endif
 

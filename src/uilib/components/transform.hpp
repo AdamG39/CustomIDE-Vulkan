@@ -5,44 +5,48 @@
 #include "../../renderer/shapes.hpp"
 #include "../ui.hpp"
 
+namespace CustomIDE::UI::ECS {
+
 class Transform : public IComponent {
 private:
-  Vector2<UISize<float>> m_size;
-  Vector2<UISize<float>> m_position;
-  UIAnchorType m_anchor = UIAnchorType::Center;
+  Vector2<UI::Size<float>> m_size;
+  Vector2<UI::Size<float>> m_position;
+  UI::AnchorType m_anchor = UI::AnchorType::Center;
 
-  Vector2<float> m_pixelSize;
-  Vector2<float> m_pixelPosition;
+  Vector2D m_pixelSize;
+  Vector2D m_pixelPosition;
 
 public:
   static int TypeValue() { return TypeTransform; }
   int GetType() override;
 
   Transform() = default;
-  Transform(Vector2<UISize<float>> Size, Vector2<UISize<float>> Position)
-  : m_size(Size), m_position(Position), m_anchor(UIAnchorType::Center) {}
+  Transform(Vector2<UI::Size<float>> Size, Vector2<UI::Size<float>> Position)
+  : m_size(Size), m_position(Position), m_anchor(UI::AnchorType::Center) {}
 
-  void SetSize(const Vector2<UISize<float>>& Size);
+  void SetSize(const Vector2<UI::Size<float>>& Size);
 
-  Vector2<UISize<float>> GetSize() const;
+  Vector2<UI::Size<float>> GetSize() const;
 
   Vector2<float> RecalculateEntitySize(float ParentWidth, float ParentHeight);
 
   Vector2<float> GetPixelSize() const;
 
-  void SetPosition(const Vector2<UISize<float>>& Position);
+  void SetPosition(const Vector2<UI::Size<float>>& Position);
 
-  Vector2<UISize<float>> GetPosition() const;
+  Vector2<UI::Size<float>> GetPosition() const;
 
   Vector2<float> RecalculateEntityPosition(Vector2<float> ParentSize, 
-    Vector2<float> ParentPosition, const UIAnchorType& Anchor);
+    Vector2<float> ParentPosition, const UI::AnchorType& Anchor);
 
   Vector2<float> GetPixelPosition() const;
 
-  void SetAnchor(const UIAnchorType& AnchorValue);
+  void SetAnchor(const UI::AnchorType& AnchorValue);
 
-  UIAnchorType GetAnchor() const;
+  UI::AnchorType GetAnchor() const;
 };
+
+} // namespace UI::ECS
 
 #endif
 

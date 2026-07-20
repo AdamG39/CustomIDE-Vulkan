@@ -21,6 +21,8 @@
     #define THEME_DARK_COLOUR_0 Colour(0x3B1C32, 1.f)
     #define THEME_DARK_COLOUR_1 Colour(0x1A1A1D, 1.f)
 
+namespace CustomIDE {
+
 template <typename T>
 struct Vector2 {
   T x{};
@@ -28,43 +30,44 @@ struct Vector2 {
 
   Vector2() = default;
 
-  template <typename U1, typename U2,
-            typename = std::enable_if_t<std::is_convertible_v<T, U1> &&
-                                        std::is_convertible_v<T, U2>>>
-  Vector2(U1&& X, U2&& Y)
-  : x(std::forward<U1>(X)), y(std::forward<U2>(Y)) {}
+  Vector2(T X, T Y) : x(X), y(Y) {}
 
-  template<typename U>
-  Vector2(const Vector2<U>& That)
-  : x(static_cast<T>(That.x)), y(static_cast<T>(That.y)) {}
+  Vector2<T>& operator*(const Vector2<T>& Other) {
+    this->x *= Other.x;
+    this->y *= Other.y;
+    return *this;
+  }
+};
 
-  Vector2 operator*(Vector2 Other) {
+using Vector2D = Vector2<float>;
+
+template <typename T>
+struct Vector3 {
+  T x{};
+  T y{};
+  T z{};
+
+  Vector3() = default;
+
+  Vector3(T X, T Y, T Z) : x(X), y(Y), z(Z) {}
+
+  Vector3(const Vector2<T>& that) : x(that.x), y(that.y), z(0) {}
+
+  Vector3<T>& operator*(const Vector2<T>& Other) {
     this->x *= Other.x;
     this->y *= Other.y;
     return *this;
   }
 
-  Vector2(T X, T Y) : x(X), y(Y) {}
+  Vector3<T>& operator*(const Vector3<T>& Other) {
+    this->x *= Other.x;
+    this->y *= Other.y;
+    this->z *= Other.z;
+    return *this;
+  }
 };
 
-typedef Vector2<float> Vector2D;
-
-template <typename T>
-struct Vector3 {
-  T x, y, z;
-
-  Vector3(): x(0), y(0), z(0) {}
-
-  Vector3(const Vector2<T>& that) : x(that.x), y(that.y), z(0) {}
-
-  template<typename U, typename = std::enable_if_t<!std::is_same_v<T, U>>>
-  Vector3(const Vector3<U>& That)
-  : x(static_cast<T>(That.x)), y(static_cast<T>(That.y)), z(static_cast<T>(That.z)) {}
-
-  Vector3(T X, T Y, T Z) : x(X), y(Y), z(Z) {}
-};
-
-typedef Vector3<float> Vector3D;
+using Vector3D = Vector3<float>;
 
 struct Colour {
   float r, g, b, a;
@@ -111,7 +114,7 @@ struct Vertex {
   }
 };
 
-typedef int TextureID;
+using TextureID = int;
 
 struct Rect2D {
   int32_t xOffset, yOffset;
@@ -152,17 +155,23 @@ struct ClipRect {
   }
 };
 
-struct DrawCommand {
-  TextureID texture;
-  Rect2D transformRect;
-  UVRect2D uvRect;
-  Colour colour;
+} // namespace CustomIDE
 
-  ClipRect clipRect;
+namespace Vulkan {
+
+struct DrawCommand {
+  CustomIDE::TextureID texture;
+  CustomIDE::Rect2D transformRect;
+  CustomIDE::UVRect2D uvRect;
+  CustomIDE::Colour colour;
+
+  CustomIDE::ClipRect clipRect;
   int zIndex;
 };
 
-typedef std::vector<DrawCommand> DrawBatch;
+using DrawBatch = std::vector<DrawCommand>;
+
+} // namespace Renderer
 
 #endif
 

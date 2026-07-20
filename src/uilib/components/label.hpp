@@ -3,6 +3,8 @@
 
 #include "component.hpp"
 
+namespace CustomIDE::UI::ECS {
+
 class Label : public IText {
 private:
   const std::string m_content;
@@ -22,6 +24,8 @@ public:
   std::string GetContent() override;
   std::string GetContent() const override;
 };
+
+} // namespace UI::ECS
 
 #endif
 

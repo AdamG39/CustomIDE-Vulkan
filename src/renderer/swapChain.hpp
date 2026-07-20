@@ -6,6 +6,8 @@
 #include <memory>
 #include <vector>
 
+namespace Vulkan {
+
 class SwapChain {
 private:
   GLFWwindow* m_window;
@@ -57,6 +59,8 @@ public:
   std::vector<VkFramebuffer> GetFramebuffers() const { return m_swapChainFramebuffers; }
   uint32_t GetImageCount() const { return m_imageCount; }
 };
+
+} // namespace Vulkan
 
 #endif
 

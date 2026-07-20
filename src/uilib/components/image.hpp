@@ -3,7 +3,9 @@
 
 #include "component.hpp"
 
-class UIImage : public IRenderable {
+namespace CustomIDE::UI::ECS {
+
+class Image : public IRenderable {
 private:
   Colour m_colour;
   UVRect2D m_uvRect = { 0.5f, 0.5f, 1.f, 1.f };
@@ -13,7 +15,7 @@ public:
   static int TypeValue() { return TypeImage; }
   int GetType() override;
 
-  UIImage(const Colour& _Colour = Colour(), int TextureCoords = -1)
+  Image(const Colour& _Colour = Colour(), int TextureCoords = -1)
   : m_colour(_Colour), m_textureIndex(TextureCoords) {}
 
   void Render(EntityManager& Manager, const Transform* Transform) override;
@@ -27,6 +29,8 @@ public:
   void SetTextureIndex(int TextureIndex);
   int GetTextureIndex() const;
 };
+
+} // namespace UI::ECS
 
 #endif
 

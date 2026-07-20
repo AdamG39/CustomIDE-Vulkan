@@ -4,6 +4,8 @@
 #include "../renderer/shapes.hpp"
 #include "../uilib/ecs.hpp"
 
+namespace CustomIDE::EventSystem {
+
 enum EventType : int {
   Mouse       = (1u << 0),
   Window      = (1u << 1),
@@ -43,7 +45,7 @@ struct CharacterEventInfo {
 
 struct EventInfo {
   // Application manager pointers
-  std::shared_ptr<EntityManager> Manager;
+  std::shared_ptr<UI::ECS::EntityManager> Manager;
   GLFWwindow* Window;
   
   union {
@@ -58,6 +60,8 @@ struct Event {
   EventType Type;
   EventInfo Info;
 };
+
+} // namespace EventSystem
 
 #endif
 

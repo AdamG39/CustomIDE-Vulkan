@@ -18,6 +18,8 @@
 
 #include "ui.hpp"
 
+namespace CustomIDE::UI::ECS {
+
 class Entity {
 private:
   std::vector<std::shared_ptr<IComponent>> m_components;
@@ -31,7 +33,7 @@ private:
 
 
 public:
-  Entity(Vector2<UISize<float>> Size = {}, Vector2<UISize<float>> Position = {}, Entity* Parent = nullptr)
+  Entity(Vector2<UI::Size<float>> Size = {}, Vector2<UI::Size<float>> Position = {}, Entity* Parent = nullptr)
   : m_parent(Parent) {
     // By default every object will have a transform component
     // This can be manually removed if preferred
@@ -168,6 +170,8 @@ public:
   void RenderEntityAndChildren(EntityManager& Manager, Transform* Transform,
       IRenderable* Renderable, Vector2<float> DrawArea, Vector2<float> DrawAreaOffset);
 };
+
+} // namespace UI::ECS
 
 #endif
 

@@ -2,9 +2,11 @@
 #include "transform.hpp"
 #include "../ecs.hpp"
 
-int UIImage::GetType() { return TypeValue(); }
+namespace CustomIDE {
 
-void UIImage::Render(EntityManager& Manager, const Transform* Transform) {
+int UI::ECS::Image::GetType() { return TypeValue(); }
+
+void UI::ECS::Image::Render(EntityManager& Manager, const Transform* Transform) {
   auto pos = Transform->GetPixelPosition();
   auto size = Transform->GetPixelSize();
 
@@ -18,27 +20,29 @@ void UIImage::Render(EntityManager& Manager, const Transform* Transform) {
       m_uvRect, m_drawDepth, m_textureIndex, clipRect, m_colour);
 }
 
-void UIImage::SetColour(const Colour& Colour) {
+void UI::ECS::Image::SetColour(const Colour& Colour) {
   m_colour = Colour;
 }
 
-Colour UIImage::GetColour() const {
+Colour UI::ECS::Image::GetColour() const {
   return m_colour;
 }
 
-void UIImage::SetUVRect(UVRect2D UVRect) {
+void UI::ECS::Image::SetUVRect(UVRect2D UVRect) {
   m_uvRect = UVRect;
 }
 
-const UVRect2D& UIImage::GetUVRect() const {
+const UVRect2D& UI::ECS::Image::GetUVRect() const {
   return m_uvRect;
 }
 
-void UIImage::SetTextureIndex(int TextureIndex) {
+void UI::ECS::Image::SetTextureIndex(int TextureIndex) {
   m_textureIndex = TextureIndex;
 }
 
-int UIImage::GetTextureIndex() const {
+int UI::ECS::Image::GetTextureIndex() const {
   return m_textureIndex;
 }
+
+} // namespace CustomIDE
 

@@ -1,10 +1,14 @@
 #include "mask.hpp"
 
-int Mask::GetType() { return TypeValue(); }
+namespace CustomIDE {
 
-Mask::Mask(ClipRect Rect) : m_clipRect(Rect) {}
+int UI::ECS::Mask::GetType() { return TypeValue(); }
 
-ClipRect Mask::GetClipArea() {
+UI::ECS::Mask::Mask(ClipRect Rect) : m_clipRect(Rect) {}
+
+ClipRect UI::ECS::Mask::GetClipArea() {
   return m_clipRect;
 }
+
+} // namespace CustomIDE
 

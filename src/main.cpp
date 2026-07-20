@@ -1,9 +1,9 @@
 #include "app.hpp"
 
-CustomIDEApplication* CustomIDEApplication::s_instance = nullptr;
+CustomIDE::Application* CustomIDE::Application::s_instance = nullptr;
 
 int main() {
-  CustomIDEApplication* app = CustomIDEApplication::GetInstance();
+  CustomIDE::Application* app = CustomIDE::Application::GetInstance();
   app->InitApplication();
   app->RunApplication();
   app->EndApplication();

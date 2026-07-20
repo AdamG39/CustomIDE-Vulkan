@@ -3,9 +3,11 @@
 #include "../ecs.hpp"
 #include "../../helpers/errors/errors.hpp"
 
-int Label::GetType() { return TypeValue(); }
+namespace CustomIDE {
 
-void Label::Render(EntityManager& Manager, const Transform* Transform) {
+int UI::ECS::Label::GetType() { return TypeValue(); }
+
+void UI::ECS::Label::Render(EntityManager& Manager, const Transform* Transform) {
   // calculate size of each character based on font
   Font font = GetFont();
   Vector2 textObjPos = Transform->GetPixelPosition();
@@ -34,7 +36,7 @@ void Label::Render(EntityManager& Manager, const Transform* Transform) {
       continue;
     }
 
-    Vector2<float> charPosition {
+    Vector2D charPosition {
       textObjPos.x + (font.size.x * linePosition),
       textObjPos.y + (lineCount * font.size.y)
     };
@@ -50,7 +52,7 @@ void Label::Render(EntityManager& Manager, const Transform* Transform) {
 
     Colour textColour = font.colour;
     auto imageIndex = Manager.GetRenderer().lock()->GetImageIndexFromName(font.familyName);
-    if (imageIndex < 0) ExitWithError("No image with that name found", -35);
+    if (imageIndex < 0) Errors::ExitWithError("No image with that name found", -35);
 
     ClipRect clipRect {.clippingEnabled = false};
     if (!Manager.GetClipStack().empty())
@@ -64,7 +66,13 @@ void Label::Render(EntityManager& Manager, const Transform* Transform) {
   }
 }
 
-std::string Label::GetContent() { return m_content; }
+std::string UI::ECS::Label::GetContent() {
+  return m_content;
+}
 
-std::string Label::GetContent() const { return m_content; }
+std::string UI::ECS::Label::GetContent() const {
+  return m_content;
+}
+
+} // namespace CustomIDE
 

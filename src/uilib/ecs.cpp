@@ -1,18 +1,20 @@
 #include "ecs.hpp"
 
-EntityManager::EntityManager(std::weak_ptr<VulkanRenderer> Renderer) {
+namespace CustomIDE {
+
+UI::ECS::EntityManager::EntityManager(std::weak_ptr<Vulkan::Renderer> Renderer) {
   m_renderer = Renderer;
 }
 
-std::weak_ptr<VulkanRenderer> EntityManager::GetRenderer() {
+std::weak_ptr<Vulkan::Renderer> UI::ECS::EntityManager::GetRenderer() {
   return m_renderer;
 }
 
-std::vector<std::shared_ptr<Entity>>& EntityManager::GetEntityTree() {
+std::vector<std::shared_ptr<UI::ECS::Entity>>& UI::ECS::EntityManager::GetEntityTree() {
   return m_entityTree;
 }
 
-const std::list<std::shared_ptr<Entity>> EntityManager::GetAllEntities() const {
+const std::list<std::shared_ptr<UI::ECS::Entity>> UI::ECS::EntityManager::GetAllEntities() const {
   std::list<std::shared_ptr<Entity>> result;
 
   for (auto& entity : m_entityTree) {
@@ -31,25 +33,25 @@ const std::list<std::shared_ptr<Entity>> EntityManager::GetAllEntities() const {
   return result;
 }
 
-std::stack<ClipRect>& EntityManager::GetClipStack() {
+std::stack<ClipRect>& UI::ECS::EntityManager::GetClipStack() {
   return m_clipStack;
 }
 
-Entity& EntityManager::AddEntity() {
+UI::ECS::Entity& UI::ECS::EntityManager::AddEntity() {
   return *m_entityTree.emplace_back(std::make_shared<Entity>());
 }
 
-Entity& EntityManager::AddEntity(const Vector2<UISize<float>>& Size, const Vector2<UISize<float>>& Position) {
+UI::ECS::Entity& UI::ECS::EntityManager::AddEntity(const Vector2<UI::Size<float>>& Size, const Vector2<UI::Size<float>>& Position) {
   m_entityTree.emplace_back(std::make_shared<Entity>(Size, Position));
 
   return *m_entityTree.back();
 }
 
-void EntityManager::RemoveEntity(const size_t Index) {
+void UI::ECS::EntityManager::RemoveEntity(const size_t Index) {
   m_entityTree.erase(m_entityTree.begin() + Index);
 }
 
-void EntityManager::RenderTree(float framebufferWidth, float framebufferHeight) {
+void UI::ECS::EntityManager::RenderTree(float framebufferWidth, float framebufferHeight) {
   for (auto entity : m_entityTree) {
     Transform* transform = entity->GetComponent<Transform>();
     IRenderable* renderableComponent = entity->GetRenderableComponent();
@@ -64,4 +66,6 @@ void EntityManager::RenderTree(float framebufferWidth, float framebufferHeight) 
       m_clipStack.pop();
   }
 }
+
+} // namespace CustomIDE
 

@@ -6,6 +6,7 @@
 #include <vector>
 #include "../renderer/shapes.hpp"
 
+namespace CustomIDE::UI {
 
 enum TextType {
   Normal,
@@ -101,6 +102,8 @@ public:
 };
 
 UVRect2D CalculateCharUV(Vector2<float> FontAtlasSize, char Character);
+
+} // namespace UI
 
 #endif
 

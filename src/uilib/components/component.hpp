@@ -7,6 +7,8 @@
 #include <stdexcept>
 #include "../text.hpp"
 
+namespace CustomIDE::UI::ECS {
+
 enum ComponentTypes{
   TypeTransform,
   TypeImage,
@@ -95,6 +97,8 @@ public:
   virtual std::string GetContent() = 0;
   virtual std::string GetContent() const = 0;
 };
+
+} // namespace UI::ECS
 
 #endif
 

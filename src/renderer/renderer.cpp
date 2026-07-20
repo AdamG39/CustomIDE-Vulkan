@@ -9,18 +9,18 @@
 
 #define APP_VERSION VK_MAKE_VERSION(0, 1, 0)
 
-void VulkanRenderer::Start() {
+void Vulkan::Renderer::Start() {
   InitGLFW();
   InitVulkan();
 }
 
 // Initialise GLFW or exit with an error if failed
-void VulkanRenderer::InitGLFW(){
-  if (!glfwInit()) ExitWithError("GLFW Failed to Initialise", -1);
+void Vulkan::Renderer::InitGLFW(){
+  if (!glfwInit()) CustomIDE::Errors::ExitWithError("GLFW Failed to Initialise", -1);
   CreateWindow();
 }
 
-void VulkanRenderer::CreateWindow() {
+void Vulkan::Renderer::CreateWindow() {
   glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
   glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
   glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
@@ -28,17 +28,17 @@ void VulkanRenderer::CreateWindow() {
 
   m_window = glfwCreateWindow(WIDTH, HEIGHT, m_appName.c_str(), nullptr, nullptr);
 
-  glfwSetWindowCloseCallback(m_window, CloseWindowCallback);
-  glfwSetMouseButtonCallback(m_window, MouseButtonCallback);
-  glfwSetFramebufferSizeCallback(m_window, FramebufferResizeCallback);
-  glfwSetCursorPosCallback(m_window, CursorPositionCallback);
-  glfwSetKeyCallback(m_window, KeyCallback);
-  glfwSetCharCallback(m_window, CharacterCallback);
+  glfwSetWindowCloseCallback(m_window, CustomIDE::CloseWindowCallback);
+  glfwSetMouseButtonCallback(m_window, CustomIDE::MouseButtonCallback);
+  glfwSetFramebufferSizeCallback(m_window, CustomIDE::FramebufferResizeCallback);
+  glfwSetCursorPosCallback(m_window, CustomIDE::CursorPositionCallback);
+  glfwSetKeyCallback(m_window, CustomIDE::KeyCallback);
+  glfwSetCharCallback(m_window, CustomIDE::CharacterCallback);
 
-  if (!m_window) ExitWithError("Failed to create window!", -1);
+  if (!m_window) CustomIDE::Errors::ExitWithError("Failed to create window!", -1);
 }
 
-void VulkanRenderer::InitVulkan() {
+void Vulkan::Renderer::InitVulkan() {
   CreateInstance();
   CreateSurface();
   PickPhysicalDevice();
@@ -50,9 +50,9 @@ void VulkanRenderer::InitVulkan() {
   CreateSyncObjects();
 }
 
-void VulkanRenderer::CreateInstance() {
+void Vulkan::Renderer::CreateInstance() {
   if (m_enableValidationLayers && !CheckValidationLayerSupport(m_validationLayers.data(), m_validationLayers.size())) {
-    ExitWithError("Validation layers requested, but not available!", -1);
+    CustomIDE::Errors::ExitWithError("Validation layers requested, but not available!", -1);
   }
 
   VkApplicationInfo appInfo{
@@ -82,24 +82,24 @@ void VulkanRenderer::CreateInstance() {
   createInfo.ppEnabledExtensionNames = glfwExtenstions;
 
   if (vkCreateInstance(&createInfo, nullptr, &m_instance) != VK_SUCCESS) {
-    ExitWithError("Failed to create Vulkan instance", -1);
+    CustomIDE::Errors::ExitWithError("Failed to create Vulkan instance", -1);
   }
 }
 
-void VulkanRenderer::CreateSurface() {
+void Vulkan::Renderer::CreateSurface() {
   if (glfwCreateWindowSurface(m_instance, m_window, nullptr, &m_surface) != VK_SUCCESS) {
-    ExitWithError("Failed to create window surface!", -1);
+    CustomIDE::Errors::ExitWithError("Failed to create window surface!", -1);
   }
 }
 
-void VulkanRenderer::PickPhysicalDevice() {
+void Vulkan::Renderer::PickPhysicalDevice() {
   // Get the number of physical devices installed saved to deviceCount
   uint32_t deviceCount = 0;
   vkEnumeratePhysicalDevices(m_instance, &deviceCount, nullptr);
 
   // If no GPU's are found that support Vulkan throw error
   if (deviceCount == 0) {
-      ExitWithError("Failed to find GPUs with Vulkan support!", -1);
+      CustomIDE::Errors::ExitWithError("Failed to find GPUs with Vulkan support!", -1);
   }
 
   // Load a pointer to each physical device into devices
@@ -116,11 +116,11 @@ void VulkanRenderer::PickPhysicalDevice() {
 
   // Throw error if no suitable GPU is found
   if (m_physicalDevice == VK_NULL_HANDLE) {
-    ExitWithError("Failed to find a suitable GPU!", -1);
+    CustomIDE::Errors::ExitWithError("Failed to find a suitable GPU!", -1);
   }
 }
 
-void VulkanRenderer::CreateLogicalDevice() {
+void Vulkan::Renderer::CreateLogicalDevice() {
   QueueFamilyIndicies indicies = FindQueueFamilies(m_physicalDevice, m_surface);
 
   std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
@@ -177,14 +177,14 @@ void VulkanRenderer::CreateLogicalDevice() {
   }
 
   if (vkCreateDevice(m_physicalDevice, &createInfo, nullptr, &m_device) != VK_SUCCESS) {
-    ExitWithError("Failed to create logical device!", -1);
+    CustomIDE::Errors::ExitWithError("Failed to create logical device!", -1);
   }
 
   vkGetDeviceQueue(m_device, indicies.graphicsFamily.value(), 0, &m_graphicsQueue);
   vkGetDeviceQueue(m_device, indicies.presentFamily.value(), 0, &m_presentQueue);
 }
 
-void VulkanRenderer::InitSwapChain() {
+void Vulkan::Renderer::InitSwapChain() {
   m_swapchain = new SwapChain(m_window, m_device, m_physicalDevice, m_surface);
 
   m_swapchain->CreateSwapChain();
@@ -197,11 +197,11 @@ void VulkanRenderer::InitSwapChain() {
   m_maxFramesInFlight = m_swapchain->GetImageCount();
 }
 
-void VulkanRenderer::RecreateSwapChain() {
+void Vulkan::Renderer::RecreateSwapChain() {
   m_swapchain->RecreateSwapChain(m_renderPass);
 }
 
-void VulkanRenderer::CreateDescriptorSets(const TextureBufferMap& Textures, int NumImages) {
+void Vulkan::Renderer::CreateDescriptorSets(const TextureBufferMap& Textures, int NumImages) {
   CreateDescriptorPool(NumImages);
 
   CreateDescriptorSetLayout(NumImages);
@@ -211,7 +211,7 @@ void VulkanRenderer::CreateDescriptorSets(const TextureBufferMap& Textures, int 
   UpdateDescriptorSets(Textures, NumImages);
 }
 
-void VulkanRenderer::CreateDescriptorPool(int NumImages) {
+void Vulkan::Renderer::CreateDescriptorPool(int NumImages) {
   std::vector<VkDescriptorPoolSize> poolSizes;
 
   VkDescriptorPoolSize imagesPoolSize{
@@ -237,10 +237,10 @@ void VulkanRenderer::CreateDescriptorPool(int NumImages) {
   };
 
   if (vkCreateDescriptorPool(m_device, &poolInfo, nullptr, &m_descriptorPool) != VK_SUCCESS)
-    ExitWithError("Failed to create descriptor pool", 1);
+    CustomIDE::Errors::ExitWithError("Failed to create descriptor pool", 1);
 }
 
-void VulkanRenderer::CreateDescriptorSetLayout(int NumImages) {
+void Vulkan::Renderer::CreateDescriptorSetLayout(int NumImages) {
 	std::vector<VkDescriptorSetLayoutBinding> LayoutBindings;
 
 	VkDescriptorSetLayoutBinding samplerLayoutBinding {
@@ -270,10 +270,10 @@ void VulkanRenderer::CreateDescriptorSetLayout(int NumImages) {
 	};
 
 	if (vkCreateDescriptorSetLayout(m_device, &LayoutInfo, NULL, &m_descriptorSetLayout) != VK_SUCCESS)
-    ExitWithError("Failed to create descriptor set", 1);
+    CustomIDE::Errors::ExitWithError("Failed to create descriptor set", 1);
 }
 
-void VulkanRenderer::AllocateDescriptorSets(int NumImages) {
+void Vulkan::Renderer::AllocateDescriptorSets(int NumImages) {
   VkDescriptorSetAllocateInfo allocateInfo = {
     .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
     .pNext = nullptr,
@@ -285,10 +285,10 @@ void VulkanRenderer::AllocateDescriptorSets(int NumImages) {
   m_descriptorSets.resize(1);
 
   if (vkAllocateDescriptorSets(m_device, &allocateInfo, m_descriptorSets.data()) != VK_SUCCESS)
-    ExitWithError("Failed to allocate for descriptor sets", 1);
+    CustomIDE::Errors::ExitWithError("Failed to allocate for descriptor sets", 1);
 }
 
-void VulkanRenderer::UpdateDescriptorSets(const TextureBufferMap& Textures, int NumImages) {
+void Vulkan::Renderer::UpdateDescriptorSets(const TextureBufferMap& Textures, int NumImages) {
   VkDescriptorImageInfo imageInfos[MAX_TEXTURES];
 
   VkFilter minFilter = VK_FILTER_LINEAR;
@@ -336,22 +336,22 @@ void VulkanRenderer::UpdateDescriptorSets(const TextureBufferMap& Textures, int 
   vkUpdateDescriptorSets(m_device, 2, setWrites, 0, nullptr);
 }
 
-void VulkanRenderer::LoadImage(const std::string& Filepath, bool UpdateDescriptors) {
+void Vulkan::Renderer::LoadImage(const std::string& Filepath, bool UpdateDescriptors) {
   std::string fileName = GetFileNameFromPath(Filepath);
-  m_textures[fileName] = VulkanTexture();
+  m_textures[fileName] = {};
   CreateTexture(Filepath.c_str(), m_textures[fileName], m_device, m_physicalDevice,
       m_commandBuffers.data(), m_currentFrame, m_graphicsQueue);
 
   if (UpdateDescriptors) UpdateDescriptorSets(m_textures, m_textures.Capacity());
 }
 
-void VulkanRenderer::LoadImages(const std::vector<std::string>& Filepaths) {
+void Vulkan::Renderer::LoadImages(const std::vector<std::string>& Filepaths) {
   for (std::string filepath : Filepaths) {
     LoadImage(filepath, false);
   }
 }
 
-void VulkanRenderer::CreateGraphicsPipeline() {
+void Vulkan::Renderer::CreateGraphicsPipeline() {
   std::vector<std::string> filePaths = {
     "../assets/textures/pngTest.png",
     "../assets/textures/test.bmp",
@@ -363,11 +363,11 @@ void VulkanRenderer::CreateGraphicsPipeline() {
 
   CreateDescriptorSets(m_textures, MAX_TEXTURES);
 
-  auto vertShaderCode = ReadBinaryFile("../shaders/vert.spv");
-  auto fragShaderCode = ReadBinaryFile("../shaders/frag.spv");
+  auto vertShaderCode = CustomIDE::IO::ReadBinaryFile("../shaders/vert.spv");
+  auto fragShaderCode = CustomIDE::IO::ReadBinaryFile("../shaders/frag.spv");
 
-  VkShaderModule vertShaderModule = CreateShaderModule(vertShaderCode.data(), vertShaderCode.size(), m_device);
-  VkShaderModule fragShaderModule = CreateShaderModule(fragShaderCode.data(), fragShaderCode.size(), m_device);
+  VkShaderModule vertShaderModule = CreateShaderModule(reinterpret_cast<char*>(vertShaderCode.data()), vertShaderCode.size(), m_device);
+  VkShaderModule fragShaderModule = CreateShaderModule(reinterpret_cast<char*>(fragShaderCode.data()), fragShaderCode.size(), m_device);
 
   VkPipelineShaderStageCreateInfo shaderStages[2] = {
     {
@@ -384,7 +384,7 @@ void VulkanRenderer::CreateGraphicsPipeline() {
     }
   };
 
-  using VertexF = Vertex<float>;
+  using VertexF = CustomIDE::Vertex<float>;
 
   VkVertexInputBindingDescription bindingDescription{};
   bindingDescription.binding = 0;
@@ -493,7 +493,7 @@ void VulkanRenderer::CreateGraphicsPipeline() {
   pipelineLayoutInfo.pPushConstantRanges = pushConstantRanges;
 
   if (vkCreatePipelineLayout(m_device, &pipelineLayoutInfo, nullptr, &m_pipelineLayout) != VK_SUCCESS) {
-    ExitWithError("Failed to create pipeline layout!", -1);
+    CustomIDE::Errors::ExitWithError("Failed to create pipeline layout!", -1);
   }
 
   VkGraphicsPipelineCreateInfo pipelineInfo{};
@@ -515,14 +515,14 @@ void VulkanRenderer::CreateGraphicsPipeline() {
   pipelineInfo.basePipelineIndex = -1;
 
   if (vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_graphicsPipeline) != VK_SUCCESS) {
-    ExitWithError("Failed to create graphics pipeline!", -1);
+    CustomIDE::Errors::ExitWithError("Failed to create graphics pipeline!", -1);
   }
 
   vkDestroyShaderModule(m_device, vertShaderModule, nullptr);
   vkDestroyShaderModule(m_device, fragShaderModule, nullptr);
 }
 
-void VulkanRenderer::CreateCommandPool() {
+void Vulkan::Renderer::CreateCommandPool() {
   QueueFamilyIndicies queueFamilyIndicies = FindQueueFamilies(m_physicalDevice, m_surface);
 
   VkCommandPoolCreateInfo poolInfo{};
@@ -531,11 +531,11 @@ void VulkanRenderer::CreateCommandPool() {
   poolInfo.queueFamilyIndex = queueFamilyIndicies.graphicsFamily.value();
 
   if (vkCreateCommandPool(m_device, &poolInfo, nullptr, &m_commandPool) != VK_SUCCESS) {
-    ExitWithError("Failed to create command pool!", -1);
+    CustomIDE::Errors::ExitWithError("Failed to create command pool!", -1);
   }
 }
 
-void VulkanRenderer::CreateCommandBuffers() {
+void Vulkan::Renderer::CreateCommandBuffers() {
   m_commandBuffers.resize(m_maxFramesInFlight);
 
   VkCommandBufferAllocateInfo allocInfo = {
@@ -546,11 +546,11 @@ void VulkanRenderer::CreateCommandBuffers() {
   };
 
   if (vkAllocateCommandBuffers(m_device, &allocInfo, m_commandBuffers.data()) != VK_SUCCESS) {
-    ExitWithError("Failed to allocate command buffers!", -1);
+    CustomIDE::Errors::ExitWithError("Failed to allocate command buffers!", -1);
   }
 }
 
-uint32_t VulkanRenderer::FindMemoryType(uint32_t TypeFilter, VkMemoryPropertyFlags Properties) {
+uint32_t Vulkan::Renderer::FindMemoryType(uint32_t TypeFilter, VkMemoryPropertyFlags Properties) {
   VkPhysicalDeviceMemoryProperties memProperties;
   vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &memProperties);
 
@@ -561,13 +561,13 @@ uint32_t VulkanRenderer::FindMemoryType(uint32_t TypeFilter, VkMemoryPropertyFla
     }
   }
 
-  ExitWithError("Failed to find suitable memory type", -1);
+  CustomIDE::Errors::ExitWithError("Failed to find suitable memory type", -1);
   return -1; // This point will never get reached
 }
 
-void VulkanRenderer::CreateVertexBuffer() {
+void Vulkan::Renderer::CreateVertexBuffer() {
   if (m_vertexArray.empty()) {
-    ExitWithError("No vertices in vertex array!", -1);
+    CustomIDE::Errors::ExitWithError("No vertices in vertex array!", -1);
   }
 
   // Increase the total size by double to reduce calls
@@ -578,7 +578,7 @@ void VulkanRenderer::CreateVertexBuffer() {
     vkFreeMemory(m_device, m_vertexBufferMemory, nullptr);
   }
 
-  VkDeviceSize bufferSize = requiredVertexCount * sizeof(Vertex<float>);
+  VkDeviceSize bufferSize = requiredVertexCount * sizeof(CustomIDE::Vertex<float>);
 
   VkBufferCreateInfo bufferInfo{};
   bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -587,7 +587,7 @@ void VulkanRenderer::CreateVertexBuffer() {
   bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
   if (vkCreateBuffer(m_device, &bufferInfo, nullptr, &m_vertexBuffer) != VK_SUCCESS) {
-    ExitWithError("Failed to create vertex buffer", -1);
+    CustomIDE::Errors::ExitWithError("Failed to create vertex buffer", -1);
   }
 
   VkMemoryRequirements memRequirements;
@@ -602,7 +602,7 @@ void VulkanRenderer::CreateVertexBuffer() {
   );
 
   if (vkAllocateMemory(m_device, &allocInfo, nullptr, &m_vertexBufferMemory) != VK_SUCCESS) {
-    ExitWithError("Failed to allocated vertex buffer memory", -1);
+    CustomIDE::Errors::ExitWithError("Failed to allocated vertex buffer memory", -1);
   }
 
   vkBindBufferMemory(m_device, m_vertexBuffer, m_vertexBufferMemory, 0);
@@ -610,8 +610,8 @@ void VulkanRenderer::CreateVertexBuffer() {
   m_vertexBufferCapacity = requiredVertexCount;
 }
 
-void VulkanRenderer::UploadVertexData() {
-  VkDeviceSize bufferSize = m_vertexArray.size() * sizeof(Vertex<float>);
+void Vulkan::Renderer::UploadVertexData() {
+  VkDeviceSize bufferSize = m_vertexArray.size() * sizeof(CustomIDE::Vertex<float>);
 
   void* data;
   vkMapMemory(m_device, m_vertexBufferMemory, 0, bufferSize, 0, &data);
@@ -619,7 +619,7 @@ void VulkanRenderer::UploadVertexData() {
   vkUnmapMemory(m_device, m_vertexBufferMemory);
 }
 
-void VulkanRenderer::RecordCommandBuffer(VkCommandBuffer commandBuffer,
+void Vulkan::Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer,
                                          const std::vector<DrawBatch>& batches) {
   VkExtent2D extent = m_swapchain->GetExtent();
 
@@ -677,14 +677,14 @@ void VulkanRenderer::RecordCommandBuffer(VkCommandBuffer commandBuffer,
   }
 }
 
-void VulkanRenderer::StartRenderPass(VkCommandBuffer& commandBuffer, uint32_t imageIndex) {
+void Vulkan::Renderer::StartRenderPass(VkCommandBuffer& commandBuffer, uint32_t imageIndex) {
   VkCommandBufferBeginInfo beginInfo{};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   beginInfo.flags = 0;
   beginInfo.pInheritanceInfo = nullptr;
 
   if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
-    ExitWithError("Failed to begin recording command buffer!", -1);
+    CustomIDE::Errors::ExitWithError("Failed to begin recording command buffer!", -1);
   }
 
   VkExtent2D extent = m_swapchain->GetExtent();
@@ -701,15 +701,15 @@ void VulkanRenderer::StartRenderPass(VkCommandBuffer& commandBuffer, uint32_t im
   vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
-void VulkanRenderer::EndRenderPass(VkCommandBuffer& commandBuffer) {
+void Vulkan::Renderer::EndRenderPass(VkCommandBuffer& commandBuffer) {
   vkCmdEndRenderPass(commandBuffer);
 
   if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-    ExitWithError("Failed to record command buffer!", -1);
+    CustomIDE::Errors::ExitWithError("Failed to record command buffer!", -1);
   }
 }
 
-void VulkanRenderer::CreateSyncObjects() {
+void Vulkan::Renderer::CreateSyncObjects() {
   m_imageAvailableSemaphores.resize(m_maxFramesInFlight);
   m_renderFinishedSemaphores.resize(m_maxFramesInFlight);
   m_inFlightFences.resize(m_maxFramesInFlight);
@@ -725,14 +725,14 @@ void VulkanRenderer::CreateSyncObjects() {
     if (vkCreateSemaphore(m_device, &semaphoreInfo, nullptr, &m_imageAvailableSemaphores[i]) != VK_SUCCESS ||
         vkCreateSemaphore(m_device, &semaphoreInfo, nullptr, &m_renderFinishedSemaphores[i]) != VK_SUCCESS ||
         vkCreateFence(m_device, &fenceInfo, nullptr, &m_inFlightFences[i]) != VK_SUCCESS) {
-      ExitWithError("Failed to create semaphores!", -1);
+      CustomIDE::Errors::ExitWithError("Failed to create semaphores!", -1);
     }
   }
 }
 
 #include <stdio.h>
 
-void VulkanRenderer::DrawFrame() {
+void Vulkan::Renderer::DrawFrame() {
   vkWaitForFences(m_device, 1, &m_inFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
   vkResetFences(m_device, 1, &m_inFlightFences[m_currentFrame]);
 
@@ -782,7 +782,7 @@ void VulkanRenderer::DrawFrame() {
   submitInfo.pSignalSemaphores = signalSemaphores;
 
   if (vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, m_inFlightFences[m_currentFrame]) != VK_SUCCESS) {
-    ExitWithError("Failed to submit draw command buffer!", -1);
+    CustomIDE::Errors::ExitWithError("Failed to submit draw command buffer!", -1);
   }
 
   VkPresentInfoKHR presentInfo{};
@@ -810,28 +810,28 @@ void VulkanRenderer::DrawFrame() {
   m_currentFrame = (m_currentFrame + 1) % m_maxFramesInFlight;
 }
 
-void VulkanRenderer::DrawRect(
-    Rect2D Rect,
+void Vulkan::Renderer::DrawRect(
+    CustomIDE::Rect2D Rect,
     int ZIndex,
-    Colour Colour
+    CustomIDE::Colour Colour
   ) {
   DrawCommand cmd {
     .texture = -1,
     .transformRect = Rect,
-    .uvRect = UVRect2D{},
+    .uvRect = CustomIDE::UVRect2D{},
     .colour = Colour,
-    .clipRect = ClipRect{.clippingEnabled = false},
+    .clipRect = CustomIDE::ClipRect{.clippingEnabled = false},
     .zIndex = ZIndex
   };
 
   m_commands.push_back(cmd);
 }
 
-void VulkanRenderer::DrawRectEx(
-    Rect2D Rect,
+void Vulkan::Renderer::DrawRectEx(
+    CustomIDE::Rect2D Rect,
     int ZIndex,
-    ClipRect ClipArea,
-    Colour Colour
+    CustomIDE::ClipRect ClipArea,
+    CustomIDE::Colour Colour
   ) {
   // If rect not within the clip area dont need to do any rendering
   if (ClipArea.clippingEnabled)
@@ -844,7 +844,7 @@ void VulkanRenderer::DrawRectEx(
   DrawCommand cmd {
     .texture = -1,
     .transformRect = Rect,
-    .uvRect = UVRect2D{},
+    .uvRect = CustomIDE::UVRect2D{},
     .colour = Colour,
     .clipRect = ClipArea,
     .zIndex = ZIndex
@@ -853,31 +853,31 @@ void VulkanRenderer::DrawRectEx(
   m_commands.push_back(cmd);
 }
 
-void VulkanRenderer::DrawTexturedRect(
-    Rect2D Rect,
-    UVRect2D UVRect,
+void Vulkan::Renderer::DrawTexturedRect(
+    CustomIDE::Rect2D Rect,
+    CustomIDE::UVRect2D UVRect,
     int ZIndex,
-    TextureID TextureIndex
+    CustomIDE::TextureID TextureIndex
   ) {
   DrawCommand cmd {
     .texture = TextureIndex,
     .transformRect = Rect,
     .uvRect = UVRect,
-    .colour = COLOUR_WHITE,
-    .clipRect = ClipRect{.clippingEnabled = false},
+    .colour = CustomIDE::COLOUR_WHITE,
+    .clipRect = CustomIDE::ClipRect{.clippingEnabled = false},
     .zIndex = ZIndex
   };
 
   m_commands.push_back(cmd);
 }
 
-void VulkanRenderer::DrawTexturedRectEx(
-    Rect2D Rect,
-    UVRect2D UVRect,
+void Vulkan::Renderer::DrawTexturedRectEx(
+    CustomIDE::Rect2D Rect,
+    CustomIDE::UVRect2D UVRect,
     int ZIndex,
-    TextureID TextureIndex,
-    ClipRect ClipArea,
-    Colour Colour
+    CustomIDE::TextureID TextureIndex,
+    CustomIDE::ClipRect ClipArea,
+    CustomIDE::Colour Colour
   ) {
   // If rect not within the clip area dont need to do any rendering
   if (ClipArea.clippingEnabled)
@@ -899,7 +899,7 @@ void VulkanRenderer::DrawTexturedRectEx(
   m_commands.push_back(cmd);
 }
 
-void VulkanRenderer::BatchDrawCommands() {
+void Vulkan::Renderer::BatchDrawCommands() {
   // Order draw commands based on zIndex
   m_commands.sort([](DrawCommand A, DrawCommand B) {
     return A.zIndex < B.zIndex;
@@ -926,30 +926,30 @@ void VulkanRenderer::BatchDrawCommands() {
   }
 }
 
-void VulkanRenderer::FillVertexArray() {
+void Vulkan::Renderer::FillVertexArray() {
   for (auto batch : m_drawBatches) {
     for (auto cmd : batch) {
-      Vector2D topLeft { cmd.transformRect.xOffset - (cmd.transformRect.width / 2.f),
+      CustomIDE::Vector2D topLeft { cmd.transformRect.xOffset - (cmd.transformRect.width / 2.f),
                          cmd.transformRect.yOffset + (cmd.transformRect.height / 2.f) };
-      Vector2D topRight { cmd.transformRect.xOffset + (cmd.transformRect.width / 2.f),
+      CustomIDE::Vector2D topRight { cmd.transformRect.xOffset + (cmd.transformRect.width / 2.f),
                           cmd.transformRect.yOffset + (cmd.transformRect.height / 2.f) };
-      Vector2D bottomLeft { cmd.transformRect.xOffset - (cmd.transformRect.width / 2.f),
+      CustomIDE::Vector2D bottomLeft { cmd.transformRect.xOffset - (cmd.transformRect.width / 2.f),
                             cmd.transformRect.yOffset - (cmd.transformRect.height / 2.f) };
-      Vector2D bottomRight { cmd.transformRect.xOffset + (cmd.transformRect.width / 2.f),
+      CustomIDE::Vector2D bottomRight { cmd.transformRect.xOffset + (cmd.transformRect.width / 2.f),
                              cmd.transformRect.yOffset - (cmd.transformRect.height / 2.f) };
-      Vertex<float> V0 = Vertex<float>(topLeft, cmd.colour);
-      Vertex<float> V1 = Vertex<float>(topRight, cmd.colour);
-      Vertex<float> V2 = Vertex<float>(bottomLeft, cmd.colour);
-      Vertex<float> V3 = Vertex<float>(bottomRight, cmd.colour);
+      CustomIDE::Vertex<float> V0 = CustomIDE::Vertex<float>(topLeft, cmd.colour);
+      CustomIDE::Vertex<float> V1 = CustomIDE::Vertex<float>(topRight, cmd.colour);
+      CustomIDE::Vertex<float> V2 = CustomIDE::Vertex<float>(bottomLeft, cmd.colour);
+      CustomIDE::Vertex<float> V3 = CustomIDE::Vertex<float>(bottomRight, cmd.colour);
 
       if (cmd.texture >= 0) {
-        Vector2D textureTopLeft { cmd.uvRect.xOffset - (cmd.uvRect.width / 2.f),
+        CustomIDE::Vector2D textureTopLeft { cmd.uvRect.xOffset - (cmd.uvRect.width / 2.f),
                                   cmd.uvRect.yOffset + (cmd.uvRect.height / 2.f) };
-        Vector2D textureTopRight { cmd.uvRect.xOffset + (cmd.uvRect.width / 2.f),
+        CustomIDE::Vector2D textureTopRight { cmd.uvRect.xOffset + (cmd.uvRect.width / 2.f),
                                    cmd.uvRect.yOffset + (cmd.uvRect.height / 2.f) };
-        Vector2D textureBottomLeft { cmd.uvRect.xOffset - (cmd.uvRect.width / 2.f),
+        CustomIDE::Vector2D textureBottomLeft { cmd.uvRect.xOffset - (cmd.uvRect.width / 2.f),
                                      cmd.uvRect.yOffset - (cmd.uvRect.height / 2.f) };
-        Vector2D textureBottomRight { cmd.uvRect.xOffset + (cmd.uvRect.width / 2.f),
+        CustomIDE::Vector2D textureBottomRight { cmd.uvRect.xOffset + (cmd.uvRect.width / 2.f),
                                       cmd.uvRect.yOffset - (cmd.uvRect.height / 2.f) };
         V0.SetTextureCoords(textureTopLeft);
         V1.SetTextureCoords(textureTopRight);
@@ -969,15 +969,15 @@ void VulkanRenderer::FillVertexArray() {
   }
 }
 
-Vector2<float> VulkanRenderer::GetWindowContentScale() {
+CustomIDE::Vector2D Vulkan::Renderer::GetWindowContentScale() {
   return m_windowContentScale;
 }
 
-void VulkanRenderer::SetWindowContentScale(float xScale, float yScale) {
-  m_windowContentScale = Vector2D(xScale, yScale);
+void Vulkan::Renderer::SetWindowContentScale(float xScale, float yScale) {
+  m_windowContentScale = CustomIDE::Vector2D(xScale, yScale);
 }
 
-void VulkanRenderer::Cleanup() {
+void Vulkan::Renderer::Cleanup() {
   for (uint32_t i = 0; i < m_maxFramesInFlight; i++) {
     vkDestroySemaphore(m_device, m_imageAvailableSemaphores[i], nullptr);
     vkDestroySemaphore(m_device, m_renderFinishedSemaphores[i], nullptr);
@@ -999,4 +999,3 @@ void VulkanRenderer::Cleanup() {
   vkDestroyInstance(m_instance, nullptr);
   glfwTerminate();
 }
-

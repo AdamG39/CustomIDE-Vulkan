@@ -6,6 +6,8 @@
 #include "event/eventManager.hpp"
 #include <map>
 
+namespace CustomIDE {
+
 #define BORDER_THICKNESS                  10
 #define MAXIMISE_DISTANCE_FROM_SCREEN_TOP  5
 
@@ -22,9 +24,9 @@
 
 enum class ResizeSide { Top, Left, Right, Bottom };
 
-bool CursorAtHorizonalBorder(double xpos, ResizeSide* side);
+bool CursorAtHorizontalBorder(double xpos, ResizeSide& side);
 
-bool CursorAtVerticalBorder(double ypos, ResizeSide* side);
+bool CursorAtVerticalBorder(double ypos, ResizeSide& side);
 
 /*
 template <typename T, typename C>
@@ -226,13 +228,13 @@ private:
 };
 */
 
-class CustomIDEApplication {
+class Application {
 public:
-  CustomIDEApplication(const CustomIDEApplication& other) = delete;
+  Application(const Application& other) = delete;
 
-  static CustomIDEApplication* GetInstance() {
+  static Application* GetInstance() {
     if (s_instance == nullptr) {
-      s_instance = new CustomIDEApplication();
+      s_instance = new Application();
     }
     return s_instance;
   }
@@ -241,14 +243,14 @@ public:
   void RunApplication();
   void EndApplication();
 
-  std::weak_ptr<VulkanRenderer> GetRenderer() const;
-  std::weak_ptr<EntityManager> GetEntityManager() const;
-  std::weak_ptr<EventManager> GetEventManager() const;
+  std::weak_ptr<Vulkan::Renderer> GetRenderer() const;
+  std::weak_ptr<UI::ECS::EntityManager> GetEntityManager() const;
+  std::weak_ptr<EventSystem::EventManager> GetEventManager() const;
 
   void CreateUIElements();
 
 private:
-  static CustomIDEApplication* s_instance;
+  static Application* s_instance;
 
   std::string m_applicationName;
 
@@ -262,12 +264,12 @@ private:
   int m_windowWidth;
   int m_windowHeight;
 
-  CustomIDEApplication() = default;
-  ~CustomIDEApplication() = default;
+  Application() = default;
+  ~Application() = default;
 
-  std::shared_ptr<VulkanRenderer> m_renderer;
-  std::shared_ptr<EntityManager> m_entityManager;
-  std::shared_ptr<EventManager> m_eventManager;
+  std::shared_ptr<Vulkan::Renderer> m_renderer;
+  std::shared_ptr<UI::ECS::EntityManager> m_entityManager;
+  std::shared_ptr<EventSystem::EventManager> m_eventManager;
 
   std::map<std::string, GLFWcursor*> m_cursorObjects;
 
@@ -282,7 +284,9 @@ private:
   void HandleDragging();
 };
 
-Font CreateFont(const std::string& Filepath, const Colour& FontColour);
+UI::Font CreateFont(const std::string& Filepath, const Colour& FontColour);
+
+} // namespace CustomIDE
 
 #endif
 

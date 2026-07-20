@@ -3,6 +3,8 @@
 
 #include "component.hpp"
 
+namespace CustomIDE::UI::ECS {
+
 class Mask : public IComponent {
 private:
   ClipRect m_clipRect;
@@ -15,6 +17,8 @@ public:
 
   ClipRect GetClipArea();
 };
+
+} // namespace UI::ECS
 
 #endif
 

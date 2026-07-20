@@ -1,7 +1,9 @@
 #include "entity.hpp"
 #include "ecs.hpp"
 
-void Entity::RenderEntity(EntityManager& Manager, Transform* Transform,
+namespace CustomIDE {
+
+void UI::ECS::Entity::RenderEntity(EntityManager& Manager, Transform* Transform,
     IRenderable* Renderable, Vector2<float> DrawArea, Vector2<float> DrawAreaOffset) {
   if (Transform == nullptr || Renderable == nullptr)
     return;
@@ -12,7 +14,7 @@ void Entity::RenderEntity(EntityManager& Manager, Transform* Transform,
   Renderable->Render(Manager, Transform);
 }
 
-void Entity::RenderEntityAndChildren(EntityManager& Manager, Transform* TransformComponent,
+void UI::ECS::Entity::RenderEntityAndChildren(EntityManager& Manager, Transform* TransformComponent,
     IRenderable* Renderable, Vector2<float> DrawArea, Vector2<float> DrawAreaOffset) {
   RenderEntity(Manager, TransformComponent, Renderable, DrawArea, DrawAreaOffset);
   // Get reference to parent render geometry
@@ -33,3 +35,5 @@ void Entity::RenderEntityAndChildren(EntityManager& Manager, Transform* Transfor
       Manager.GetClipStack().pop();
   }
 }
+
+} // namespace CustomIDE

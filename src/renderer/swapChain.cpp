@@ -2,7 +2,7 @@
 #include "vulkanCore.hpp"
 #include "../helpers/errors/errors.hpp"
 
-void SwapChain::RecreateSwapChain(VkRenderPass RenderPass) {
+void Vulkan::SwapChain::RecreateSwapChain(VkRenderPass RenderPass) {
   if (glfwWindowShouldClose(m_window)) { return; }
   vkDeviceWaitIdle(*m_device);
 
@@ -23,7 +23,7 @@ void SwapChain::RecreateSwapChain(VkRenderPass RenderPass) {
   CreateFramebuffers(RenderPass);
 }
 
-void SwapChain::CreateSwapChain() {
+void Vulkan::SwapChain::CreateSwapChain() {
   SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(*m_physicalDevice, *m_surface);
 
   VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.formats);
@@ -70,7 +70,7 @@ void SwapChain::CreateSwapChain() {
   createInfo.oldSwapchain = VK_NULL_HANDLE;
 
   if (vkCreateSwapchainKHR(*m_device, &createInfo, nullptr, &m_swapChain) != VK_SUCCESS) {
-    ExitWithError("Failed to create swap chain!", -1);
+    CustomIDE::Errors::ExitWithError("Failed to create swap chain!", -1);
   }
 
   vkGetSwapchainImagesKHR(*m_device, m_swapChain, &m_imageCount, nullptr);
@@ -81,7 +81,7 @@ void SwapChain::CreateSwapChain() {
   m_swapChainExtent = extent;
 }
 
-void SwapChain::CreateImageViews() {
+void Vulkan::SwapChain::CreateImageViews() {
   m_swapChainImageViews.resize(m_swapChainImages.size());
 
   for (size_t i = 0; i < m_swapChainImages.size(); i++) {
@@ -90,7 +90,7 @@ void SwapChain::CreateImageViews() {
   }
 }
 
-void SwapChain::CreateFramebuffers(VkRenderPass RenderPass) {
+void Vulkan::SwapChain::CreateFramebuffers(VkRenderPass RenderPass) {
   m_swapChainFramebuffers.resize(m_swapChainImageViews.size());
 
   for (size_t i = 0; i < m_swapChainImageViews.size(); i++) {
@@ -108,7 +108,7 @@ void SwapChain::CreateFramebuffers(VkRenderPass RenderPass) {
     framebufferInfo.layers = 1;
 
     if (vkCreateFramebuffer(*m_device, &framebufferInfo, nullptr, &m_swapChainFramebuffers[i]) != VK_SUCCESS) {
-      ExitWithError("Failed to create graphics pipeline!", -1);
+      CustomIDE::Errors::ExitWithError("Failed to create graphics pipeline!", -1);
     }
   }
 }

@@ -10,27 +10,28 @@
 #include "shapes.hpp"
 #include "texture.hpp"
 
+namespace Vulkan {
 
-class VulkanRenderer {
+class Renderer {
 public:
-  VulkanRenderer(std::string AppName, Colour ClearColour)
+  Renderer(std::string AppName, CustomIDE::Colour ClearColour)
   : m_appName(AppName)
   {
     SetClearColour(ClearColour);
     Start();
   }
 
-  ~VulkanRenderer() {
+  ~Renderer() {
     Cleanup();
   }
 
-  void DrawRect(Rect2D Rect, int ZIndex, Colour Colour = {0x000000, 1.f});
-  void DrawRectEx(Rect2D Rect, int ZIndex, ClipRect ClipArea,
-                  Colour Colour = {0x000000, 1.f});
+  void DrawRect(CustomIDE::Rect2D Rect, int ZIndex, CustomIDE::Colour Colour = {0x000000, 1.f});
+  void DrawRectEx(CustomIDE::Rect2D Rect, int ZIndex, CustomIDE::ClipRect ClipArea,
+                  CustomIDE::Colour Colour = {0x000000, 1.f});
 
-  void DrawTexturedRect(Rect2D Rect, UVRect2D UVRect, int ZIndex, TextureID TextureIndex);
-  void DrawTexturedRectEx(Rect2D Rect, UVRect2D UVRect, int ZIndex, TextureID TextureIndex,
-                          ClipRect ClipArea, Colour Colour = {0x000000, 1.f});
+  void DrawTexturedRect(CustomIDE::Rect2D Rect, CustomIDE::UVRect2D UVRect, int ZIndex, CustomIDE::TextureID TextureIndex);
+  void DrawTexturedRectEx(CustomIDE::Rect2D Rect, CustomIDE::UVRect2D UVRect, int ZIndex, CustomIDE::TextureID TextureIndex,
+                          CustomIDE::ClipRect ClipArea, CustomIDE::Colour Colour = {0x000000, 1.f});
 
   void DrawFrame();
 
@@ -40,7 +41,7 @@ public:
 
   void RecreateSwapChain();
 
-  void SetClearColour(const Colour ClearColour) {
+  void SetClearColour(const CustomIDE::Colour ClearColour) {
     m_clearColour = {{{ClearColour.r, ClearColour.g, ClearColour.b, ClearColour.a}}};
   }
 
@@ -51,11 +52,11 @@ public:
     return (pos != m_textures.Size()) ? pos : -1;
   }
 
-  Vector2<int> GetImageDimensions(size_t ImageIndex) const {
+  CustomIDE::Vector2<int> GetImageDimensions(size_t ImageIndex) const {
     return m_textures[ImageIndex].metadata.dimensions;
   }
 
-  Vector2<float> GetWindowContentScale();
+  CustomIDE::Vector2D GetWindowContentScale();
 
   void SetWindowContentScale(float xScale, float yScale);
 
@@ -84,7 +85,7 @@ private:
 
   uint32_t m_maxFramesInFlight = 2;
 
-  Vector2<float> m_windowContentScale = { 1.f, 1.f };
+  CustomIDE::Vector2D m_windowContentScale = { 1.f, 1.f };
 
   VkInstance m_instance;
   VkSurfaceKHR m_surface;
@@ -112,7 +113,7 @@ private:
   std::vector<VkCommandBuffer> m_commandBuffers;
 
   size_t m_vertexBufferCapacity = 0;
-  std::vector<Vertex<float>> m_vertexArray;
+  std::vector<CustomIDE::Vertex<float>> m_vertexArray;
   std::list<DrawCommand> m_commands;
   std::vector<DrawBatch> m_drawBatches;
   VkDeviceMemory m_vertexBufferMemory;
@@ -181,6 +182,8 @@ private:
 
   void Cleanup();
 };
+
+} // namespace Vulkan
 
 #endif
 

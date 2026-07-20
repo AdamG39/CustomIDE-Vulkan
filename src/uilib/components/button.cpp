@@ -1,16 +1,20 @@
 #include "button.hpp"
 
-int Button::GetType() { return TypeValue(); }
+namespace CustomIDE {
 
-void Button::OnPress() {
+int UI::ECS::Button::GetType() { return TypeValue(); }
+
+void UI::ECS::Button::OnPress() {
   ExecAction("OnPress");
 }
 
-void Button::OnRelease() {
+void UI::ECS::Button::OnRelease() {
   ExecAction("OnRelease");
 }
 
-void Button::OnHover() {
+void UI::ECS::Button::OnHover() {
   ExecAction("OnHover");
 }
+
+} // namespace CustomIDE
 

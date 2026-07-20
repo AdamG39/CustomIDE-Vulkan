@@ -4,7 +4,9 @@
 #include "GLFW/glfw3.h"
 #include <iostream>
 
-bool CursorOverlap(const Vector2<float>& CursorPos, const Vector2<float>& Size, const Vector2<float>& Position) {
+namespace CustomIDE {
+
+bool EventSystem::CursorOverlap(const Vector2D& CursorPos, const Vector2D& Size, const Vector2D& Position) {
   Vector2 min = Vector2(Position.x - (Size.x / 2), Position.y - (Size.y / 2));
   Vector2 max = Vector2(Position.x + (Size.x / 2), Position.y + (Size.y / 2));
 
@@ -14,19 +16,19 @@ bool CursorOverlap(const Vector2<float>& CursorPos, const Vector2<float>& Size, 
   return false;
 }
 
-bool EventListenerHandle::IsValid() {
+bool EventSystem::EventListenerHandle::IsValid() {
   return !Expired && Object != nullptr;
 }
 
-bool EventHandler::HandleMouseEvent(const EventInfo& Info) {
+bool EventSystem::EventHandler::HandleMouseEvent(const EventInfo& Info) {
   if (Info.MouseInfo.Button == GLFW_MOUSE_BUTTON_LEFT) {
     for (auto& handler : m_eventChannels[EventTypeEnumToIndex(EventType::Mouse)]) {
       if (!handler.IsValid()) continue;
 
       auto entity = handler.Object;
 
-      Transform* transform = entity->GetComponent<Transform>();
-      IInteractable* button = entity->GetInteractableComponent();
+      UI::ECS::Transform* transform = entity->GetComponent<UI::ECS::Transform>();
+      UI::ECS::IInteractable* button = entity->GetInteractableComponent();
 
       if (transform == nullptr || button == nullptr) continue;
 
@@ -41,17 +43,17 @@ bool EventHandler::HandleMouseEvent(const EventInfo& Info) {
   return true;
 }
 
-bool EventHandler::HandleWindowEvent(const EventInfo& Info) {
+bool EventSystem::EventHandler::HandleWindowEvent(const EventInfo& Info) {
   return false;
 }
 
-bool EventHandler::HandleKeyboardEvent(const EventInfo& Info) {
+bool EventSystem::EventHandler::HandleKeyboardEvent(const EventInfo& Info) {
   if (Info.KeyboardInfo.Action == GLFW_RELEASE) return true;
 
   for (auto& handler : m_eventChannels[EventTypeEnumToIndex(EventType::Keyboard)]) {
     if (!handler.IsValid()) continue;
 
-    TextBox* textBox = handler.Object->GetComponent<TextBox>();
+    UI::ECS::TextBox* textBox = handler.Object->GetComponent<UI::ECS::TextBox>();
 
     if (textBox == nullptr) continue;
 
@@ -156,7 +158,7 @@ bool EventHandler::HandleKeyboardEvent(const EventInfo& Info) {
   return false;
 }
 
-bool EventHandler::HandleCharacterEvent(const EventInfo& Info) {
+bool EventSystem::EventHandler::HandleCharacterEvent(const EventInfo& Info) {
   // TODO: add handling of any UFT-8 character
 
 
@@ -164,7 +166,7 @@ bool EventHandler::HandleCharacterEvent(const EventInfo& Info) {
   for (auto handler : m_eventChannels[EventTypeEnumToIndex(EventType::Character)]) {
     if (!handler.IsValid()) continue;
 
-    TextBox* textBox = handler.Object->GetComponent<TextBox>();
+    UI::ECS::TextBox* textBox = handler.Object->GetComponent<UI::ECS::TextBox>();
 
     if (textBox == nullptr) continue;
 
@@ -175,7 +177,7 @@ bool EventHandler::HandleCharacterEvent(const EventInfo& Info) {
   return false;
 }
 
-bool EventHandler::HandleEvent(const Event& Event) {
+bool EventSystem::EventHandler::HandleEvent(const Event& Event) {
   switch (Event.Type) {
     case Mouse:
       return HandleMouseEvent(Event.Info);
@@ -190,15 +192,15 @@ bool EventHandler::HandleEvent(const Event& Event) {
   return false;
 }
 
-void EventManager::PushEvent(const Event& Event) {
+void EventSystem::EventManager::PushEvent(const Event& Event) {
   m_eventQueue.push(Event);
 }
 
-void EventManager::PopEvent() {
+void EventSystem::EventManager::PopEvent() {
   m_eventQueue.pop();
 }
 
-Event EventManager::CreateEvent(EventType Type, const EventInfo* Info) {
+EventSystem::Event EventSystem::EventManager::CreateEvent(EventType Type, const EventInfo* Info) {
   Event event{};
 
   event.Type = Type;
@@ -208,11 +210,11 @@ Event EventManager::CreateEvent(EventType Type, const EventInfo* Info) {
   return event;
 }
 
-void EventManager::AddEvent(EventType Type, const EventInfo* Info) {
+void EventSystem::EventManager::AddEvent(EventType Type, const EventInfo* Info) {
   PushEvent(CreateEvent(Type, Info));
 }
 
-void EventManager::HandleEvents() {
+void EventSystem::EventManager::HandleEvents() {
   // Loop through all current events ignoring repeats to avoid possible
   // infinite loop due to something required by next frame
   if (m_eventQueue.size() == 0) return;
@@ -227,7 +229,7 @@ void EventManager::HandleEvents() {
   }
 }
 
-void EventManager::RegisterEventListener(Entity* Object, int Channels) {
+void EventSystem::EventManager::RegisterEventListener(UI::ECS::Entity* Object, int Channels) {
   EventListenerHandle handle {
     .Object = Object,
     .Expired = false
@@ -250,7 +252,7 @@ void EventManager::RegisterEventListener(Entity* Object, int Channels) {
   }
 }
 
-void EventManager::ExpireEventListener(Entity* Object) {
+void EventSystem::EventManager::ExpireEventListener(UI::ECS::Entity* Object) {
   for (auto& channel : m_eventChannels) {
     for (auto& listener : channel) {
       if (listener.Object == Object)
@@ -259,7 +261,7 @@ void EventManager::ExpireEventListener(Entity* Object) {
   }
 }
 
-void EventManager::ExpireEventListenerOnChannel(Entity* Object, EventType Channel) {
+void EventSystem::EventManager::ExpireEventListenerOnChannel(UI::ECS::Entity* Object, EventType Channel) {
   int channelIndex = EventTypeEnumToIndex(Channel);
   if (channelIndex >= EventTypeCount) return;
 
@@ -268,3 +270,5 @@ void EventManager::ExpireEventListenerOnChannel(Entity* Object, EventType Channe
       listener.Expired = true;
   }
 }
+
+} // namespace CustomIDE

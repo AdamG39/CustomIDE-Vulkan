@@ -1,7 +1,11 @@
 #include "../helpers/errors/errors.hpp"
 #include "text.hpp"
+#include <string>
+#include <vector>
 
-UVRect2D CalculateCharUV(Vector2<float> FontAtlasSize, char Character) {
+namespace CustomIDE {
+
+UVRect2D UI::CalculateCharUV(Vector2<float> FontAtlasSize, char Character) {
   Vector2 characterAtlasSize { 1.f / FontAtlasSize.x, 1.f / FontAtlasSize.y };
 
   return {
@@ -12,7 +16,7 @@ UVRect2D CalculateCharUV(Vector2<float> FontAtlasSize, char Character) {
   };
 }
 
-char PieceTable::Index(unsigned Position) const {
+char UI::PieceTable::Index(unsigned Position) const {
   unsigned counter = 0;
   for (auto entry : m_entries) {
     if (Position >= counter && Position <= (counter + (entry.Length - 1))) {
@@ -27,12 +31,12 @@ char PieceTable::Index(unsigned Position) const {
     counter += entry.Length;
   }
 
-  ExitWithError("Index out of bounds of PieceTable", -45);
+  Errors::ExitWithError("Index out of bounds of PieceTable", -45);
 
   return 0;
 }
 
-size_t PieceTable::Insert(char Character, unsigned Position) {
+size_t UI::PieceTable::Insert(char Character, unsigned Position) {
   m_add.push_back(Character);
 
   if (TABS_ARE_SPACES && Character == TAB_CHAR_LITERAL) {
@@ -103,7 +107,7 @@ size_t PieceTable::Insert(char Character, unsigned Position) {
   return DEFAULT_CHAR_WIDTH;
 }
 
-void PieceTable::Delete(unsigned Position) {
+void UI::PieceTable::Delete(unsigned Position) {
   m_recalculateContent = true;
   m_recalculateStartOfLines = true;
 
@@ -159,7 +163,7 @@ void PieceTable::Delete(unsigned Position) {
   if (entry.Length == 0) m_entries.erase(it);
 }
 
-std::string PieceTable::GetContent() {
+::std::string UI::PieceTable::GetContent() {
   // Recalculates content if contents state changed otherwise returns cached result
   if (!m_recalculateContent) return m_content;
 
@@ -179,8 +183,8 @@ std::string PieceTable::GetContent() {
   return m_content;
 }
 
-std::string PieceTable::GetContent() const {
-  std::string result;
+::std::string UI::PieceTable::GetContent() const {
+  ::std::string result;
 
   for (auto entry : m_entries) {
     if (entry.Type == PieceTableBufferType::Original) {
@@ -193,7 +197,7 @@ std::string PieceTable::GetContent() const {
   return result;
 }
 
-const std::vector<int>& PieceTable::GetStartOfLines() {
+const ::std::vector<int>& UI::PieceTable::GetStartOfLines() {
   // Recalculates new line positions if content state changed otherwise returns cached result
   if (!m_recalculateStartOfLines) return m_startOfLines;
 
@@ -213,10 +217,14 @@ const std::vector<int>& PieceTable::GetStartOfLines() {
   return m_startOfLines;
 }
 
+} // namespace CustomIDE
+
 #ifdef _DEBUG
 #include <iostream>
 
-void PieceTable::Print() {
+namespace CustomIDE {
+
+void UI::PieceTable::Print() {
   std::string result;
 
   for (auto entry : m_entries) {
@@ -227,10 +235,10 @@ void PieceTable::Print() {
     }
   }
 
-  std::cout << result << std::endl;
+  std::cout << result << ::std::endl;
 }
 
-void PieceTable::DebugPrint() {
+void UI::PieceTable::DebugPrint() {
   std::cout << "PieceTable:" << std::endl;
 
   std::cout << "Original Buffer: { " << m_original << " }" << std::endl;
@@ -242,6 +250,8 @@ void PieceTable::DebugPrint() {
     std::cout << ", Start: " << entry.Start << ", Length: " << entry.Length << std::endl;
   }
 }
+
+} // namespace CustomIDE
 
 #endif // _DEBUG
 

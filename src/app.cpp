@@ -10,6 +10,8 @@
  *  [ ] Create a dropdown UI element
 \*/
 
+namespace CustomIDE {
+
 bool framebufferResized = false;
 int framebufferWidth = 0;
 int framebufferHeight = 0;
@@ -20,9 +22,9 @@ bool resizing = false;
 
 ResizeSide resizeSide;
 
-void CustomIDEApplication::InitApplication() {
-  std::vector<std::shared_ptr<Image>> loadedImages;
-  ReadImageFile("../CustomIDE icon.ico", loadedImages);
+void Application::InitApplication() {
+  std::vector<std::shared_ptr<IO::Image>> loadedImages;
+  IO::ReadImageFile("../CustomIDE icon.ico", loadedImages);
   std::vector<GLFWimage> appIcon;
   appIcon.reserve(loadedImages.size());
   for (size_t i = 0; i < loadedImages.size(); i++) {
@@ -33,9 +35,9 @@ void CustomIDEApplication::InitApplication() {
     appIcon.push_back(image);
   }
 
-  m_renderer = std::make_shared<VulkanRenderer>(m_applicationName, THEME_DARK_COLOUR_0.ConvertSRGBToLinear());
-  m_entityManager = std::make_unique<EntityManager>(m_renderer);
-  m_eventManager = std::make_unique<EventManager>();
+  m_renderer = std::make_shared<Vulkan::Renderer>(m_applicationName, THEME_DARK_COLOUR_0.ConvertSRGBToLinear());
+  m_entityManager = std::make_unique<UI::ECS::EntityManager>(m_renderer);
+  m_eventManager = std::make_unique<EventSystem::EventManager>();
 
   glfwGetFramebufferSize(m_renderer->GetWindow(), &m_windowWidth, &m_windowHeight);
 
@@ -54,11 +56,11 @@ void CustomIDEApplication::InitApplication() {
   m_cursorObjects["VRESIZE"] = glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR);
   if (m_cursorObjects["HRESIZE"] == nullptr ||
       m_cursorObjects["VRESIZE"] == nullptr) {
-    ExitWithError("Failed to create cursor objects!", -1);
+    Errors::ExitWithError("Failed to create cursor objects!", -1);
   }
 }
 
-void CustomIDEApplication::RunApplication() {
+void Application::RunApplication() {
   std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
   size_t counter = 0;
   while (!glfwWindowShouldClose(m_renderer->GetWindow())) {
@@ -91,31 +93,31 @@ void CustomIDEApplication::RunApplication() {
   vkDeviceWaitIdle(m_renderer->GetDevice());
 }
 
-void CustomIDEApplication::EndApplication() {
+void Application::EndApplication() {
   // Currently nothing to do on end
 }
 
-std::weak_ptr<VulkanRenderer> CustomIDEApplication::GetRenderer() const {
+std::weak_ptr<Vulkan::Renderer> Application::GetRenderer() const {
   return m_renderer;
 }
 
-std::weak_ptr<EntityManager> CustomIDEApplication::GetEntityManager() const {
+std::weak_ptr<UI::ECS::EntityManager> Application::GetEntityManager() const {
   return m_entityManager;
 }
 
-std::weak_ptr<EventManager> CustomIDEApplication::GetEventManager() const {
+std::weak_ptr<EventSystem::EventManager> Application::GetEventManager() const {
   return m_eventManager;
 }
 
-GLFWcursor* CustomIDEApplication::GetCursorObject(std::string Index) {
+GLFWcursor* Application::GetCursorObject(std::string Index) {
   return m_cursorObjects[Index];
 }
 
-void CustomIDEApplication::SetCursorState(int State) {
+void Application::SetCursorState(int State) {
   m_cursorState = State;
 }
 
-void CustomIDEApplication::HandleResizing() {
+void Application::HandleResizing() {
   if (resizing) {
     double xpos, ypos;
     int xwin, ywin;
@@ -162,7 +164,7 @@ void CustomIDEApplication::HandleResizing() {
   }
 }
 
-void CustomIDEApplication::UpdateCursorState() {
+void Application::UpdateCursorState() {
   if (resizeHover && m_cursorState == CURSOR_STATE_DEFAULT) {
     switch (resizeSide) {
       case ResizeSide::Left:
@@ -186,7 +188,7 @@ void CustomIDEApplication::UpdateCursorState() {
 
 // FIXME Transition from old uimanager to new ecs manager
 /*
-void CustomIDEApplication::HandleDragging() {
+void Application::HandleDragging() {
   if ((m_root->EventFlags & EVENT_FLAG_DRAGGING) != 0) {
     double xpos, ypos;
     GLFWwindow* window = m_renderer->GetWindow();
@@ -199,64 +201,64 @@ void CustomIDEApplication::HandleDragging() {
   }
 }*/
 
-void CustomIDEApplication::CreateUIElements() {
-  Entity& titleBar = m_entityManager->AddEntity(Vector2<UISize<float>>({1.0f, SizeMode::Proportional}, {40.0f}),
-                                                Vector2<UISize<float>>({0.0f}, {20.0f}));
+void Application::CreateUIElements() {
+  UI::ECS::Entity& titleBar = m_entityManager->AddEntity(Vector2<UI::Size<float>>({1.0f, UI::SizeMode::Proportional}, {40.0f}),
+                                                         Vector2<UI::Size<float>>({0.0f}, {20.0f}));
 
-  titleBar.GetComponent<Transform>()->SetAnchor(UIAnchorType::Top);
+  titleBar.GetComponent<UI::ECS::Transform>()->SetAnchor(UI::AnchorType::Top);
 
-  titleBar.AddComponent<UIImage>(THEME_DARK_COLOUR_1);
+  titleBar.AddComponent<UI::ECS::Image>(THEME_DARK_COLOUR_1);
 
-  Entity& closeButton = m_entityManager->AddEntity(Vector2<UISize<float>>({50.f}, {40.f}),
-                                                   Vector2<UISize<float>>({-25.f}, {20.f}));
+  UI::ECS::Entity& closeButton = m_entityManager->AddEntity(Vector2<UI::Size<float>>({50.f}, {40.f}),
+                                                            Vector2<UI::Size<float>>({-25.f}, {20.f}));
 
-  closeButton.GetComponent<Transform>()->SetAnchor(UIAnchorType::TopRight);
+  closeButton.GetComponent<UI::ECS::Transform>()->SetAnchor(UI::AnchorType::TopRight);
 
-  closeButton.AddComponent<UIImage>(Colour(0xe81123, 1.f));
-  closeButton.AddComponent<Button>();
-  closeButton.GetComponent<Button>()->SetOnRelease(&glfwSetWindowShouldClose, m_renderer->GetWindow(), GLFW_TRUE);
+  closeButton.AddComponent<UI::ECS::Image>(Colour(0xe81123, 1.f));
+  closeButton.AddComponent<UI::ECS::Button>();
+  closeButton.GetComponent<UI::ECS::Button>()->SetOnRelease(&glfwSetWindowShouldClose, m_renderer->GetWindow(), GLFW_TRUE);
 
   // TODO: find a better solution for registering buttons for mouse events
-  m_eventManager->RegisterEventListener(&closeButton, EventType::Mouse);
+  m_eventManager->RegisterEventListener(&closeButton, EventSystem::EventType::Mouse);
 
-  closeButton.AddChild(Entity(Vector2<UISize<float>>({10.f}, {10.f}),
-                              Vector2<UISize<float>>({0.f, SizeMode::Proportional}, {0.f, SizeMode::Proportional})));
+  closeButton.AddChild(UI::ECS::Entity(Vector2<UI::Size<float>>({10.f}, {10.f}),
+                                       Vector2<UI::Size<float>>({0.f, UI::SizeMode::Proportional}, {0.f, UI::SizeMode::Proportional})));
 
   std::shared_ptr closeButtonCross = closeButton.GetChild(0);
 
-  closeButtonCross->AddComponent<UIImage>(COLOUR_WHITE, 2);
+  closeButtonCross->AddComponent<UI::ECS::Image>(COLOUR_WHITE, 2);
 
-  Entity& titleLabel = m_entityManager->AddEntity(Vector2<UISize<float>>({600.f, 40.f}),
-                                                  Vector2<UISize<float>>({20.f, 20.f}));
+  UI::ECS::Entity& titleLabel = m_entityManager->AddEntity(Vector2<UI::Size<float>>({600.f, 40.f}),
+                                                           Vector2<UI::Size<float>>({20.f, 20.f}));
 
-  titleLabel.GetComponent<Transform>()->SetAnchor(UIAnchorType::TopLeft);
+  titleLabel.GetComponent<UI::ECS::Transform>()->SetAnchor(UI::AnchorType::TopLeft);
 
-  Font font = CreateFont("../assets/unscii-alt-font-16.png", Colour(0xD4D6DE, 1.f));
+  UI::Font font = CreateFont("../assets/unscii-alt-font-16.png", Colour(0xD4D6DE, 1.f));
 
-  titleLabel.AddComponent<Label>(font, "CustomIDE | File | Edit");
+  titleLabel.AddComponent<UI::ECS::Label>(font, "CustomIDE | File | Edit");
 
-  Entity& textBoxBackground = m_entityManager->AddEntity(Vector2<UISize<float>>({0.99f, SizeMode::Proportional},
-                                                         {0.95f, SizeMode::Proportional}),
-                                                         Vector2<UISize<float>>({0.f, 20.f}));
+  UI::ECS::Entity& textBoxBackground = m_entityManager->AddEntity(Vector2<UI::Size<float>>({0.99f, UI::SizeMode::Proportional},
+                                                                  {0.95f, UI::SizeMode::Proportional}),
+                                                                  Vector2<UI::Size<float>>({0.f, 20.f}));
 
-  textBoxBackground.AddComponent<UIImage>(THEME_DARK_COLOUR_1);
+  textBoxBackground.AddComponent<UI::ECS::Image>(THEME_DARK_COLOUR_1);
 
-  textBoxBackground.AddChild(Entity(Vector2<UISize<float>>({600.f, 600.f}),
-                                    Vector2<UISize<float>>({30.f, 80.f})));
+  textBoxBackground.AddChild(UI::ECS::Entity(Vector2<UI::Size<float>>({600.f, 600.f}),
+                                             Vector2<UI::Size<float>>({30.f, 80.f})));
 
   std::shared_ptr textBox = textBoxBackground.GetChild(0);
 
-  textBox->GetComponent<Transform>()->SetAnchor(UIAnchorType::TopLeft);
+  textBox->GetComponent<UI::ECS::Transform>()->SetAnchor(UI::AnchorType::TopLeft);
   
-  textBox->AddComponent<TextBox>(font, "../src/app.cpp");
+  textBox->AddComponent<UI::ECS::TextBox>(font, "../src/app.cpp");
 
-  m_eventManager->RegisterEventListener(textBox.get(), EventType::Keyboard | EventType::Character);
+  m_eventManager->RegisterEventListener(textBox.get(), EventSystem::EventType::Keyboard | EventSystem::EventType::Character);
 
-  textBox->AddComponent<Mask>(ClipRect{.clippingEnabled = true,
+  textBox->AddComponent<UI::ECS::Mask>(ClipRect{.clippingEnabled = true,
       .rect = {.xOffset = 1280, .yOffset = 716, .width = 2534, .height = 1322}});
 }
 
-bool CursorAtHorizontalBorder(double xpos, ResizeSide& side) {
+bool CursorAtHorizontalBorder(double xpos, CustomIDE::ResizeSide& side) {
   if (xpos >= -BORDER_THICKNESS && xpos <= BORDER_THICKNESS) {
     side = ResizeSide::Left;
     return true;
@@ -266,7 +268,7 @@ bool CursorAtHorizontalBorder(double xpos, ResizeSide& side) {
   } else return false;
 }
 
-bool CursorAtVerticalBorder(double ypos, ResizeSide& side) {
+bool CursorAtVerticalBorder(double ypos, CustomIDE::ResizeSide& side) {
   if (ypos >= -BORDER_THICKNESS && ypos <= BORDER_THICKNESS) {
     side = ResizeSide::Top;
     return true;
@@ -284,10 +286,10 @@ void MouseButtonCallback(GLFWwindow* Window, int Button, int Action, int Mods) {
   double xPos, yPos;
   glfwGetCursorPos(Window, &xPos, &yPos);
   Vector2D cursorPos = Vector2D((float)xPos, (float)yPos);
-  Vector2D windowScale = CustomIDEApplication::GetInstance()->GetRenderer().lock()->GetWindowContentScale();
+  Vector2D windowScale = Application::GetInstance()->GetRenderer().lock()->GetWindowContentScale();
 
-  EventInfo info {
-    .Manager = CustomIDEApplication::GetInstance()->GetEntityManager().lock(),
+  EventSystem::EventInfo info {
+    .Manager = Application::GetInstance()->GetEntityManager().lock(),
     .MouseInfo = {
       .Position = cursorPos * windowScale,
       .Button = Button,
@@ -295,7 +297,7 @@ void MouseButtonCallback(GLFWwindow* Window, int Button, int Action, int Mods) {
       .Modifications = Mods
     },
   };
-  CustomIDEApplication::GetInstance()->GetEventManager().lock()->AddEvent(EventType::Mouse, &info);
+  Application::GetInstance()->GetEventManager().lock()->AddEvent(EventSystem::EventType::Mouse, &info);
 }
 
 void FramebufferResizeCallback(GLFWwindow* Window, int Width, int Height) {
@@ -326,15 +328,15 @@ void ToggleMaximiseCallback(GLFWwindow* Window) {
     // Un-maximise window if already maximised
     glfwRestoreWindow(Window);
     maximisedState = false;
-    if (CustomIDEApplication::s_instance) {
-      CustomIDEApplication::s_instance->GetUIManager()->AddEvent(std::make_shared<UIEvent>(UIEvent(UIEventType::WINDOW_RESTORE)));
+    if (Application::s_instance) {
+      Application::s_instance->GetUIManager()->AddEvent(std::make_shared<UIEvent>(UIEvent(UIEventType::WINDOW_RESTORE)));
     }
   } else {
     // Maximise window if already un-maximised
     glfwMaximizeWindow(Window);
     maximisedState = true;
-    if (CustomIDEApplication::s_instance) {
-      CustomIDEApplication::s_instance->GetUIManager()->AddEvent(std::make_shared<UIEvent>(UIEvent(UIEventType::WINDOW_MAXIMISE)));
+    if (Application::s_instance) {
+      Application::s_instance->GetUIManager()->AddEvent(std::make_shared<UIEvent>(UIEvent(UIEventType::WINDOW_MAXIMISE)));
     }
   }
 }*/
@@ -344,8 +346,8 @@ void MinimiseCallback(GLFWwindow* Window) {
 }
 
 void KeyCallback(GLFWwindow* Window, int Key, int Scancode, int Action, int Mods) {
-  EventInfo info {
-    .Manager = CustomIDEApplication::GetInstance()->GetEntityManager().lock(),
+  EventSystem::EventInfo info {
+    .Manager = Application::GetInstance()->GetEntityManager().lock(),
     .Window = Window,
     .KeyboardInfo {
       .Key = Key,
@@ -355,33 +357,35 @@ void KeyCallback(GLFWwindow* Window, int Key, int Scancode, int Action, int Mods
     },
   };
 
-  CustomIDEApplication::GetInstance()->GetEventManager().lock()->AddEvent(EventType::Keyboard, &info);
+  Application::GetInstance()->GetEventManager().lock()->AddEvent(EventSystem::EventType::Keyboard, &info);
 }
 
 void CharacterCallback(GLFWwindow *Window, unsigned int Codepoint) {
-  EventInfo info {
-    .Manager = CustomIDEApplication::GetInstance()->GetEntityManager().lock(),
+  EventSystem::EventInfo info {
+    .Manager = Application::GetInstance()->GetEntityManager().lock(),
     .Window = Window,
     .CharacterInfo {
       .Codepoint = Codepoint
     },
   };
 
-  CustomIDEApplication::GetInstance()->GetEventManager().lock()->AddEvent(EventType::Character, &info);
+  Application::GetInstance()->GetEventManager().lock()->AddEvent(EventSystem::EventType::Character, &info);
 }
 
-Font CreateFont(const std::string& Filepath, const Colour& FontColour) {
-  Font font;
+UI::Font CreateFont(const std::string& Filepath, const Colour& FontColour) {
+  UI::Font font;
 
   font.colour = FontColour;
 
-  auto renderer = CustomIDEApplication::GetInstance()->GetRenderer().lock();
+  auto renderer = Application::GetInstance()->GetRenderer().lock();
   renderer->LoadImage(Filepath, true);
-  std::string fileName = GetFileNameFromPath(Filepath);
+  std::string fileName = Vulkan::GetFileNameFromPath(Filepath);
   Vector2<int> dimensions = renderer->GetImageDimensions(renderer->GetImageIndexFromName(fileName));
   font.size = { dimensions.x / 64, dimensions.y / 2 };
   font.familyName = fileName;
 
   return font;
 }
+
+} // namespace CustomIDE
 

@@ -3,9 +3,11 @@
 #include "../ecs.hpp"
 #include "../../io/io.hpp"
 
-int TextBox::GetType() { return TypeValue(); }
+namespace CustomIDE {
 
-TextBox::TextBox(Font Font, std::string Filepath, bool WordWrap)
+int UI::ECS::TextBox::GetType() { return TypeValue(); }
+
+UI::ECS::TextBox::TextBox(Font Font, std::string Filepath, bool WordWrap)
   : m_filepath(Filepath) {
   LoadFile();
   m_font = Font;
@@ -13,7 +15,7 @@ TextBox::TextBox(Font Font, std::string Filepath, bool WordWrap)
   m_cursor._Colour = Font.colour;
 }
 
-void TextBox::RenderSelection(EntityManager& Manager, const Vector2D& TextObjPos) {
+void UI::ECS::TextBox::RenderSelection(EntityManager& Manager, const Vector2D& TextObjPos) {
   size_t start = m_textSelection.start;
   size_t length = m_textSelection.length;
   size_t end = start + length;
@@ -91,7 +93,7 @@ void TextBox::RenderSelection(EntityManager& Manager, const Vector2D& TextObjPos
   }
 }
 
-void TextBox::RenderCursor(EntityManager& Manager, const Vector2D& TextObjPos, const Vector2<int>& CursorPosition) {
+void UI::ECS::TextBox::RenderCursor(EntityManager& Manager, const Vector2D& TextObjPos, const Vector2<int>& CursorPosition) {
   Font font = GetFont();
 
   Vector2<float> finalCursorSize {
@@ -110,7 +112,7 @@ void TextBox::RenderCursor(EntityManager& Manager, const Vector2D& TextObjPos, c
       m_drawDepth, GetCursorColour());
 }
 
-void TextBox::Render(EntityManager& Manager, const Transform* Transform) {
+void UI::ECS::TextBox::Render(EntityManager& Manager, const Transform* Transform) {
   // calculate size of each character based on font
   Font font = GetFont();
   Vector2D textObjPos = Transform->GetPixelPosition();
@@ -169,7 +171,7 @@ void TextBox::Render(EntityManager& Manager, const Transform* Transform) {
       textColour.b = 1.f - textColour.b;
     }
     auto imageIndex = Manager.GetRenderer().lock()->GetImageIndexFromName(font.familyName);
-    if (imageIndex < 0) ExitWithError("No image with that name found", -35);
+    if (imageIndex < 0) Errors::ExitWithError("No image with that name found", -35);
 
     ClipRect clipRect {};
     if (!Manager.GetClipStack().empty())
@@ -191,36 +193,36 @@ void TextBox::Render(EntityManager& Manager, const Transform* Transform) {
     RenderCursor(Manager, textObjPos, cursorPosition);
 }
 
-char TextBox::Index(unsigned Position) {
+char UI::ECS::TextBox::Index(unsigned Position) {
   return m_table.Index(Position);
 }
 
-void TextBox::Insert(char Character, int Position) {
+void UI::ECS::TextBox::Insert(char Character, int Position) {
   CancelSelection();
   size_t moveAmount = m_table.Insert(Character, Position);
   while (moveAmount--)
     MoveCursorRight();
 }
 
-void TextBox::Delete(int Position) {
+void UI::ECS::TextBox::Delete(int Position) {
   m_table.Delete(Position);
 }
 
-int TextBox::GetCursorPosition() const {
+int UI::ECS::TextBox::GetCursorPosition() const {
   return m_cursor.Position;
 }
 
-void TextBox::MoveCursorLeft() {
+void UI::ECS::TextBox::MoveCursorLeft() {
   m_cursor.Position = std::max(0, m_cursor.Position - 1);
 }
 
-void TextBox::MoveCursorRight() {
+void UI::ECS::TextBox::MoveCursorRight() {
   m_cursor.Position = std::min(static_cast<size_t>(m_cursor.Position + 1), GetContent().size());
 }
 
 #include <cassert>
 
-void TextBox::MoveCursorUp() {
+void UI::ECS::TextBox::MoveCursorUp() {
   const std::vector<int>& startOfLines = m_table.GetStartOfLines();
 
   // if only 1 line just jump to start of line
@@ -250,7 +252,7 @@ void TextBox::MoveCursorUp() {
   m_cursor.Position = std::max(std::min(startOfLines[startOfLine] - 1, previousLineStart + cursorLineOffset), 0);
 }
 
-void TextBox::MoveCursorDown() {
+void UI::ECS::TextBox::MoveCursorDown() {
   const std::vector<int>& startOfLines = m_table.GetStartOfLines();
   int contentSize = GetContent().size();
 
@@ -283,7 +285,7 @@ void TextBox::MoveCursorDown() {
   m_cursor.Position = nextLine + std::min(lineLength, cursorLineOffset);
 }
 
-void TextBox::MoveBackWord() {
+void UI::ECS::TextBox::MoveBackWord() {
   MoveCursorLeft();
 
   // find end of previous word
@@ -317,7 +319,7 @@ void TextBox::MoveBackWord() {
   MoveCursorRight();
 }
 
-void TextBox::MoveForwardWord() {
+void UI::ECS::TextBox::MoveForwardWord() {
   if (isalnum(GetContent()[m_cursor.Position])) {
     MoveCursorRight();
     // find end of this word
@@ -350,11 +352,11 @@ void TextBox::MoveForwardWord() {
   }
 }
 
-bool TextBox::GetSelectionState() const {
+bool UI::ECS::TextBox::GetSelectionState() const {
   return m_selectionState;
 }
 
-void TextBox::StartSelection() {
+void UI::ECS::TextBox::StartSelection() {
   m_textSelection = {
     .start = static_cast<size_t>(m_cursor.Position),
     .length = 0ull
@@ -364,7 +366,7 @@ void TextBox::StartSelection() {
   m_selectionDirection = None;
 }
 
-void TextBox::UpdateSelection(int PreviousPosition) {
+void UI::ECS::TextBox::UpdateSelection(int PreviousPosition) {
   // If called with no selection or no need to update just early return
   if (!m_selectionState || m_cursor.Position == PreviousPosition) return;
 
@@ -394,12 +396,12 @@ void TextBox::UpdateSelection(int PreviousPosition) {
   if (m_textSelection.length == 0) CancelSelection();
 }
 
-void TextBox::CancelSelection() {
+void UI::ECS::TextBox::CancelSelection() {
   m_selectionState = false;
   m_selectionDirection = None;
 }
 
-void TextBox::CopySelection(GLFWwindow* Window) {
+void UI::ECS::TextBox::CopySelection(GLFWwindow* Window) {
   if (!m_selectionState) {
     if (m_cursor.Position == GetContent().size()) return;
     std::string currentCharacter;
@@ -412,7 +414,7 @@ void TextBox::CopySelection(GLFWwindow* Window) {
   glfwSetClipboardString(Window, selectedText.c_str());
 }
 
-void TextBox::PasteText(GLFWwindow* Window) {
+void UI::ECS::TextBox::PasteText(GLFWwindow* Window) {
   std::string text = glfwGetClipboardString(Window);
 
   if (text.empty()) return;
@@ -422,7 +424,7 @@ void TextBox::PasteText(GLFWwindow* Window) {
   }
 }
 
-void TextBox::DeleteSelection() {
+void UI::ECS::TextBox::DeleteSelection() {
   for (int i = 0; i < m_textSelection.length; i++) {
     Delete(m_textSelection.start);
   }
@@ -432,35 +434,37 @@ void TextBox::DeleteSelection() {
   CancelSelection();
 }
 
-void TextBox::LoadFile() {
-  m_table = PieceTable(ReadTextFile(m_filepath));
+void UI::ECS::TextBox::LoadFile() {
+  m_table = PieceTable(IO::ReadTextFile(m_filepath));
 }
 
-void TextBox::SaveFile() {
-  WriteTextFile(m_filepath, GetContent());
+void UI::ECS::TextBox::SaveFile() {
+  IO::WriteTextFile(m_filepath, GetContent());
 
   LoadFile();
 }
 
-Colour TextBox::GetCursorColour() const {
+Colour UI::ECS::TextBox::GetCursorColour() const {
   return m_cursor._Colour;
 }
 
-void TextBox::SetCursorColour(const Colour& NewColour) {
+void UI::ECS::TextBox::SetCursorColour(const Colour& NewColour) {
   m_cursor._Colour = NewColour;
 }
 
-std::string TextBox::GetContent() {
+std::string UI::ECS::TextBox::GetContent() {
   return m_table.GetContent();
 }
 
-std::string TextBox::GetContent() const {
+std::string UI::ECS::TextBox::GetContent() const {
   return m_table.GetContent();
 }
 
 #ifdef _DEBUG
-  void TextBox::Print() { m_table.Print(); }
+  void UI::ECS::TextBox::Print() { m_table.Print(); }
 
-  void TextBox::DebugPrint() { m_table.DebugPrint(); }
+  void UI::ECS::TextBox::DebugPrint() { m_table.DebugPrint(); }
 #endif // _DEBUG
+
+} // namespace CustomIDE
 

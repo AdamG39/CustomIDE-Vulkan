@@ -1,7 +1,9 @@
 #include "errors.hpp"
 #include <iostream>
 
-void ExitWithError(const char* errorText, int exitCode, int errorType) {
+namespace CustomIDE {
+
+void Errors::ExitWithError(const char* errorText, int exitCode, int errorType) {
   const char* errorPrefix;
   switch(errorType) {
   case ERROR_GENERAL:
@@ -17,3 +19,5 @@ void ExitWithError(const char* errorText, int exitCode, int errorType) {
   std::cerr << errorPrefix << errorText << std::endl;
   exit(exitCode);
 }
+
+} // namespace CustomIDE
