@@ -13,6 +13,7 @@ UI::ECS::TextBox::TextBox(Font Font, std::string Filepath, bool WordWrap)
   m_font = Font;
   m_wordWrap = WordWrap;
   m_cursor._Colour = Font.colour;
+  m_cursor.Type = TextCursorType::DEFAULT;
 }
 
 void UI::ECS::TextBox::RenderSelection(EntityManager& Manager, const Vector2D& TextObjPos) {
@@ -37,46 +38,40 @@ void UI::ECS::TextBox::RenderSelection(EntityManager& Manager, const Vector2D& T
 
   std::vector<Rect2D> selectionRects;
 
+  int32_t charSpacing{CHAR_SPACING};
+
+  // If not an even number integer division causes spacing to be handled incorrectly
+  if (charSpacing & 1) charSpacing += 1; // Round to nearest even number
+
   // Generate render geometry
   int currentLine = firstLineStart;
   for (auto i{start}; i < end; i++) {
     // Create initial selection rect
     if (selectionRects.empty()) {
       Rect2D first {
-        .xOffset = font.size.x * startOffsetIntoLine,
-        .yOffset = font.size.y * firstLineStart,
+        .xOffset = font.size.x * startOffsetIntoLine ,
+        .yOffset = font.size.y * currentLine + (currentLine * LINE_SPACING),
         .width = static_cast<uint32_t>(font.size.x),
-        .height = static_cast<uint32_t>(font.size.y)
+        .height = static_cast<uint32_t>(font.size.y) + LINE_SPACING
       };
 
       selectionRects.push_back(first);
-
-      if (m_table.GetContent()[i] == '\n') {
-        currentLine++;
-        Rect2D newSelectionLine {
-          .xOffset = -(font.size.x / 2), // Line could be empty so needs to start before the line
-          .yOffset = font.size.y * currentLine,
-          .width = 0,
-          .height = static_cast<uint32_t>(font.size.y)
-        };
-
-        selectionRects.push_back(newSelectionLine);
-      }
-      continue;
     }
 
-    auto& rect = selectionRects.back();
-    // Adjust the width and xOffset to include the next element
-    rect.xOffset += font.size.x / 2;
-    rect.width += static_cast<uint32_t>(font.size.x);
+    else {
+      auto& rect = selectionRects.back();
+      // Adjust the width and xOffset to include the next element
+      rect.xOffset += (font.size.x / 2) + (charSpacing / 2);
+      rect.width += static_cast<uint32_t>(font.size.x) + charSpacing;
+    }
 
     if (m_table.GetContent()[i] == '\n') {
       currentLine++;
       Rect2D newSelectionLine {
         .xOffset = -(font.size.x / 2), // Line could be empty so needs to start before the line
-        .yOffset = font.size.y * currentLine,
+        .yOffset = font.size.y * currentLine + (currentLine * LINE_SPACING),
         .width = 0,
-        .height = static_cast<uint32_t>(font.size.y)
+        .height = static_cast<uint32_t>(font.size.y) + LINE_SPACING
       };
 
       selectionRects.push_back(newSelectionLine);
@@ -96,14 +91,45 @@ void UI::ECS::TextBox::RenderSelection(EntityManager& Manager, const Vector2D& T
 void UI::ECS::TextBox::RenderCursor(EntityManager& Manager, const Vector2D& TextObjPos, const Vector2<int>& CursorPosition) {
   Font font = GetFont();
 
-  Vector2<float> finalCursorSize {
-    static_cast<float>(font.size.x),
-    static_cast<float>(font.size.y) * 1.5f
+  float widthMultiplier{};
+
+  switch (m_cursor.Type) {
+    case TextCursorType::DEFAULT:
+      widthMultiplier = DEFAULT_WIDTH_MULTIPLIER;
+      break;
+
+    case TextCursorType::BLOCK:
+      widthMultiplier = BLOCK_WIDTH_MULTIPLIER;
+      break;
+  }
+
+  Vector2D finalCursorSize {
+    static_cast<float>(font.size.x) * widthMultiplier,
+    static_cast<float>(font.size.y) * CURSOR_HEIGHT_MULTIPLIER
   };
 
-  Vector2<float> finalCursorPosition {
-    TextObjPos.x + (font.size.x * CursorPosition.x),
-    TextObjPos.y + (font.size.y * CursorPosition.y)
+  float xOffset{};
+
+  switch (m_cursor.Type) {
+    case TextCursorType::DEFAULT:
+      xOffset = DEFAULT_X_OFFSET;
+      break;
+
+    case TextCursorType::BLOCK:
+      xOffset = BLOCK_X_OFFSET;
+      break;
+  }
+
+  xOffset *= font.size.x;
+
+  int32_t charSpacing{CHAR_SPACING};
+
+  // If not an even number integer division causes spacing to be handled incorrectly
+  if (charSpacing & 1) charSpacing += 1; // Round to nearest even number
+
+  Vector2D finalCursorPosition {
+    TextObjPos.x + (font.size.x * CursorPosition.x) + xOffset + (CursorPosition.x * charSpacing),
+    TextObjPos.y + (font.size.y * CursorPosition.y) + (CursorPosition.y * LINE_SPACING)
   };
 
   Manager.GetRenderer().lock()->DrawRect(
@@ -150,9 +176,14 @@ void UI::ECS::TextBox::Render(EntityManager& Manager, const Transform* Transform
       continue;
     }
 
-    Vector2<float> charPosition {
-      textObjPos.x + (font.size.x * linePosition),
-      textObjPos.y + (lineCount * font.size.y)
+    int32_t charSpacing{CHAR_SPACING};
+
+    // If not an even number integer division causes spacing to be handled incorrectly
+    if (charSpacing & 1) charSpacing += 1; // Round to nearest even number
+
+    Vector2D charPosition {
+      textObjPos.x + (font.size.x * linePosition) + (linePosition * charSpacing),
+      textObjPos.y + (lineCount * font.size.y) + (lineCount * LINE_SPACING)
     };
 
     linePosition++;
@@ -165,7 +196,7 @@ void UI::ECS::TextBox::Render(EntityManager& Manager, const Transform* Transform
     }
 
     Colour textColour = font.colour;
-    if (cursorIndexPosition == i) {
+    if (cursorIndexPosition == i && m_cursor.Type == TextCursorType::BLOCK) {
       textColour.r = 1.f - textColour.r;
       textColour.g = 1.f - textColour.g;
       textColour.b = 1.f - textColour.b;
@@ -183,6 +214,7 @@ void UI::ECS::TextBox::Render(EntityManager& Manager, const Transform* Transform
         CalculateCharUV(fontAtlasSize, content[i]), m_drawDepth + 1, imageIndex, clipRect,
         textColour);
   }
+
   if (GetSelectionState()) {
     RenderSelection(Manager, textObjPos);
   }
@@ -190,7 +222,7 @@ void UI::ECS::TextBox::Render(EntityManager& Manager, const Transform* Transform
   if (cursorIndexPosition == GetContent().size())
     cursorPosition = { linePosition, lineCount };
 
-    RenderCursor(Manager, textObjPos, cursorPosition);
+  RenderCursor(Manager, textObjPos, cursorPosition);
 }
 
 char UI::ECS::TextBox::Index(unsigned Position) {
@@ -390,7 +422,18 @@ void UI::ECS::TextBox::UpdateSelection(int PreviousPosition) {
       break;
     case Right:
       if (m_cursor.Position < m_textSelection.start) m_selectionDirection = Left;
-      m_textSelection.length += m_cursor.Position - PreviousPosition;
+      int difference = m_cursor.Position - PreviousPosition;
+
+      // Still moving to the right
+      if (difference >= 0)
+        m_textSelection.length += difference;
+
+      // Now moving to the left
+      else {
+        auto oldStart = m_textSelection.start;
+        m_textSelection.start += difference + m_textSelection.length;
+        m_textSelection.length = oldStart - m_textSelection.start;
+      }
       break;
   }
   if (m_textSelection.length == 0) CancelSelection();
@@ -450,6 +493,14 @@ Colour UI::ECS::TextBox::GetCursorColour() const {
 
 void UI::ECS::TextBox::SetCursorColour(const Colour& NewColour) {
   m_cursor._Colour = NewColour;
+}
+
+UI::TextCursorType UI::ECS::TextBox::GetCursorType() const {
+  return m_cursor.Type;
+}
+
+void UI::ECS::TextBox::SetCursorType(const UI::TextCursorType & NewType) {
+  m_cursor.Type = NewType;
 }
 
 std::string UI::ECS::TextBox::GetContent() {

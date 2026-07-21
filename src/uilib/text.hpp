@@ -21,21 +21,20 @@ struct Font {
   TextType type = Normal;
 };
 
+enum class TextCursorType {
+  DEFAULT,
+  BLOCK,
+};
+
 struct TextCursor {
   int Position;
   Colour _Colour;
+  TextCursorType Type;
 };
 
 struct TextSelection {
   size_t start;
   size_t length;
-};
-
-enum TextCursorMoveDirection : int {
-  Up,
-  Down,
-  Left,
-  Right
 };
 
 enum PieceTableBufferType {

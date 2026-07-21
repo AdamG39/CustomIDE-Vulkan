@@ -10,6 +10,15 @@ class TextBox : public IText {
 private:
   static constexpr int TAB_WIDTH = 4; // FIXME: Should be set using a configuration file instead
 
+  static constexpr int CHAR_SPACING = 0; // FIXME: Should be set using a configuration file instead
+  static constexpr int LINE_SPACING = 8; // FIXME: Should be set using a configuration file instead
+
+  static constexpr float DEFAULT_WIDTH_MULTIPLIER = 0.125f;
+  static constexpr float BLOCK_WIDTH_MULTIPLIER   = 1.0f;
+  static constexpr float CURSOR_HEIGHT_MULTIPLIER = 1.25f;
+  static constexpr float DEFAULT_X_OFFSET         = -0.5f;
+  static constexpr float BLOCK_X_OFFSET           = 0.0f;
+
   enum SelectionDirection {
     None,
     Left,
@@ -61,6 +70,9 @@ public:
 
   Colour GetCursorColour() const;
   void SetCursorColour(const Colour& NewColour);
+
+  TextCursorType GetCursorType() const;
+  void SetCursorType(const TextCursorType & NewType);
 
   std::string GetContent() override;
   std::string GetContent() const override;

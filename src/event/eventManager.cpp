@@ -59,6 +59,8 @@ bool EventSystem::EventHandler::HandleKeyboardEvent(const EventInfo& Info) {
 
     int previousPosition = textBox->GetCursorPosition();
 
+    auto cursorPos = textBox->GetCursorPosition();
+
     switch (Info.KeyboardInfo.Key) {
     case GLFW_KEY_LEFT:
       if (textBox->GetSelectionState() && !(Info.KeyboardInfo.Modifications & GLFW_MOD_SHIFT)) { 
@@ -151,7 +153,7 @@ bool EventSystem::EventHandler::HandleKeyboardEvent(const EventInfo& Info) {
       break;
     }
 
-    if (textBox->GetSelectionState()) textBox->UpdateSelection(previousPosition);
+    if (textBox->GetSelectionState() && cursorPos != textBox->GetCursorPosition()) textBox->UpdateSelection(previousPosition);
     return true;
   }
 
