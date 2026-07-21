@@ -3,6 +3,7 @@
 
 #include "../renderer/shapes.hpp"
 #include "../uilib/ecs.hpp"
+#include <cmath>
 
 namespace CustomIDE::EventSystem {
 
@@ -16,7 +17,7 @@ enum EventType : int {
 static constexpr int EventTypeCount = 4;
 
 constexpr int EventTypeEnumToIndex(EventType Type) {
-  return log2<int>(Type);
+  return std::log2<int>(Type);
 }
 
 struct MouseEventInfo {
