@@ -1,0 +1,15 @@
+{
+	"nodes":[
+		{"id":"e556ed19c29a9a28","x":-182,"y":-40,"width":205,"height":180,"type":"text","text":"<center>\n<h5><em>IComponent</em></h5>\n<hr>\n<em>GetType()</em>\n\n</center>"},
+		{"id":"2d152585106ed0f3","x":-204,"y":380,"width":250,"height":180,"type":"text","text":"<center>\n<h5><em>IRenderable</em></h5>\n<hr>\n<em>Render()</em>\n</center>"},
+		{"id":"9fe3e4ea9b1b1362","x":-204,"y":820,"width":250,"height":180,"type":"text","text":"<center>\n<h5><em>IText</em></h5>\n<hr>\n<em>GetContent()</em> -> string\n</center>"},
+		{"id":"9a7c704224fd1224","x":380,"y":-114,"width":285,"height":328,"type":"text","text":"<center>\n<h5>Transform</h5>\n<hr>\nAnchor m_anchor <br>\nVector2 m_position <br>\nVector2 m_size\n<hr>\nCalculatePixelSize(float, float) <br>\nCalculatePixelPosition(float, float)\n</center>"},
+		{"id":"a64a73889f07bc80","x":380,"y":294,"width":285,"height":353,"type":"text","text":"<center>\n<h5>Image</h5>\n<hr>\nColour m_colour <br>\nint m_textureIndex <br>\nVector2[4] m_textureCoords\n<hr>\n</center>"}
+	],
+	"edges":[
+		{"id":"e19552d47c60771d","fromNode":"e556ed19c29a9a28","fromSide":"bottom","toNode":"2d152585106ed0f3","toSide":"top"},
+		{"id":"3a11956fd9b669db","fromNode":"2d152585106ed0f3","fromSide":"bottom","toNode":"9fe3e4ea9b1b1362","toSide":"top"},
+		{"id":"58a680415e276c52","fromNode":"e556ed19c29a9a28","fromSide":"right","toNode":"9a7c704224fd1224","toSide":"left"},
+		{"id":"4d9babd847f7af23","fromNode":"2d152585106ed0f3","fromSide":"right","toNode":"a64a73889f07bc80","toSide":"left"}
+	]
+}

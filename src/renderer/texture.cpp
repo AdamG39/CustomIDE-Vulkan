@@ -4,7 +4,7 @@
 #include "../helpers/errors/errors.hpp"
 #include "../io/io.hpp"
 
-void VulkanTexture::Destroy(VkDevice Device) {
+void Vulkan::Texture::Destroy(VkDevice Device) {
   if (image) {
     vkDestroyImage(Device, image, nullptr);
   }
@@ -22,12 +22,60 @@ void VulkanTexture::Destroy(VkDevice Device) {
   }
 }
 
-void CreateTexture(const char* pFilename, VulkanTexture& Texture,
-                   const VkDevice& Device, const VkPhysicalDevice& PhysicalDevice,
-                   const VkCommandBuffer* CommandBuffers, uint32_t CommandBufferIndex,
-                   const VkQueue& GraphicsQueue) {
-  std::vector<std::shared_ptr<Image>> image;
-  if (!ReadImageFile(pFilename, image)) ExitWithError("Failed to load file", -11);
+Vulkan::TextureBufferMap::TextureBufferMap(size_t MaxTextures) {
+  m_maxCapacity = MaxTextures;
+}
+
+const Vulkan::Texture& Vulkan::TextureBufferMap::operator[](size_t Index) const {
+  if (Index >= m_size)
+    CustomIDE::Errors::ExitWithError("Index out of bounds of TextureBufferMap array", -33);
+
+  return m_textures[Index];
+}
+
+
+Vulkan::Texture& Vulkan::TextureBufferMap::operator[](std::string FileName) {
+  if (size_t pos = Contains(FileName); pos != m_size) { // Filename exists as a key
+    return m_textures[pos];
+  }
+
+  return m_textures[Insert(FileName)];
+}
+
+size_t Vulkan::TextureBufferMap::Insert(std::string FileName, Texture Texture) {
+  if (m_size == m_maxCapacity)
+    CustomIDE::Errors::ExitWithError("TextureBufferMap capacity reached failed to insert Texture", -34);
+
+  m_textures.push_back(Texture);
+  m_fileNames.push_back(FileName);
+
+  m_size++;
+
+  return m_size - 1;
+}
+
+size_t Vulkan::TextureBufferMap::Contains(std::string FileName) const {
+  for (size_t i = 0; i < m_size; i++) {
+    if (m_fileNames[i] == FileName) return i;
+  }
+
+  return m_size;
+}
+
+void Vulkan::TextureBufferMap::Destroy(VkDevice Device) {
+  for (size_t i = 0; i < m_size; i++) {
+    m_textures[i].Destroy(Device);
+  }
+}
+
+void Vulkan::CreateTexture(const char* pFilename, Texture& Texture,
+                           const VkDevice& Device, const VkPhysicalDevice& PhysicalDevice,
+                           const VkCommandBuffer* CommandBuffers, uint32_t CommandBufferIndex,
+                           const VkQueue& GraphicsQueue) {
+  std::vector<std::shared_ptr<CustomIDE::IO::Image>> image;
+  if (!CustomIDE::IO::ReadImageFile(pFilename, image)) CustomIDE::Errors::ExitWithError("Failed to load file", -11);
+
+  Texture.metadata.dimensions = { static_cast<int>(image[0]->width), static_cast<int>(image[0]->height) };
 
   VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
   CreateTextureImageFromData(Texture, image[0]->pixels, image[0]->width, image[0]->height, format,
@@ -36,11 +84,11 @@ void CreateTexture(const char* pFilename, VulkanTexture& Texture,
   Texture.view = CreateImageView(Device, Texture.image, format, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
-void CreateTextureImageFromData(VulkanTexture& Texture, const void* pPixels, uint32_t ImageWidth,
-                                uint32_t ImageHeight, const VkFormat& TextureFormat,
-                                const VkDevice& Device, const VkPhysicalDevice& PhysicalDevice,
-                                const VkCommandBuffer* CommandBuffers, uint32_t CommandBufferIndex,
-                                const VkQueue& GraphicsQueue) {
+void Vulkan::CreateTextureImageFromData(Vulkan::Texture& Texture, const void* pPixels, uint32_t ImageWidth,
+                                        uint32_t ImageHeight, const VkFormat& TextureFormat,
+                                        const VkDevice& Device, const VkPhysicalDevice& PhysicalDevice,
+                                        const VkCommandBuffer* CommandBuffers, uint32_t CommandBufferIndex,
+                                        const VkQueue& GraphicsQueue) {
   VkImageUsageFlagBits usage = (VkImageUsageFlagBits)(VK_IMAGE_USAGE_TRANSFER_DST_BIT |
                                                       VK_IMAGE_USAGE_SAMPLED_BIT);
 
@@ -52,10 +100,10 @@ void CreateTextureImageFromData(VulkanTexture& Texture, const void* pPixels, uin
                      Device, PhysicalDevice, CommandBuffers, CommandBufferIndex, GraphicsQueue);
 }
 
-void CreateTextureImage(VulkanTexture& Texture, uint32_t ImageWidth, uint32_t ImageHeight,
-                        const VkFormat& TextureFormat, const VkImageUsageFlags& UsageFlags,
-                        const VkMemoryPropertyFlags& PropertyFlags, const VkDevice& Device,
-                        const VkPhysicalDevice& PhysicalDevice) {
+void Vulkan::CreateTextureImage(Vulkan::Texture& Texture, uint32_t ImageWidth, uint32_t ImageHeight,
+                                const VkFormat& TextureFormat, const VkImageUsageFlags& UsageFlags,
+                                const VkMemoryPropertyFlags& PropertyFlags, const VkDevice& Device,
+                                const VkPhysicalDevice& PhysicalDevice) {
   VkImageCreateInfo imageInfo = {
     .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
     .pNext = nullptr,
@@ -75,7 +123,7 @@ void CreateTextureImage(VulkanTexture& Texture, uint32_t ImageWidth, uint32_t Im
   };
 
   if (vkCreateImage(Device, &imageInfo, NULL, &Texture.image) != VK_SUCCESS)
-      ExitWithError("Failed to create image", -12);
+      CustomIDE::Errors::ExitWithError("Failed to create image", -12);
 
   VkMemoryRequirements memoryRequirements = { 0 };
   vkGetImageMemoryRequirements(Device, Texture.image, &memoryRequirements);
@@ -90,13 +138,13 @@ void CreateTextureImage(VulkanTexture& Texture, uint32_t ImageWidth, uint32_t Im
   };
 
   if (vkAllocateMemory(Device, &memoryAllocateInfo, nullptr, &Texture.memory) != VK_SUCCESS)
-    ExitWithError("Failed to allocate memory for image", -14);
+    CustomIDE::Errors::ExitWithError("Failed to allocate memory for image", -14);
 
   if (vkBindImageMemory(Device, Texture.image, Texture.memory, 0) != VK_SUCCESS)
-    ExitWithError("Failed to bind image memory", -15);
+    CustomIDE::Errors::ExitWithError("Failed to bind image memory", -15);
 }
 
-void UpdateTextureImage(VulkanTexture& Texture, uint32_t ImageWidth, uint32_t ImageHeight,
+void Vulkan::UpdateTextureImage(Texture& Texture, uint32_t ImageWidth, uint32_t ImageHeight,
                         const VkFormat& TextureFormat, const void* pPixels,
                         const VkDevice& Device, const VkPhysicalDevice& PhysicalDevice,
                         const VkCommandBuffer* CommandBuffers, uint32_t CommandBufferIndex,
@@ -111,7 +159,7 @@ void UpdateTextureImage(VulkanTexture& Texture, uint32_t ImageWidth, uint32_t Im
   VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                      VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
-  VulkanBuffer stagingBuffer = CreateBuffer(imageSize, usage, properties, Device, PhysicalDevice);
+  Buffer stagingBuffer = CreateBuffer(imageSize, usage, properties, Device, PhysicalDevice);
 
   stagingBuffer.Update(Device, pPixels, imageSize);
 
@@ -129,7 +177,7 @@ void UpdateTextureImage(VulkanTexture& Texture, uint32_t ImageWidth, uint32_t Im
   stagingBuffer.Destroy(Device);
 }
 
-void TransitionImageLayout(VkImage& Image, VkFormat Format, VkImageLayout OldLayout, VkImageLayout NewLayout,
+void Vulkan::TransitionImageLayout(VkImage& Image, VkFormat Format, VkImageLayout OldLayout, VkImageLayout NewLayout,
                            const VkCommandBuffer* CommandBuffers, uint32_t CommandBufferIndex,
                            const VkQueue& GraphicsQueue) {
   BeginCommandBuffer(CommandBuffers[CommandBufferIndex], VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
@@ -139,7 +187,7 @@ void TransitionImageLayout(VkImage& Image, VkFormat Format, VkImageLayout OldLay
   SubmitCopyCommand(CommandBuffers, CommandBufferIndex, GraphicsQueue);
 }
 
-int GetBytesPerTextureFormat(const VkFormat& TextureFormat) {
+int Vulkan::GetBytesPerTextureFormat(const VkFormat& TextureFormat) {
   switch (TextureFormat) {
   case VK_FORMAT_R8_SINT:
   case VK_FORMAT_R8_UNORM:
@@ -156,15 +204,15 @@ int GetBytesPerTextureFormat(const VkFormat& TextureFormat) {
   case VK_FORMAT_R32G32B32A32_SFLOAT:
     return 4 * sizeof(float);
   default:
-    ExitWithError("Not support format", -16);
+    CustomIDE::Errors::ExitWithError("Not support format", -16);
   }
 
   return 0;
 }
 
-void CopyBufferToImage(const VkImage& Destination, VkBuffer Source, uint32_t ImageWidth,
-                       uint32_t ImageHeight, const VkCommandBuffer* CommandBuffers,
-                       uint32_t CommandBufferIndex, const VkQueue& GraphicsQueue) {
+void Vulkan::CopyBufferToImage(const VkImage& Destination, VkBuffer Source, uint32_t ImageWidth,
+                               uint32_t ImageHeight, const VkCommandBuffer* CommandBuffers,
+                               uint32_t CommandBufferIndex, const VkQueue& GraphicsQueue) {
   BeginCommandBuffer(CommandBuffers[CommandBufferIndex], VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
 	VkBufferImageCopy BufferImageCopy = {
@@ -187,7 +235,7 @@ void CopyBufferToImage(const VkImage& Destination, VkBuffer Source, uint32_t Ima
 	SubmitCopyCommand(CommandBuffers, CommandBufferIndex, GraphicsQueue);
 }
 
-void ImageMemoryBarrier(VkCommandBuffer CmdBuf, VkImage Image, VkFormat Format,
+void Vulkan::ImageMemoryBarrier(VkCommandBuffer CmdBuf, VkImage Image, VkFormat Format,
                         VkImageLayout OldLayout, VkImageLayout NewLayout) {
   VkImageMemoryBarrier barrier = {
 		.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
@@ -324,7 +372,7 @@ void ImageMemoryBarrier(VkCommandBuffer CmdBuf, VkImage Image, VkFormat Format,
 		destinationStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 	}
 	else {
-		ExitWithError("Unknown barrier case", 1);
+		CustomIDE::Errors::ExitWithError("Unknown barrier case", 1);
 	}
 
 	vkCmdPipelineBarrier(CmdBuf, sourceStage, destinationStage, 

@@ -6,35 +6,37 @@
 #include <string>
 #include "../helpers/errors/errors.hpp"
 
-// Image file magic numbers
-#define PNG_MAGIC_NUMBER_BYTE_AMOUNT 8
-#define BMP_MAGIC_NUMBER_BYTE_AMOUNT 2
-#define ICO_MAGIC_NUMBER_BYTE_AMOUNT 4
+namespace CustomIDE::IO {
 
-const uint8_t PNG_MAGIC_NUMBERS[] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
-const uint8_t BMP_MAGIC_NUMBERS[] = { 0x42, 0x4D };
-const uint8_t ICO_MAGIC_NUMBERS[] = { 0x00, 0x00, 0x01, 0x00 };
+// Image file magic numbers
+constexpr size_t PNG_MAGIC_NUMBER_BYTE_AMOUNT = 8;
+constexpr size_t BMP_MAGIC_NUMBER_BYTE_AMOUNT = 2;
+constexpr size_t ICO_MAGIC_NUMBER_BYTE_AMOUNT = 4;
+
+constexpr uint8_t PNG_MAGIC_NUMBERS[] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+constexpr uint8_t BMP_MAGIC_NUMBERS[] = { 0x42, 0x4D };
+constexpr uint8_t ICO_MAGIC_NUMBERS[] = { 0x00, 0x00, 0x01, 0x00 };
 
 // PNG Specific macros
-#define PNG_IHDR_CHUNK_SIGNATURE                    0x49484452
-#define PNG_sRGB_CHUNK_SIGNATURE                    0x73524742
-#define PNG_IDAT_CHUNK_SIGNATURE                    0x49444154
-#define PNG_IEND_CHUNK_SIGNATURE                    0x49454E44
+constexpr size_t PNG_IHDR_CHUNK_SIGNATURE                    = 0x49484452;
+constexpr size_t PNG_sRGB_CHUNK_SIGNATURE                    = 0x73524742;
+constexpr size_t PNG_IDAT_CHUNK_SIGNATURE                    = 0x49444154;
+constexpr size_t PNG_IEND_CHUNK_SIGNATURE                    = 0x49454E44;
 
 // ICO Specific macros
-#define ICO_DIR_OFFSET 6
-#define ICO_COMPRESSION_MEDTHOD_BI_RGB              0
-#define ICO_COMPRESSION_MEDTHOD_BI_RLE8             1
-#define ICO_COMPRESSION_MEDTHOD_BI_RLE4             2
-#define ICO_COMPRESSION_MEDTHOD_BI_BITFIELDS        3
-#define ICO_COMPRESSION_MEDTHOD_BI_JPEG             4
-#define ICO_COMPRESSION_MEDTHOD_BI_PNG              5
-#define ICO_COMPRESSION_MEDTHOD_BI_ALPHABITFIELDS   6
-#define ICO_COMPRESSION_MEDTHOD_BI_CMYK             11
-#define ICO_COMPRESSION_MEDTHOD_BI_CMYKRLE8         12
-#define ICO_COMPRESSION_MEDTHOD_BI_CMYKRLE4         13
+constexpr size_t ICO_DIR_OFFSET = 6;
+constexpr size_t ICO_COMPRESSION_MEDTHOD_BI_RGB              = 0;
+constexpr size_t ICO_COMPRESSION_MEDTHOD_BI_RLE8             = 1;
+constexpr size_t ICO_COMPRESSION_MEDTHOD_BI_RLE4             = 2;
+constexpr size_t ICO_COMPRESSION_MEDTHOD_BI_BITFIELDS        = 3;
+constexpr size_t ICO_COMPRESSION_MEDTHOD_BI_JPEG             = 4;
+constexpr size_t ICO_COMPRESSION_MEDTHOD_BI_PNG              = 5;
+constexpr size_t ICO_COMPRESSION_MEDTHOD_BI_ALPHABITFIELDS   = 6;
+constexpr size_t ICO_COMPRESSION_MEDTHOD_BI_CMYK             = 11;
+constexpr size_t ICO_COMPRESSION_MEDTHOD_BI_CMYKRLE8         = 12;
+constexpr size_t ICO_COMPRESSION_MEDTHOD_BI_CMYKRLE4         = 13;
 
-typedef uint32_t Pixel;
+using Pixel = uint32_t;
 
 int16_t s16(int8_t byte0, int8_t byte1);
 int32_t s32(int8_t byte0, int8_t byte1, int8_t byte2, int8_t byte3);
@@ -106,13 +108,17 @@ struct Image {
   }
 };
 
-std::vector<char> ReadBinaryFile(const std::string& filename);
+std::vector<uint8_t> ReadBinaryFile(const std::string& filename);
+
+std::string ReadTextFile(const std::string& filename);
+
+void WriteTextFile(const std::string& filename, const std::string& content);
 
 bool CompareByteValues(const std::vector<uint8_t>& Obj1, const uint8_t* Obj2, size_t BytesToCompare);
 
 bool ReadImageFile(const std::string &filename, std::vector<std::shared_ptr<Image>>& OutImages);
 
-std::shared_ptr<Image> ParsePNGData(const std::vector<char>& Data, uint32_t Offset);
+std::shared_ptr<Image> ParsePNGData(const std::vector<uint8_t>& Data, uint32_t Offset);
 
 int InflateDecoder(const std::vector<uint8_t>& Data, std::vector<uint8_t>& Output);
 
@@ -125,31 +131,20 @@ namespace PNG {
     TruecolourAlpha = 6
   };
 
-  constexpr int GetImageBitsPerPixel(uint8_t BitsPerChannel, ColourType ColourMode) {
-    switch (ColourMode) {
-      case ColourType::Grayscale:
-      case ColourType::Indexed:
-        return 1 * BitsPerChannel;
-      case ColourType::GrayscaleAlpha:
-        return 2 * BitsPerChannel;
-      case ColourType::Truecolour:
-        return 3 * BitsPerChannel;
-      case ColourType::TruecolourAlpha:
-        return 4 * BitsPerChannel;
-    }
-    ExitWithError("Invalid PNG Colour type", -23);
-  }
+  constexpr int GetImageBitsPerPixel(uint8_t BitsPerChannel, ColourType ColourMode);
 
   constexpr uint8_t ReconA(size_t ScanLine, size_t LineByteOffset, size_t Stride, int BytesPerPixel, const uint8_t* Output);
   constexpr uint8_t ReconB(size_t ScanLine, size_t LineByteOffset, size_t Stride, const uint8_t* Output);
   constexpr uint8_t ReconC(size_t ScanLine, size_t LineByteOffset, size_t Stride, int BytesPerPixel, const uint8_t* Output);
 
   constexpr uint8_t PaethPredictor(uint8_t A, uint8_t B, uint8_t C);
-}
+} // namespace PNG
 
-void ParseICOData(const std::vector<char>& Data, std::vector<std::shared_ptr<Image>>& OutImages);
+void ParseICOData(const std::vector<uint8_t>& Data, std::vector<std::shared_ptr<Image>>& OutImages);
 
-std::shared_ptr<Image> ParseBMPData(const std::vector<char>& Data, BITMAPINFOHEADER BitMapInfo, uint32_t Offset);
+std::shared_ptr<Image> ParseBMPData(const std::vector<uint8_t>& Data, BITMAPINFOHEADER BitMapInfo, uint32_t Offset);
+
+} // namespace CustomIDE::IO
 
 #endif
 

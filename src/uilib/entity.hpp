@@ -3,16 +3,37 @@
 
 #include <vector>
 #include <memory>
-#include "components.hpp"
+#include <optional>
+#include <type_traits>
+#include "components/component.hpp"
+
+// Need to include all types of component headers to know that they inherit from IComponent
+// so that AddComponent can create a new component pointer by pointing to the base IComponent class
+#include "components/transform.hpp"
+#include "components/image.hpp"
+#include "components/button.hpp"
+#include "components/label.hpp"
+#include "components/textBox.hpp"
+#include "components/mask.hpp"
+
+#include "ui.hpp"
+
+namespace CustomIDE::UI::ECS {
 
 class Entity {
 private:
   std::vector<std::shared_ptr<IComponent>> m_components;
   std::vector<std::shared_ptr<Entity>> m_children;
-  std::shared_ptr<Entity> m_parent;
+  Entity* m_parent;
+
+  template <class ComponentType, typename... Args>
+  void CreateComponent(Args&&... Parameters) {
+    m_components.push_back(std::make_shared<ComponentType>(std::forward<Args>(Parameters)...));
+  }
+
 
 public:
-  Entity(Vector2<UISize<float>> Size = {}, Vector2<UISize<float>> Position = {}, Entity* Parent = nullptr)
+  Entity(Vector2<UI::Size<float>> Size = {}, Vector2<UI::Size<float>> Position = {}, Entity* Parent = nullptr)
   : m_parent(Parent) {
     // By default every object will have a transform component
     // This can be manually removed if preferred
@@ -21,7 +42,13 @@ public:
 
   template <class ComponentType, typename... Args>
   void AddComponent(Args&&... Parameters) {
-    m_components.push_back(std::make_shared<ComponentType>(std::forward<Args>(Parameters)...));
+    if (std::is_base_of_v<IInteractable, ComponentType> && GetInteractableComponent() != nullptr)
+      ReplaceComponent<IInteractable, ComponentType>(Parameters...);
+
+    if (std::is_base_of_v<IRenderable, ComponentType> && GetRenderableComponent() != nullptr)
+      ReplaceComponent<IRenderable, ComponentType>(Parameters...);
+
+    CreateComponent<ComponentType>(Parameters...);
   }
 
   template <class ComponentType>
@@ -42,6 +69,25 @@ public:
     return success;
   }
 
+  void RemoveComponentByIndex(size_t Index) {
+    if (Index >= m_components.size()) {
+      printf("[Warning]: Attempt to remove component using out of bounds index, call ignored");
+      return;
+    }
+
+    auto it = m_components.begin();
+    it += Index;
+    m_components.erase(it);
+  }
+
+  template <class PreviousComponent, class NewComponent, typename... NewComponentArgs>
+  void ReplaceComponent(NewComponentArgs... Parameters) {
+    std::optional<size_t> index = FindIndexOfComponentWithBase<PreviousComponent>();
+    // If previous component exists then remove it
+    if (index) RemoveComponentByIndex(index.value());
+    CreateComponent<NewComponent>(Parameters...);
+  }
+
   template <class ComponentType>
   ComponentType* GetComponent() {
     for (auto&& component : m_components) {
@@ -53,12 +99,48 @@ public:
     return nullptr;
   }
 
-  std::shared_ptr<Entity> GetParent() {
+  template <class BaseType>
+  std::optional<size_t> FindIndexOfComponentWithBase() {
+    size_t index = 0;
+    for (auto&& component : m_components) {
+      if (dynamic_cast<BaseType*>(component.get())) {
+        return index;
+      }
+      index++;
+    }
+
+    // No component found
+    return std::nullopt;
+  }
+
+  IInteractable* GetInteractableComponent() {
+    for (auto&& component : m_components) {
+      auto interactable = dynamic_cast<IInteractable*>(component.get());
+      if (interactable != nullptr) {
+        return interactable ;
+      }
+    }
+
+    return nullptr;
+  }
+
+  IRenderable* GetRenderableComponent() {
+    for (auto&& component : m_components) {
+      auto renderable = dynamic_cast<IRenderable*>(component.get());
+      if (renderable != nullptr) {
+        return renderable;
+      }
+    }
+
+    return nullptr;
+  }
+
+  Entity* GetParent() {
     return m_parent;
   }
 
   void SetParent(Entity* Parent) {
-    m_parent = std::shared_ptr<Entity>(Parent);
+    m_parent = Parent;
   }
 
   void AddChild(const Entity& Child) {
@@ -81,7 +163,15 @@ public:
   size_t GetChildCount() {
     return m_children.size();
   }
+
+  void RenderEntity(EntityManager& Manager, Transform* Transform,
+      IRenderable* Renderable, Vector2<float> DrawArea, Vector2<float> DrawAreaOffset);
+
+  void RenderEntityAndChildren(EntityManager& Manager, Transform* Transform,
+      IRenderable* Renderable, Vector2<float> DrawArea, Vector2<float> DrawAreaOffset);
 };
+
+} // namespace UI::ECS
 
 #endif
 

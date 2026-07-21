@@ -7,6 +7,8 @@
 #include <vector>
 #include <string>
 
+namespace Vulkan {
+
 struct QueueFamilyIndicies {
   std::optional<uint32_t> graphicsFamily;
   std::optional<uint32_t> presentFamily;
@@ -65,6 +67,10 @@ VkShaderModule CreateShaderModule(const char* pCodeData, size_t CodeSize, const 
 
 std::string GetFileNameFromPath(const std::string& filePath, bool includeExtension = false);
 
+} // namespace Vulkan
+
+namespace CustomIDE {
+
 void CloseWindowCallback(GLFWwindow* window);
 
 void MouseButtonCallback(GLFWwindow* Window, int Button, int Action, int Mods);
@@ -76,6 +82,15 @@ void CursorPositionCallback(GLFWwindow* Window, double xpos, double ypos);
 void ToggleMaximiseCallback(GLFWwindow* Window);
 
 void MinimiseCallback(GLFWwindow* Window);
+
+void KeyCallback(GLFWwindow* Window, int Key, int Scancode, int Action, int Mods);
+
+void CharacterCallback(GLFWwindow* Window, unsigned int Codepoint);
+
+// TODO: Change entity pixel scaling based on scale content %
+//void WindowScaleContentCallback(GLFWwindow* Window, float XScale, float YScale);
+
+} // namespace CustomIDE
 
 #endif
 

@@ -2,15 +2,15 @@
 #include "../helpers/errors/errors.hpp"
 #include <cstring>
 
-void VulkanBuffer::Update(VkDevice Device, const void* pData, size_t Size) {
+void Vulkan::Buffer::Update(VkDevice Device, const void* pData, size_t Size) {
   void* pMemory = NULL;
   if (vkMapMemory(Device, memory, 0, Size, 0, &pMemory) != VK_SUCCESS)
-    ExitWithError("Failed to map memory for buffer", -17);
+    CustomIDE::Errors::ExitWithError("Failed to map memory for buffer", -17);
   memcpy(pMemory, pData, Size);
   vkUnmapMemory(Device, memory);
 }
 
-void VulkanBuffer::Destroy(VkDevice Device) {
+void Vulkan::Buffer::Destroy(VkDevice Device) {
   if (buffer) {
     vkDestroyBuffer(Device, buffer, nullptr);
   }
@@ -20,9 +20,9 @@ void VulkanBuffer::Destroy(VkDevice Device) {
   }
 }
 
-VulkanBuffer CreateBuffer(const VkDeviceSize& Size, const VkBufferUsageFlags& Usage,
-                          const VkMemoryPropertyFlags& Properties, const VkDevice& Device,
-                          const VkPhysicalDevice& PhysicalDevice) {
+Vulkan::Buffer Vulkan::CreateBuffer(const VkDeviceSize& Size, const VkBufferUsageFlags& Usage,
+                                    const VkMemoryPropertyFlags& Properties, const VkDevice& Device,
+                                    const VkPhysicalDevice& PhysicalDevice) {
   VkBufferCreateInfo bufferInfo = {
     .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
     .size = Size,
@@ -30,10 +30,10 @@ VulkanBuffer CreateBuffer(const VkDeviceSize& Size, const VkBufferUsageFlags& Us
     .sharingMode = VK_SHARING_MODE_EXCLUSIVE
   };
 
-  VulkanBuffer buffer;
+  Buffer buffer;
 
   if (vkCreateBuffer(Device, &bufferInfo, nullptr, &buffer.buffer) != VK_SUCCESS)
-    ExitWithError("Failed to create buffer", -18);
+    CustomIDE::Errors::ExitWithError("Failed to create buffer", -18);
 
   VkMemoryRequirements memoryRequirements = { 0 };
   vkGetBufferMemoryRequirements(Device, buffer.buffer, &memoryRequirements);
@@ -50,15 +50,15 @@ VulkanBuffer CreateBuffer(const VkDeviceSize& Size, const VkBufferUsageFlags& Us
   };
 
   if (vkAllocateMemory(Device, &memoryAllocateInfo, nullptr, &buffer.memory) != VK_SUCCESS)
-    ExitWithError("Failed to allocate memory for image", -14);
+    CustomIDE::Errors::ExitWithError("Failed to allocate memory for image", -14);
 
   if (vkBindBufferMemory(Device, buffer.buffer, buffer.memory, 0) != VK_SUCCESS)
-    ExitWithError("Failed to bind image memory", -15);
+    CustomIDE::Errors::ExitWithError("Failed to bind image memory", -15);
 
   return buffer;
 }
 
-uint32_t GetMemoryTypeIndex(uint32_t MemoryTypeBitsMask, const VkMemoryPropertyFlags& RequiredMemoryPropertyFlags,
+uint32_t Vulkan::GetMemoryTypeIndex(uint32_t MemoryTypeBitsMask, const VkMemoryPropertyFlags& RequiredMemoryPropertyFlags,
                             const VkPhysicalDevice& PhysicalDevice) {
   VkPhysicalDeviceMemoryProperties memoryProperties;
   vkGetPhysicalDeviceMemoryProperties(PhysicalDevice, &memoryProperties);
@@ -73,8 +73,7 @@ uint32_t GetMemoryTypeIndex(uint32_t MemoryTypeBitsMask, const VkMemoryPropertyF
     if (isCurrentMemoryTypeSupported && hasRequiredMemoryProperties) return i;
   }
 
-  ExitWithError("No valid memory type found", -13);
+  CustomIDE::Errors::ExitWithError("No valid memory type found", -13);
   return -1;
 }
-
 

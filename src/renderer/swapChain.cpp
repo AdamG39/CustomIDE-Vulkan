@@ -2,7 +2,7 @@
 #include "vulkanCore.hpp"
 #include "../helpers/errors/errors.hpp"
 
-void SwapChain::RecreateSwapChain(VkRenderPass RenderPass) {
+void Vulkan::SwapChain::RecreateSwapChain(VkRenderPass RenderPass) {
   if (glfwWindowShouldClose(m_window)) { return; }
   vkDeviceWaitIdle(*m_device);
 
@@ -23,24 +23,24 @@ void SwapChain::RecreateSwapChain(VkRenderPass RenderPass) {
   CreateFramebuffers(RenderPass);
 }
 
-void SwapChain::CreateSwapChain() {
+void Vulkan::SwapChain::CreateSwapChain() {
   SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(*m_physicalDevice, *m_surface);
 
   VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.formats);
   VkPresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.presentModes);
   VkExtent2D extent = ChooseSwapExtent(swapChainSupport.capabilities, m_window);
 
-  uint32_t imageCount = swapChainSupport.capabilities.minImageCount;
+  m_imageCount = swapChainSupport.capabilities.minImageCount;
 
-  if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
-    imageCount = swapChainSupport.capabilities.maxImageCount;
+  if (swapChainSupport.capabilities.maxImageCount > 0 && m_imageCount > swapChainSupport.capabilities.maxImageCount) {
+    m_imageCount = swapChainSupport.capabilities.maxImageCount;
   }
 
   VkSwapchainCreateInfoKHR createInfo{};
   createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
   createInfo.surface = *m_surface;
 
-  createInfo.minImageCount = imageCount;
+  createInfo.minImageCount = m_imageCount;
   createInfo.imageFormat = surfaceFormat.format;
   createInfo.imageColorSpace = surfaceFormat.colorSpace;
   createInfo.imageExtent = extent;
@@ -70,18 +70,18 @@ void SwapChain::CreateSwapChain() {
   createInfo.oldSwapchain = VK_NULL_HANDLE;
 
   if (vkCreateSwapchainKHR(*m_device, &createInfo, nullptr, &m_swapChain) != VK_SUCCESS) {
-    ExitWithError("Failed to create swap chain!", -1);
+    CustomIDE::Errors::ExitWithError("Failed to create swap chain!", -1);
   }
 
-  vkGetSwapchainImagesKHR(*m_device, m_swapChain, &imageCount, nullptr);
-  m_swapChainImages.resize(imageCount);
-  vkGetSwapchainImagesKHR(*m_device, m_swapChain, &imageCount, m_swapChainImages.data());
+  vkGetSwapchainImagesKHR(*m_device, m_swapChain, &m_imageCount, nullptr);
+  m_swapChainImages.resize(m_imageCount);
+  vkGetSwapchainImagesKHR(*m_device, m_swapChain, &m_imageCount, m_swapChainImages.data());
 
   m_swapChainImageFormat = surfaceFormat.format;
   m_swapChainExtent = extent;
 }
 
-void SwapChain::CreateImageViews() {
+void Vulkan::SwapChain::CreateImageViews() {
   m_swapChainImageViews.resize(m_swapChainImages.size());
 
   for (size_t i = 0; i < m_swapChainImages.size(); i++) {
@@ -90,7 +90,7 @@ void SwapChain::CreateImageViews() {
   }
 }
 
-void SwapChain::CreateFramebuffers(VkRenderPass RenderPass) {
+void Vulkan::SwapChain::CreateFramebuffers(VkRenderPass RenderPass) {
   m_swapChainFramebuffers.resize(m_swapChainImageViews.size());
 
   for (size_t i = 0; i < m_swapChainImageViews.size(); i++) {
@@ -108,7 +108,7 @@ void SwapChain::CreateFramebuffers(VkRenderPass RenderPass) {
     framebufferInfo.layers = 1;
 
     if (vkCreateFramebuffer(*m_device, &framebufferInfo, nullptr, &m_swapChainFramebuffers[i]) != VK_SUCCESS) {
-      ExitWithError("Failed to create graphics pipeline!", -1);
+      CustomIDE::Errors::ExitWithError("Failed to create graphics pipeline!", -1);
     }
   }
 }

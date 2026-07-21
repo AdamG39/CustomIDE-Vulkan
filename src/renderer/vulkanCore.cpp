@@ -3,8 +3,10 @@
 #include <set>
 #include <string>
 #include <algorithm>
+#include <cstring>
+#include <limits>
 
-bool CheckValidationLayerSupport(const char* const* ValidationLayers, size_t LayersSize) {
+bool Vulkan::CheckValidationLayerSupport(const char* const* ValidationLayers, size_t LayersSize) {
   uint32_t layerCount;
   vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
@@ -30,8 +32,8 @@ bool CheckValidationLayerSupport(const char* const* ValidationLayers, size_t Lay
 }
 
 // Checks if the supplied GPU is suitable for this program
-bool IsDeviceSuitable(VkPhysicalDevice Device, VkSurfaceKHR Surface,
-                      const std::vector<const char*>& DeviceExtensions) {
+bool Vulkan::IsDeviceSuitable(VkPhysicalDevice Device, VkSurfaceKHR Surface,
+                              const std::vector<const char*>& DeviceExtensions) {
   QueueFamilyIndicies indicies = FindQueueFamilies(Device, Surface);
 
   bool extensionsSupported = CheckDeviceExtensionSupport(Device, DeviceExtensions.data(), DeviceExtensions.size());
@@ -45,8 +47,8 @@ bool IsDeviceSuitable(VkPhysicalDevice Device, VkSurfaceKHR Surface,
   return indicies.IsComplete() && extensionsSupported && swapChainAdequate;
 }
 
-bool CheckDeviceExtensionSupport(VkPhysicalDevice Device, const char* const* DeviceExtensions,
-                                 size_t ExtensionsCount) {
+bool Vulkan::CheckDeviceExtensionSupport(VkPhysicalDevice Device, const char* const* DeviceExtensions,
+                                         size_t ExtensionsCount) {
   uint32_t extensionCount;
   vkEnumerateDeviceExtensionProperties(Device, nullptr, &extensionCount, nullptr);
 
@@ -66,7 +68,7 @@ bool CheckDeviceExtensionSupport(VkPhysicalDevice Device, const char* const* Dev
 }
 
 // Find all queue families and check for compatabilities
-QueueFamilyIndicies FindQueueFamilies(VkPhysicalDevice Device, VkSurfaceKHR Surface) {
+Vulkan::QueueFamilyIndicies Vulkan::FindQueueFamilies(VkPhysicalDevice Device, VkSurfaceKHR Surface) {
   QueueFamilyIndicies indicies;
 
   uint32_t queueFamilyCount = 0;
@@ -99,7 +101,7 @@ QueueFamilyIndicies FindQueueFamilies(VkPhysicalDevice Device, VkSurfaceKHR Surf
   return indicies;
 }
 
-SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice Device, VkSurfaceKHR Surface) {
+Vulkan::SwapChainSupportDetails Vulkan::QuerySwapChainSupport(VkPhysicalDevice Device, VkSurfaceKHR Surface) {
   SwapChainSupportDetails details;
 
   vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Device, Surface, &details.capabilities);
@@ -123,7 +125,7 @@ SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice Device, VkSurface
   return details;
 }
 
-VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& AvailableFormats) {
+VkSurfaceFormatKHR Vulkan::ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& AvailableFormats) {
   for (const auto& availableFormat : AvailableFormats) {
     if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && 
         availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
@@ -134,7 +136,7 @@ VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>
   return AvailableFormats[0];
 }
 
-VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& AvailablePresentModes) {
+VkPresentModeKHR Vulkan::ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& AvailablePresentModes) {
   for (const auto& availablePresentMode : AvailablePresentModes) {
     if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
       return availablePresentMode;
@@ -144,29 +146,29 @@ VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& Avai
   return VK_PRESENT_MODE_FIFO_KHR;
 }
 
-VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& Capabilities, GLFWwindow* Window) {
+VkExtent2D Vulkan::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& Capabilities, GLFWwindow* Window) {
   if (Capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
     return Capabilities.currentExtent;
-  } else {
-    int width = 0;
-    int height = 0;
-    glfwGetFramebufferSize(Window, &width, &height);
+  } 
 
-    VkExtent2D actualExtent = {
-      static_cast<uint32_t>(width),
-      static_cast<uint32_t>(height)
-    };
+  int width = 0;
+  int height = 0;
+  glfwGetFramebufferSize(Window, &width, &height);
 
-    actualExtent.width = std::clamp(actualExtent.width, 
-        Capabilities.minImageExtent.width, Capabilities.maxImageExtent.width);
-    actualExtent.height = std::clamp(actualExtent.height, 
-        Capabilities.minImageExtent.height, Capabilities.maxImageExtent.height);
+  VkExtent2D actualExtent = {
+    static_cast<uint32_t>(width),
+    static_cast<uint32_t>(height)
+  };
 
-    return actualExtent;
-  }
+  actualExtent.width = std::clamp(actualExtent.width, 
+      Capabilities.minImageExtent.width, Capabilities.maxImageExtent.width);
+  actualExtent.height = std::clamp(actualExtent.height, 
+      Capabilities.minImageExtent.height, Capabilities.maxImageExtent.height);
+
+  return actualExtent;
 }
 
-void BeginCommandBuffer(VkCommandBuffer CommandBuffer, VkCommandBufferUsageFlags UsageFlags) {
+void Vulkan::BeginCommandBuffer(VkCommandBuffer CommandBuffer, VkCommandBufferUsageFlags UsageFlags) {
 	VkCommandBufferBeginInfo beginInfo = {
 		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
 		.pNext = NULL,
@@ -175,11 +177,11 @@ void BeginCommandBuffer(VkCommandBuffer CommandBuffer, VkCommandBufferUsageFlags
 	};
 
   if (vkBeginCommandBuffer(CommandBuffer, &beginInfo) != VK_SUCCESS)
-    ExitWithError("Failed to start command buffer", -19);
+    CustomIDE::Errors::ExitWithError("Failed to start command buffer", -19);
 }
 
-void SubmitCopyCommand(const VkCommandBuffer* CommandBuffers, uint32_t CommandBufferIndex,
-                       const VkQueue& GraphicsQueue) {
+void Vulkan::SubmitCopyCommand(const VkCommandBuffer* CommandBuffers, uint32_t CommandBufferIndex,
+                               const VkQueue& GraphicsQueue) {
   vkEndCommandBuffer(CommandBuffers[CommandBufferIndex]);
 
   VkSubmitInfo submitInfo = {
@@ -195,13 +197,13 @@ void SubmitCopyCommand(const VkCommandBuffer* CommandBuffers, uint32_t CommandBu
 	};
 
 	if (vkQueueSubmit(GraphicsQueue, 1, &submitInfo, NULL) != VK_SUCCESS)
-    ExitWithError("Failed to submit queue", 1);
+    CustomIDE::Errors::ExitWithError("Failed to submit queue", 1);
 
   vkQueueWaitIdle(GraphicsQueue);
 }
 
-VkImageView CreateImageView(VkDevice Device, VkImage Image, VkFormat Format,
-                            VkImageAspectFlags AspectFlags) {
+VkImageView Vulkan::CreateImageView(VkDevice Device, VkImage Image, VkFormat Format,
+                                    VkImageAspectFlags AspectFlags) {
   VkImageViewCreateInfo viewInfo = {
 		.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
 		.pNext = NULL,
@@ -226,11 +228,11 @@ VkImageView CreateImageView(VkDevice Device, VkImage Image, VkFormat Format,
 
 	VkImageView ImageView;
 	if (vkCreateImageView(Device, &viewInfo, NULL, &ImageView) != VK_SUCCESS)
-    ExitWithError("Failed to create image view", 1);
+    CustomIDE::Errors::ExitWithError("Failed to create image view", 1);
 	return ImageView;
 }
 
-VkSampler CreateTextureSampler(const VkDevice& Device, const VkFilter& MinFilter,
+VkSampler Vulkan::CreateTextureSampler(const VkDevice& Device, const VkFilter& MinFilter,
                                const VkFilter& MaxFilter, const VkSamplerAddressMode& AddressMode) {
   VkSamplerCreateInfo samplerInfo = {
 		.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -255,11 +257,11 @@ VkSampler CreateTextureSampler(const VkDevice& Device, const VkFilter& MinFilter
 
 	VkSampler Sampler;
 	if (vkCreateSampler(Device, &samplerInfo, VK_NULL_HANDLE, &Sampler) != VK_SUCCESS)
-    ExitWithError("Failed to create sampler", 1);
+    CustomIDE::Errors::ExitWithError("Failed to create sampler", 1);
 	return Sampler;
 }
 
-VkRenderPass CreateRenderPass(const VkFormat& SwapChainFormat, const VkDevice& Device) {
+VkRenderPass Vulkan::CreateRenderPass(const VkFormat& SwapChainFormat, const VkDevice& Device) {
   VkAttachmentDescription colourAttachment{};
   colourAttachment.format = SwapChainFormat;
   colourAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -299,13 +301,13 @@ VkRenderPass CreateRenderPass(const VkFormat& SwapChainFormat, const VkDevice& D
   VkRenderPass renderPass;
 
   if (vkCreateRenderPass(Device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
-    ExitWithError("Failed to create render pass!", -1);
+    CustomIDE::Errors::ExitWithError("Failed to create render pass!", -1);
   }
 
   return renderPass;
 }
 
-VkShaderModule CreateShaderModule(const char* pCodeData, size_t CodeSize, const VkDevice& Device) {
+VkShaderModule Vulkan::CreateShaderModule(const char* pCodeData, size_t CodeSize, const VkDevice& Device) {
   VkShaderModuleCreateInfo createInfo{};
   createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
   createInfo.codeSize = CodeSize;
@@ -313,13 +315,13 @@ VkShaderModule CreateShaderModule(const char* pCodeData, size_t CodeSize, const 
 
   VkShaderModule shaderModule;
   if (vkCreateShaderModule(Device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
-    ExitWithError("Failed to create shader module", -1);
+    CustomIDE::Errors::ExitWithError("Failed to create shader module", -1);
   }
 
   return shaderModule;
 }
 
-std::string GetFileNameFromPath(const std::string& filePath, bool includeExtension) {
+std::string Vulkan::GetFileNameFromPath(const std::string& filePath, bool includeExtension) {
   size_t forwardSlash = filePath.find_last_of('/');
   size_t backSlash = filePath.find_last_of('\\');
 

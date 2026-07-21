@@ -1,68 +1,71 @@
-#include <stack>
 #include "ecs.hpp"
 
-std::vector<std::shared_ptr<Entity>>& EntityManager::GetEntityTree() {
+namespace CustomIDE {
+
+UI::ECS::EntityManager::EntityManager(std::weak_ptr<Vulkan::Renderer> Renderer) {
+  m_renderer = Renderer;
+}
+
+std::weak_ptr<Vulkan::Renderer> UI::ECS::EntityManager::GetRenderer() {
+  return m_renderer;
+}
+
+std::vector<std::shared_ptr<UI::ECS::Entity>>& UI::ECS::EntityManager::GetEntityTree() {
   return m_entityTree;
 }
 
-Entity& EntityManager::AddEntity() {
+const std::list<std::shared_ptr<UI::ECS::Entity>> UI::ECS::EntityManager::GetAllEntities() const {
+  std::list<std::shared_ptr<Entity>> result;
+
+  for (auto& entity : m_entityTree) {
+    result.push_back(entity);
+  }
+
+  auto it = result.begin();
+  while (it != result.end()) {
+    if ((*it)->GetChildCount() > 0) {
+      for (auto& entity : (*it)->GetChildren())
+        result.push_back(entity);
+    }
+    it++;
+  }
+
+  return result;
+}
+
+std::stack<ClipRect>& UI::ECS::EntityManager::GetClipStack() {
+  return m_clipStack;
+}
+
+UI::ECS::Entity& UI::ECS::EntityManager::AddEntity() {
   return *m_entityTree.emplace_back(std::make_shared<Entity>());
 }
 
-Entity& EntityManager::AddEntity(const Vector2<UISize<float>>& Size, const Vector2<UISize<float>>& Position) {
+UI::ECS::Entity& UI::ECS::EntityManager::AddEntity(const Vector2<UI::Size<float>>& Size, const Vector2<UI::Size<float>>& Position) {
   m_entityTree.emplace_back(std::make_shared<Entity>(Size, Position));
 
   return *m_entityTree.back();
 }
 
-void EntityManager::RemoveEntity(const size_t Index) {
+void UI::ECS::EntityManager::RemoveEntity(const size_t Index) {
   m_entityTree.erase(m_entityTree.begin() + Index);
 }
 
-void EntityManager::RenderTree() {
-  std::vector<Rect<float, float>> geometries;
+void UI::ECS::EntityManager::RenderTree(float framebufferWidth, float framebufferHeight) {
+  for (auto entity : m_entityTree) {
+    Transform* transform = entity->GetComponent<Transform>();
+    IRenderable* renderableComponent = entity->GetRenderableComponent();
+    Mask* maskComponent = entity->GetComponent<Mask>();
 
-  for (size_t i = 0; i < m_entityTree.size(); i++) {
-    std::stack<Entity*> entities;
-    entities.push(m_entityTree[i].get());
+    if (maskComponent != nullptr)
+      m_clipStack.push(maskComponent->GetClipArea());
 
-    while (!entities.empty()) {
-      Entity* top = entities.top();
-      entities.pop();
-      for (auto entity : top->GetChildren()) {
-        entities.push(entity.get());
-      }
+    entity->RenderEntityAndChildren(*this, transform, renderableComponent, Vector2(framebufferWidth, framebufferHeight), {0, 0});
 
-      Transform* transform = top->GetComponent<Transform>();
-      StaticColour* staticColour = top->GetComponent<StaticColour>();
-      Texture* texture = top->GetComponent<Texture>();
-      // An entity requires a colour/texture component and a transform to be renderered
-      if (transform == nullptr) continue; // Just skip this entity since it cant be renderered
-
-      if (staticColour != nullptr) {
-        geometries.emplace_back(transform->GetPixelSize(), transform->GetPixelPosition(), staticColour->GetColour());
-      } else if (texture != nullptr) {
-        geometries.emplace_back(transform->GetPixelSize(), transform->GetPixelPosition(), COLOUR_WHITE);
-        geometries.back().SetTextureCoords(texture->GetTextureCoords());
-        geometries.back().SetTextureIndex(texture->GetTextureIndex());
-      }
-      // Dont do anything if either condition isnt met
-    }
+    if (maskComponent != nullptr)
+      m_clipStack.pop();
   }
-
-  std::vector<Triangle<float, float>> tris;
-
-  for (size_t i = 0; i < geometries.size(); i++) {
-    std::array<Triangle<float, float>, 2> temp = geometries[i].GetTris();
-    tris.push_back(temp[0]);
-    tris.push_back(temp[1]);
-  }
-
-  std::vector<TextureArrayBounds> textureIndexArrayBounds;
-  // Order each triangle based on its zIndex then convert each triangle into its vertices
-  auto vertices = TriVectorToSortedVertexVector(tris, textureIndexArrayBounds);
-
-  if (vertices.size() != 0)
-    m_renderer.FillVertexBuffer(vertices, textureIndexArrayBounds);
 }
+
+} // namespace CustomIDE
 

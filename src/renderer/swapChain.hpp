@@ -6,12 +6,15 @@
 #include <memory>
 #include <vector>
 
+namespace Vulkan {
+
 class SwapChain {
 private:
   GLFWwindow* m_window;
   std::shared_ptr<VkDevice> m_device;
   std::shared_ptr<VkPhysicalDevice> m_physicalDevice;
   std::shared_ptr<VkSurfaceKHR> m_surface;
+  uint32_t m_imageCount;
 
   VkSwapchainKHR m_swapChain;
   std::vector<VkImage> m_swapChainImages;
@@ -54,7 +57,10 @@ public:
   VkExtent2D GetExtent() const { return m_swapChainExtent; }
   std::vector<VkImageView> GetImageViews() const { return m_swapChainImageViews; }
   std::vector<VkFramebuffer> GetFramebuffers() const { return m_swapChainFramebuffers; }
+  uint32_t GetImageCount() const { return m_imageCount; }
 };
+
+} // namespace Vulkan
 
 #endif
 

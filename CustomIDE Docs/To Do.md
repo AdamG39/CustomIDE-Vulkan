@@ -1,8 +1,15 @@
-- Implement text rendering (Just display prerendered text for the appropriate scale)
+- Add ability to set a custom scissor area for scrollable elements
 - Implement text editing
-	- Define text storage system
-	- Handle adding text
-	- Handle removing text
-	- Handle word wrap
-	- Handle text navigation
-	- Allow for text copy and paste
+	- Handle mouse interaction with text box
+		- Handle text cursor move to the closest text position to the mouse
+		- Handle drag selection using the mouse
+	- Handle undo/redo
+- Rework ECS system
+	- Better setting of size and position of an entity making relative calculations easier (see unity for examples on good implementation)
+	- Create helper functions for complex elements
+		- Panel
+		- Dropdown (button that shows/hides a panel)
+- Improve event system
+	- Allow entities to subscribe to specific events
+	- Keep a list of all the entities subscribed on each channel
+	- Use the list of subscribed entities for the specific channel for which an event is produced
