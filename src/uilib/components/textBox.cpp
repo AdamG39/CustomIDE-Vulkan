@@ -417,15 +417,25 @@ void UI::ECS::TextBox::UpdateSelection(int PreviousPosition) {
       break;
     case Left:
       if (m_cursor.Position > m_textSelection.start + m_textSelection.length) m_selectionDirection = Right;
-      m_textSelection.start = m_cursor.Position;
-      m_textSelection.length += PreviousPosition - m_cursor.Position;
+
+      // Still moving to the left
+      if (m_selectionDirection == Left) {
+        m_textSelection.start = m_cursor.Position;
+        m_textSelection.length += PreviousPosition - m_cursor.Position;
+      }
+
+      // Now moving to the right
+      else {
+        m_textSelection.start += m_textSelection.length;
+        m_textSelection.length = m_cursor.Position - m_textSelection.start;
+      }
       break;
     case Right:
       if (m_cursor.Position < m_textSelection.start) m_selectionDirection = Left;
       int difference = m_cursor.Position - PreviousPosition;
 
       // Still moving to the right
-      if (difference >= 0)
+      if (m_selectionDirection == Right)
         m_textSelection.length += difference;
 
       // Now moving to the left
