@@ -12,8 +12,8 @@ Vector2<UI::Size<float>> UI::ECS::Transform::GetSize() const {
   return m_size;
 }
 
-Vector2<float> UI::ECS::Transform::RecalculateEntitySize(float ParentWidth, float ParentHeight) {
-  Vector2<float> calculatedSize;
+Vector2D UI::ECS::Transform::RecalculateEntitySize(float ParentWidth, float ParentHeight) {
+  Vector2D calculatedSize;
 
   if (m_size.x.Mode == SizeMode::Proportional) {
     calculatedSize.x = ParentWidth * m_size.x.Value;
@@ -27,7 +27,7 @@ Vector2<float> UI::ECS::Transform::RecalculateEntitySize(float ParentWidth, floa
   return calculatedSize;
 }
 
-Vector2<float> UI::ECS::Transform::GetPixelSize() const {
+Vector2D UI::ECS::Transform::GetPixelSize() const {
   return m_pixelSize;
 }
 
@@ -41,9 +41,9 @@ Vector2<UI::Size<float>> UI::ECS::Transform::GetPosition() const {
 
 // TODO: can child object can only use center anchor
 // change to allow better calculation of objects based on parents and anchors
-Vector2<float> UI::ECS::Transform::RecalculateEntityPosition(Vector2<float> ParentSize, 
-    Vector2<float> ParentPosition, const UI::AnchorType& Anchor) {
-  Vector2<float> calculatedPosition;
+Vector2D UI::ECS::Transform::RecalculateEntityPosition(Vector2D ParentSize, 
+    Vector2D ParentPosition, const UI::AnchorType& Anchor) {
+  Vector2D calculatedPosition;
 
   switch (Anchor) {
     case UI::AnchorType::Center:
@@ -98,7 +98,7 @@ Vector2<float> UI::ECS::Transform::RecalculateEntityPosition(Vector2<float> Pare
   return calculatedPosition;
 }
 
-Vector2<float> UI::ECS::Transform::GetPixelPosition() const {
+Vector2D UI::ECS::Transform::GetPixelPosition() const {
   return m_pixelPosition;
 }
 

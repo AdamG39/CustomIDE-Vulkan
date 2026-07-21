@@ -243,7 +243,7 @@ void Application::CreateUIElements() {
 
   textBoxBackground.AddComponent<UI::ECS::Image>(THEME_DARK_COLOUR_1);
 
-  textBoxBackground.AddChild(UI::ECS::Entity(Vector2<UI::Size<float>>({600.f, 600.f}),
+  textBoxBackground.AddChild(UI::ECS::Entity(Vector2<UI::Size<float>>({1.f, UI::SizeMode::Proportional}, {1.f, UI::SizeMode::Proportional}),
                                              Vector2<UI::Size<float>>({30.f, 80.f})));
 
   std::shared_ptr textBox = textBoxBackground.GetChild(0);
@@ -252,7 +252,9 @@ void Application::CreateUIElements() {
   
   textBox->AddComponent<UI::ECS::TextBox>(font, "../src/app.cpp");
 
-  m_eventManager->RegisterEventListener(textBox.get(), EventSystem::EventType::Keyboard | EventSystem::EventType::Character);
+  textBox->AddComponent<UI::ECS::TextInteraction>(*textBox->GetComponent<UI::ECS::TextBox>(), m_renderer->GetWindow());
+
+  m_eventManager->RegisterEventListener(textBox.get(), EventSystem::EventType::Keyboard | EventSystem::EventType::Character | EventSystem::EventType::Mouse);
 
   textBox->AddComponent<UI::ECS::Mask>(ClipRect{.clippingEnabled = true,
       .rect = {.xOffset = 1280, .yOffset = 716, .width = 2534, .height = 1322}});

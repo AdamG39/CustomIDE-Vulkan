@@ -527,5 +527,31 @@ std::string UI::ECS::TextBox::GetContent() const {
   void UI::ECS::TextBox::DebugPrint() { m_table.DebugPrint(); }
 #endif // _DEBUG
 
+int UI::ECS::TextInteraction::GetType() { return TypeValue(); }
+
+UI::ECS::TextInteraction::TextInteraction(const TextBox& TextBox, GLFWwindow* Window) : m_textBox(TextBox) {
+  AddAction("OnPress", &OnPress, Window);
+  AddAction("OnRelease", &OnRelease, Window);
+}
+
+void UI::ECS::TextInteraction::OnPress(GLFWwindow* Window) {
+  Vector2<double> mousePosition;
+
+  glfwGetCursorPos(Window, &mousePosition.x, &mousePosition.y);
+
+  printf("clicked within a text box!\n");
+
+  // TODO: Find closest point to mouse cursor
+  // Move text cursor to that position
+
+  // TODO: Handle drag selection
+  // Automatically start drag selecting on click and if the mouse didnt move stop selecting
+  // Otherwise if the mouse moved select the region
+}
+
+void UI::ECS::TextInteraction::OnRelease(GLFWwindow* Window) {
+
+}
+
 } // namespace CustomIDE
 

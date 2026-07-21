@@ -84,6 +84,24 @@ public:
 #endif // _DEBUG
 };
 
+class TextInteraction : public IInteractable {
+private:
+  const TextBox& m_textBox;
+
+  void MoveTextCursorToMousePosition();
+  void DragSelect(); // ?
+
+public:
+  static int TypeValue() { return TypeTextInteraction; }
+  int GetType() override;
+
+  TextInteraction(const TextBox& TextBox, GLFWwindow* Window);
+
+  static void OnPress(GLFWwindow* Window);
+
+  static void OnRelease(GLFWwindow* Window);
+};
+
 } // namespace UI::ECS
 
 #endif

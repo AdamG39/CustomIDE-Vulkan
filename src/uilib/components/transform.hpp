@@ -28,18 +28,18 @@ public:
 
   Vector2<UI::Size<float>> GetSize() const;
 
-  Vector2<float> RecalculateEntitySize(float ParentWidth, float ParentHeight);
+  Vector2D RecalculateEntitySize(float ParentWidth, float ParentHeight);
 
-  Vector2<float> GetPixelSize() const;
+  Vector2D GetPixelSize() const;
 
   void SetPosition(const Vector2<UI::Size<float>>& Position);
 
   Vector2<UI::Size<float>> GetPosition() const;
 
-  Vector2<float> RecalculateEntityPosition(Vector2<float> ParentSize, 
-    Vector2<float> ParentPosition, const UI::AnchorType& Anchor);
+  Vector2D RecalculateEntityPosition(Vector2D ParentSize, 
+    Vector2D ParentPosition, const UI::AnchorType& Anchor);
 
-  Vector2<float> GetPixelPosition() const;
+  Vector2D GetPixelPosition() const;
 
   void SetAnchor(const UI::AnchorType& AnchorValue);
 

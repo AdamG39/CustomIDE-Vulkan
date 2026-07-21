@@ -15,6 +15,7 @@ enum ComponentTypes{
   TypeButton,
   TypeLabel,
   TypeTextBox,
+  TypeTextInteraction,
   TypeMask
 };
 
