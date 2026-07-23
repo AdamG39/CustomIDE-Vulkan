@@ -32,7 +32,7 @@ bool EventSystem::EventHandler::HandleMouseEvent(const EventInfo& Info) {
 
       if (transform == nullptr || button == nullptr) continue;
 
-      if (CursorOverlap(Info.MouseInfo.Position, transform->GetPixelSize(), transform->GetPixelPosition())) {
+      if (CursorOverlap(Info.MouseInfo.Position, transform->GetGlobalSize(), transform->GetGlobalPosition())) {
         if (Info.MouseInfo.Action == GLFW_PRESS && button->HasAction("OnPress")) button->ExecAction("OnPress"); 
         else if (Info.MouseInfo.Action == GLFW_RELEASE && button->HasAction("OnRelease")) button->ExecAction("OnRelease");
         return true;

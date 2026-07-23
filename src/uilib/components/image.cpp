@@ -6,9 +6,9 @@ namespace CustomIDE {
 
 int UI::ECS::Image::GetType() { return TypeValue(); }
 
-void UI::ECS::Image::Render(EntityManager& Manager, const Transform* Transform) {
-  auto pos = Transform->GetPixelPosition();
-  auto size = Transform->GetPixelSize();
+void UI::ECS::Image::Render(EntityManager& Manager, Transform* Transform) {
+  auto pos = Transform->GetGlobalPosition();
+  auto size = Transform->GetGlobalSize();
 
   ClipRect clipRect {.clippingEnabled = false};
   if (!Manager.GetClipStack().empty())

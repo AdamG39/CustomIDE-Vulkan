@@ -81,7 +81,7 @@ public:
   void SetDrawDepth(int DrawDepth) { m_drawDepth = DrawDepth; }
   int GetDrawDepth() { return m_drawDepth; }
 
-  virtual void Render(EntityManager& Manager, const Transform* Transform) = 0;
+  virtual void Render(EntityManager& Manager, Transform* Transform) = 0;
 };
 
 class IText : public IRenderable {

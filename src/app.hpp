@@ -247,7 +247,8 @@ public:
   std::weak_ptr<UI::ECS::EntityManager> GetEntityManager() const;
   std::weak_ptr<EventSystem::EventManager> GetEventManager() const;
 
-  void CreateUIElements();
+  void CreateElements();
+  void RecalculateElements();
 
 private:
   static Application* s_instance;

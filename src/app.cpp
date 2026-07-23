@@ -49,7 +49,7 @@ void Application::InitApplication() {
   framebufferWidth = m_windowWidth;
   framebufferHeight = m_windowHeight;
 
-  CreateUIElements();
+  CreateElements();
 
   m_cursorObjects["DEFAULT"] = nullptr;
   m_cursorObjects["HRESIZE"] = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
@@ -76,7 +76,7 @@ void Application::RunApplication() {
 
     m_eventManager->HandleEvents();
 
-    m_entityManager->RenderTree(m_windowWidth, m_windowHeight);
+    m_entityManager->RenderTree();
 
     m_renderer->DrawFrame();
 
@@ -201,54 +201,60 @@ void Application::HandleDragging() {
   }
 }*/
 
-void Application::CreateUIElements() {
-  UI::ECS::Entity& titleBar = m_entityManager->AddEntity(Vector2<UI::Size<float>>({1.0f, UI::SizeMode::Proportional}, {40.0f}),
-                                                         Vector2<UI::Size<float>>({0.0f}, {20.0f}));
+void Application::CreateElements() {
+  UI::ECS::Entity& titleBar = m_entityManager->AddEntity(Vector2D({1.0f, 40.0f}),
+                                                         Vector2D({0.0f, 20.0f}));
 
-  titleBar.GetComponent<UI::ECS::Transform>()->SetAnchor(UI::AnchorType::Top);
+  titleBar.GetComponent<UI::ECS::Transform>()->SetAnchorPreset(UI::AnchorPresets::STRETCH_TOP);
 
   titleBar.AddComponent<UI::ECS::Image>(THEME_DARK_COLOUR_1);
 
-  UI::ECS::Entity& closeButton = m_entityManager->AddEntity(Vector2<UI::Size<float>>({50.f}, {40.f}),
-                                                            Vector2<UI::Size<float>>({-25.f}, {20.f}));
+  titleBar.AddChild(UI::ECS::Entity(Vector2D{50.f, 40.f},
+                                    Vector2D{-25.f, 20.f}));
 
-  closeButton.GetComponent<UI::ECS::Transform>()->SetAnchor(UI::AnchorType::TopRight);
+  std::shared_ptr closeButton = titleBar.GetLastChild();
 
-  closeButton.AddComponent<UI::ECS::Image>(Colour(0xe81123, 1.f));
-  closeButton.AddComponent<UI::ECS::Button>();
-  closeButton.GetComponent<UI::ECS::Button>()->SetOnRelease(&glfwSetWindowShouldClose, m_renderer->GetWindow(), GLFW_TRUE);
+  closeButton->GetComponent<UI::ECS::Transform>()->SetAnchorPreset(UI::AnchorPresets::TOP_RIGHT);
+
+  closeButton->AddComponent<UI::ECS::Image>(Colour(0xe81123, 1.f));
+  closeButton->AddComponent<UI::ECS::Button>();
+  closeButton->GetComponent<UI::ECS::Button>()->SetOnRelease(&glfwSetWindowShouldClose, m_renderer->GetWindow(), GLFW_TRUE);
 
   // TODO: find a better solution for registering buttons for mouse events
-  m_eventManager->RegisterEventListener(&closeButton, EventSystem::EventType::Mouse);
+  m_eventManager->RegisterEventListener(closeButton.get(), EventSystem::EventType::Mouse);
 
-  closeButton.AddChild(UI::ECS::Entity(Vector2<UI::Size<float>>({10.f}, {10.f}),
-                                       Vector2<UI::Size<float>>({0.f, UI::SizeMode::Proportional}, {0.f, UI::SizeMode::Proportional})));
+  closeButton->AddChild(UI::ECS::Entity(Vector2D{10.f, 10.f},
+                                        Vector2D{0.f, 0.f}));
 
-  std::shared_ptr closeButtonCross = closeButton.GetChild(0);
+  std::shared_ptr closeButtonCross = closeButton->GetLastChild();
 
   closeButtonCross->AddComponent<UI::ECS::Image>(COLOUR_WHITE, 2);
 
-  UI::ECS::Entity& titleLabel = m_entityManager->AddEntity(Vector2<UI::Size<float>>({600.f, 40.f}),
-                                                           Vector2<UI::Size<float>>({20.f, 20.f}));
+  titleBar.AddChild(UI::ECS::Entity(Vector2D{600.f, 40.f}, Vector2D{305.f, 25.f}));
 
-  titleLabel.GetComponent<UI::ECS::Transform>()->SetAnchor(UI::AnchorType::TopLeft);
+  std::shared_ptr titleLabel = titleBar.GetLastChild();
+
+  titleLabel->GetComponent<UI::ECS::Transform>()->SetAnchorPreset(UI::AnchorPresets::TOP_LEFT);
 
   UI::Font font = CreateFont("../assets/unscii-alt-font-16.png", Colour(0xD4D6DE, 1.f));
 
-  titleLabel.AddComponent<UI::ECS::Label>(font, "CustomIDE | File | Edit");
+  titleLabel->AddComponent<UI::ECS::Label>(font, "CustomIDE | File | Edit");
 
-  UI::ECS::Entity& textBoxBackground = m_entityManager->AddEntity(Vector2<UI::Size<float>>({0.99f, UI::SizeMode::Proportional},
-                                                                  {0.95f, UI::SizeMode::Proportional}),
-                                                                  Vector2<UI::Size<float>>({0.f, 20.f}));
+  UI::ECS::Entity& textBoxBackground = m_entityManager->AddEntity(Vector2D{1.f, 1.f},
+                                                                  Vector2D{0.f, 20.f},
+                                                                  Vector4D{10.f, 50.f, 10.f, 10.f});
+
+  textBoxBackground.GetComponent<UI::ECS::Transform>()->SetAnchorPreset(UI::AnchorPresets::STRETCH_ALL);
 
   textBoxBackground.AddComponent<UI::ECS::Image>(THEME_DARK_COLOUR_1);
 
-  textBoxBackground.AddChild(UI::ECS::Entity(Vector2<UI::Size<float>>({1.f, UI::SizeMode::Proportional}, {1.f, UI::SizeMode::Proportional}),
-                                             Vector2<UI::Size<float>>({30.f, 80.f})));
+  textBoxBackground.AddChild(UI::ECS::Entity(Vector2D{1.f, 1.f},
+                                             Vector2D{0.f, 0.f},
+                                             Vector4D{10.f, 10.f, 10.f, 10.f}));
 
-  std::shared_ptr textBox = textBoxBackground.GetChild(0);
+  std::shared_ptr textBox = textBoxBackground.GetLastChild();
 
-  textBox->GetComponent<UI::ECS::Transform>()->SetAnchor(UI::AnchorType::TopLeft);
+  textBox->GetComponent<UI::ECS::Transform>()->SetAnchorPreset(UI::AnchorPresets::STRETCH_ALL);
   
   textBox->AddComponent<UI::ECS::TextBox>(font, "../src/app.cpp");
 
@@ -258,6 +264,12 @@ void Application::CreateUIElements() {
 
   textBox->AddComponent<UI::ECS::Mask>(ClipRect{.clippingEnabled = true,
       .rect = {.xOffset = 1280, .yOffset = 716, .width = 2534, .height = 1322}});
+
+  RecalculateElements();
+}
+
+void Application::RecalculateElements() {
+  m_entityManager->RecalculateTree();
 }
 
 bool CursorAtHorizontalBorder(double xpos, CustomIDE::ResizeSide& side) {

@@ -41,8 +41,8 @@ UI::ECS::Entity& UI::ECS::EntityManager::AddEntity() {
   return *m_entityTree.emplace_back(std::make_shared<Entity>());
 }
 
-UI::ECS::Entity& UI::ECS::EntityManager::AddEntity(const Vector2<UI::Size<float>>& Size, const Vector2<UI::Size<float>>& Position) {
-  m_entityTree.emplace_back(std::make_shared<Entity>(Size, Position));
+UI::ECS::Entity& UI::ECS::EntityManager::AddEntity(const Vector2D& Size, const Vector2D& Position, const Vector4D& Padding) {
+  m_entityTree.emplace_back(std::make_shared<Entity>(Size, Position, Padding));
 
   return *m_entityTree.back();
 }
@@ -51,7 +51,7 @@ void UI::ECS::EntityManager::RemoveEntity(const size_t Index) {
   m_entityTree.erase(m_entityTree.begin() + Index);
 }
 
-void UI::ECS::EntityManager::RenderTree(float framebufferWidth, float framebufferHeight) {
+void UI::ECS::EntityManager::RenderTree() {
   for (auto entity : m_entityTree) {
     Transform* transform = entity->GetComponent<Transform>();
     IRenderable* renderableComponent = entity->GetRenderableComponent();
@@ -60,10 +60,16 @@ void UI::ECS::EntityManager::RenderTree(float framebufferWidth, float framebuffe
     if (maskComponent != nullptr)
       m_clipStack.push(maskComponent->GetClipArea());
 
-    entity->RenderEntityAndChildren(*this, transform, renderableComponent, Vector2(framebufferWidth, framebufferHeight), {0, 0});
+    entity->RenderEntityAndChildren(*this, transform, renderableComponent);
 
     if (maskComponent != nullptr)
       m_clipStack.pop();
+  }
+}
+
+void UI::ECS::EntityManager::RecalculateTree() {
+  for (auto& entity : m_entityTree) {
+    entity->RecalculateEntity();
   }
 }
 

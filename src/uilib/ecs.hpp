@@ -28,11 +28,13 @@ public:
 
   Entity& AddEntity();
 
-  Entity& AddEntity(const Vector2<UI::Size<float>>& Size, const Vector2<UI::Size<float>>& Position);
+  Entity& AddEntity(const Vector2D& Size, const Vector2D& Position, const Vector4D& Padding = {});
 
   void RemoveEntity(size_t Index);
 
-  void RenderTree(float framebufferWidth, float framebufferHeight);
+  void RenderTree();
+
+  void RecalculateTree();
 };
 
 } // namespace UI::ECS

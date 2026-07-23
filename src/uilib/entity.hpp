@@ -31,14 +31,8 @@ private:
     m_components.push_back(std::make_shared<ComponentType>(std::forward<Args>(Parameters)...));
   }
 
-
 public:
-  Entity(Vector2<UI::Size<float>> Size = {}, Vector2<UI::Size<float>> Position = {}, Entity* Parent = nullptr)
-  : m_parent(Parent) {
-    // By default every object will have a transform component
-    // This can be manually removed if preferred
-    AddComponent<Transform>(Size, Position);
-  }
+  Entity(Vector2D Size = {}, Vector2D Position = {}, Vector4D Padding = {}, Entity* Parent = nullptr);
 
   template <class ComponentType, typename... Args>
   void AddComponent(Args&&... Parameters) {
@@ -145,7 +139,12 @@ public:
 
   void AddChild(const Entity& Child) {
     m_children.push_back(std::make_shared<Entity>(std::move(Child)));
-    m_children.back().get()->SetParent(this);
+    auto child = m_children.back();
+    child->SetParent(this);
+    Transform* transform = child->GetComponent<Transform>();
+    Transform* parentTransform = GetComponent<Transform>();
+
+    child->ReplaceComponent<Transform, Transform>(transform->GetPadding(), transform->GetLocalSize(), transform->GetLocalPosition(), parentTransform);
   }
 
   void RemoveChild(size_t Index) {
@@ -164,11 +163,15 @@ public:
     return m_children.size();
   }
 
-  void RenderEntity(EntityManager& Manager, Transform* Transform,
-      IRenderable* Renderable, Vector2<float> DrawArea, Vector2<float> DrawAreaOffset);
+  std::shared_ptr<Entity> GetLastChild() {
+    return m_children.back();
+  }
 
-  void RenderEntityAndChildren(EntityManager& Manager, Transform* Transform,
-      IRenderable* Renderable, Vector2<float> DrawArea, Vector2<float> DrawAreaOffset);
+  void RenderEntity(EntityManager& Manager, Transform* Transform, IRenderable* Renderable);
+
+  void RenderEntityAndChildren(EntityManager& Manager, Transform* Transform, IRenderable* Renderable);
+
+  void RecalculateEntity();
 };
 
 } // namespace UI::ECS

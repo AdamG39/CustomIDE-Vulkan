@@ -9,41 +9,52 @@ namespace CustomIDE::UI::ECS {
 
 class Transform : public IComponent {
 private:
-  Vector2<UI::Size<float>> m_size;
-  Vector2<UI::Size<float>> m_position;
-  UI::AnchorType m_anchor = UI::AnchorType::Center;
+  Transform* m_parentTransform;
 
-  Vector2D m_pixelSize;
-  Vector2D m_pixelPosition;
+  Vector2D m_position;
+  Vector2D m_size;
+  Vector4D m_padding;
+  Vector2D m_pivot;
+  UI::Anchor m_anchor;
+
+  Vector2<bool> m_recalculateGlobalRect;
+  Vector2D m_globalPosition;
+  Vector2D m_globalSize;
+
+  void GetParentGlobalRect(Vector2D& ParentPosition, Vector2D& ParentSize) const;
+
+  Vector2D CalculateGlobalPosition() const;
+  Vector2D CalculateGlobalSize() const;
 
 public:
   static int TypeValue() { return TypeTransform; }
   int GetType() override;
 
-  Transform() = default;
-  Transform(Vector2<UI::Size<float>> Size, Vector2<UI::Size<float>> Position)
-  : m_size(Size), m_position(Position), m_anchor(UI::AnchorType::Center) {}
+  Transform(const Vector2D& Size, const Vector2D& Position, Transform* ParentTransform);
+  Transform(const Vector4D& Padding, const Vector2D& Position, Transform* ParentTransform);
+  Transform(const Vector4D& Padding, const Vector2D& Size, const Vector2D& Position, Transform* ParentTransform);
 
-  void SetSize(const Vector2<UI::Size<float>>& Size);
+  Vector2D GetLocalPosition() const;
+  Vector2D GetGlobalPosition();
+  Vector2D GetGlobalPosition() const;
+  void SetLocalPosition(const Vector2D& Position);
 
-  Vector2<UI::Size<float>> GetSize() const;
+  Vector2D GetLocalSize() const;
+  Vector2D GetGlobalSize();
+  Vector2D GetGlobalSize() const;
+  void SetLocalSize(const Vector2D& Size);
 
-  Vector2D RecalculateEntitySize(float ParentWidth, float ParentHeight);
+  Vector4D GetPadding() const;
+  void SetPadding(const Vector4D& Padding);
 
-  Vector2D GetPixelSize() const;
+  void RecalculateTransform();
 
-  void SetPosition(const Vector2<UI::Size<float>>& Position);
+  Vector2D GetPivot() const;
+  void SetPivot(const Vector2D& Pivot);
 
-  Vector2<UI::Size<float>> GetPosition() const;
-
-  Vector2D RecalculateEntityPosition(Vector2D ParentSize, 
-    Vector2D ParentPosition, const UI::AnchorType& Anchor);
-
-  Vector2D GetPixelPosition() const;
-
-  void SetAnchor(const UI::AnchorType& AnchorValue);
-
-  UI::AnchorType GetAnchor() const;
+  UI::Anchor GetAnchor() const;
+  void SetAnchorPreset(const AnchorPresets::PresetID& Preset);
+  void SetCustomAnchor(const UI::Anchor& Anchor);
 };
 
 } // namespace UI::ECS

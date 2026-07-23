@@ -18,7 +18,7 @@ public:
   Image(const Colour& _Colour = Colour(), int TextureCoords = -1)
   : m_colour(_Colour), m_textureIndex(TextureCoords) {}
 
-  void Render(EntityManager& Manager, const Transform* Transform) override;
+  void Render(EntityManager& Manager, Transform* Transform) override;
 
   void SetColour(const Colour& Colour);
   Colour GetColour() const;

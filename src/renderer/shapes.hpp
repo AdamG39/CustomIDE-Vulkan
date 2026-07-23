@@ -23,25 +23,56 @@
 
 namespace CustomIDE {
 
-template <typename T>
+template <typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
 struct Vector2 {
   T x{};
   T y{};
 
   Vector2() = default;
 
-  Vector2(T X, T Y) : x(X), y(Y) {}
+  constexpr Vector2(T X, T Y) : x(X), y(Y) {}
 
-  Vector2<T>& operator*(const Vector2<T>& Other) {
-    this->x *= Other.x;
-    this->y *= Other.y;
-    return *this;
+  constexpr Vector2 operator+(const Vector2& Other) const {
+    return { this->x + Other.x, this->y + Other.y };
+  }
+  constexpr Vector2 operator-(const Vector2& Other) const {
+    return { this->x - Other.x, this->y -= Other.y };
+  }
+  constexpr Vector2 operator*(const Vector2& Other) const {
+    return { this->x * Other.x, this->y * Other.y };
+  }
+  constexpr Vector2 operator/(const Vector2& Other) const {
+    return { this->x / Other.x, this->y / Other.y };
+  }
+
+  constexpr bool operator==(const Vector2& Other) const {
+    return (this->x == Other.x) && (this->y == Other.y);
+  }
+  constexpr bool operator!=(const Vector2& Other) const {
+    return (this->x != Other.x) || (this->y != Other.y);
+  }
+
+  template <typename U, typename = std::enable_if_t<std::is_arithmetic_v<U> && std::is_convertible_v<U, T>>>
+  constexpr Vector2 operator+(U Other) const {
+    return { this->x + static_cast<T>(Other), this->y + static_cast<T>(Other) };
+  }
+  template <typename U, typename = std::enable_if_t<std::is_arithmetic_v<U> && std::is_convertible_v<U, T>>>
+  constexpr Vector2 operator-(U Other) const {
+    return { this->x - static_cast<T>(Other), this->y - static_cast<T>(Other) };
+  }
+  template <typename U, typename = std::enable_if_t<std::is_arithmetic_v<U> && std::is_convertible_v<U, T>>>
+  constexpr Vector2 operator*(U Other) const {
+    return { this->x * static_cast<T>(Other), this->y * static_cast<T>(Other) };
+  }
+  template <typename U, typename = std::enable_if_t<std::is_arithmetic_v<U> && std::is_convertible_v<U, T>>>
+  constexpr Vector2 operator/(U Other) const {
+    return { this->x / static_cast<T>(Other), this->y / static_cast<T>(Other) };
   }
 };
 
 using Vector2D = Vector2<float>;
 
-template <typename T>
+template <typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
 struct Vector3 {
   T x{};
   T y{};
@@ -49,25 +80,79 @@ struct Vector3 {
 
   Vector3() = default;
 
-  Vector3(T X, T Y, T Z) : x(X), y(Y), z(Z) {}
+  constexpr Vector3(T X, T Y, T Z) : x(X), y(Y), z(Z) {}
 
-  Vector3(const Vector2<T>& that) : x(that.x), y(that.y), z(0) {}
+  constexpr Vector3(const Vector2<T>& That) : x(That.x), y(That.y), z(0) {}
 
-  Vector3<T>& operator*(const Vector2<T>& Other) {
-    this->x *= Other.x;
-    this->y *= Other.y;
-    return *this;
+  constexpr Vector3 operator+(const Vector2<T>& Other) const {
+    return { this->x + Other.x, this->y + Other.y, this->z };
+  }
+  constexpr Vector3 operator+(const Vector3& Other) const {
+    return { this->x + Other.x, this->y + Other.y, this->z + Other.z };
+  }
+  constexpr Vector3 operator-(const Vector2<T>& Other) const {
+    return { this->x - Other.x, this->y - Other.y, this->z };
+  }
+  constexpr Vector3 operator-(const Vector3& Other) const {
+    return { this->x - Other.x, this->y - Other.y, this->z - Other.z };
+  }
+  constexpr Vector3 operator*(const Vector2<T>& Other) const {
+    return { this->x * Other.x, this->y * Other.y, this->z };
+  }
+  constexpr Vector3 operator*(const Vector3& Other) const {
+    return { this->x * Other.x, this->y * Other.y, this->z * Other.z };
+  }
+  constexpr Vector3 operator/(const Vector2<T>& Other) const {
+    return { this->x / Other.x, this->y / Other.y, this->z };
+  }
+  constexpr Vector3 operator/(const Vector3& Other) const {
+    return { this->x / Other.x, this->y / Other.y, this->z / Other.z };
   }
 
-  Vector3<T>& operator*(const Vector3<T>& Other) {
-    this->x *= Other.x;
-    this->y *= Other.y;
-    this->z *= Other.z;
-    return *this;
+  constexpr bool operator==(const Vector3& Other) const {
+    return (this->x == Other.x) && (this->y == Other.y) && (this->z == Other.z);
+  }
+  constexpr bool operator!=(const Vector3& Other) const {
+    return (this->x != Other.x) && (this->y != Other.y) && (this->z != Other.z);
+  }
+
+  template <typename U, typename = std::enable_if_t<std::is_arithmetic_v<U> && std::is_convertible_v<U, T>>>
+  constexpr Vector3 operator+(U Other) const {
+    return { this->x + static_cast<T>(Other), this->y + static_cast<T>(Other), this->z + static_cast<T>(Other) };
+  }
+  template <typename U, typename = std::enable_if_t<std::is_arithmetic_v<U> && std::is_convertible_v<U, T>>>
+  constexpr Vector3 operator-(U Other) const {
+    return { this->x - static_cast<T>(Other), this->y - static_cast<T>(Other), this->z - static_cast<T>(Other) };
+  }
+  template <typename U, typename = std::enable_if_t<std::is_arithmetic_v<U> && std::is_convertible_v<U, T>>>
+  constexpr Vector3 operator*(U Other) const {
+    return { this->x * static_cast<T>(Other), this->y * static_cast<T>(Other), this->z * static_cast<T>(Other) };
+  }
+  template <typename U, typename = std::enable_if_t<std::is_arithmetic_v<U> && std::is_convertible_v<U, T>>>
+  constexpr Vector3 operator/(U Other) const {
+    return { this->x / static_cast<T>(Other), this->y / static_cast<T>(Other), this->z / static_cast<T>(Other) };
   }
 };
 
 using Vector3D = Vector3<float>;
+
+template <typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
+struct Vector4 {
+  T x{};
+  T y{};
+  T z{};
+  T w{};
+
+  Vector4() = default;
+
+  constexpr Vector4(T X, T Y, T Z, T W) : x(X), y(Y), z(Z), w(W) {}
+
+  constexpr Vector4(const Vector2<T>& That) : x(That.x), y(That.y), z(0), w(0) {}
+
+  constexpr Vector4(const Vector3<T>& That) : x(That.x), y(That.y), z(That.z), w(0) {}
+};
+
+using Vector4D = Vector4<float>;
 
 struct Colour {
   float r, g, b, a;

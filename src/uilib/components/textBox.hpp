@@ -8,6 +8,10 @@ namespace CustomIDE::UI::ECS {
 
 class TextBox : public IText {
 private:
+  static constexpr int TAB_WIDTH = 4; // FIXME: Should be set using a configuration file instead
+
+  static constexpr int CHAR_SPACING = 0; // FIXME: Should be set using a configuration file instead
+  static constexpr int LINE_SPACING = 8; // FIXME: Should be set using a configuration file instead
 
   static constexpr float DEFAULT_WIDTH_MULTIPLIER = 0.125f;
   static constexpr float BLOCK_WIDTH_MULTIPLIER   = 1.0f;
