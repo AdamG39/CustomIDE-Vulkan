@@ -3,7 +3,7 @@
 
 namespace CustomIDE {
 
-UVRect2D UI::CalculateCharUV(Vector2<float> FontAtlasSize, char Character) {
+UVRect2D UI::CalculateCharUV(Vector2D FontAtlasSize, char Character) {
   Vector2 characterAtlasSize { 1.f / FontAtlasSize.x, 1.f / FontAtlasSize.y };
 
   return {

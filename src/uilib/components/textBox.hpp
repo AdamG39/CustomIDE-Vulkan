@@ -8,10 +8,6 @@ namespace CustomIDE::UI::ECS {
 
 class TextBox : public IText {
 private:
-  static constexpr int TAB_WIDTH = 4; // FIXME: Should be set using a configuration file instead
-
-  static constexpr int CHAR_SPACING = 0; // FIXME: Should be set using a configuration file instead
-  static constexpr int LINE_SPACING = 8; // FIXME: Should be set using a configuration file instead
 
   static constexpr float DEFAULT_WIDTH_MULTIPLIER = 0.125f;
   static constexpr float BLOCK_WIDTH_MULTIPLIER   = 1.0f;
@@ -34,8 +30,8 @@ private:
   SelectionDirection m_selectionDirection = None;
   TextSelection m_textSelection;
 
-  void RenderSelection(EntityManager& Manager, const Vector2D& TextObjPos);
-  void RenderCursor(EntityManager& Manager, const Vector2D& TextObjPos, const Vector2<int>& CursorPosition);
+  void RenderSelection(EntityManager& Manager, Transform* TextObjPos);
+  void RenderCursor(EntityManager& Manager, Transform* TextObjPos, const Vector2<int>& CursorPosition);
 
 public:
   static int TypeValue() { return TypeTextBox; }
@@ -43,7 +39,7 @@ public:
 
   TextBox(Font Font, std::string Filepath = "", bool WordWrap = false);
 
-  void Render(EntityManager& Manager, const Transform* Transform) override;
+  void Render(EntityManager& Manager, Transform* Transform) override;
 
   char Index(unsigned Position);
   void Insert(char Character, int Position);

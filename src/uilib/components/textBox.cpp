@@ -2,6 +2,7 @@
 #include "transform.hpp"
 #include "../ecs.hpp"
 #include "../../io/io.hpp"
+#include "../../helpers/text/textHelper.hpp"
 
 namespace CustomIDE {
 
@@ -16,12 +17,15 @@ UI::ECS::TextBox::TextBox(Font Font, std::string Filepath, bool WordWrap)
   m_cursor.Type = TextCursorType::DEFAULT;
 }
 
-void UI::ECS::TextBox::RenderSelection(EntityManager& Manager, const Vector2D& TextObjPos) {
+void UI::ECS::TextBox::RenderSelection(EntityManager& Manager, Transform* TextObjTransform) {
   size_t start = m_textSelection.start;
   size_t length = m_textSelection.length;
   size_t end = start + length;
 
   Font font = GetFont();
+
+  Vector2D textObjPos = TextObjTransform->GetGlobalPosition();
+  Vector2D textObjSize = TextObjTransform->GetGlobalSize();
 
   // find which line the selection starts on
   int firstLineStart = -1;
@@ -80,16 +84,19 @@ void UI::ECS::TextBox::RenderSelection(EntityManager& Manager, const Vector2D& T
 
   // Render all selection rects
   for (auto rect : selectionRects) {
-    rect.yOffset += TextObjPos.y;
-    rect.xOffset += TextObjPos.x;
+    rect.xOffset += textObjPos.x - (textObjSize.x / 2.f - font.size.x);
+    rect.yOffset += textObjPos.y - (textObjSize.y / 2.f - font.size.y);
     Manager.GetRenderer().lock()->DrawRect(
         rect,
         m_drawDepth, Colour(0x90D5FF, 0.5f));
   }
 }
 
-void UI::ECS::TextBox::RenderCursor(EntityManager& Manager, const Vector2D& TextObjPos, const Vector2<int>& CursorPosition) {
+void UI::ECS::TextBox::RenderCursor(EntityManager& Manager, Transform* TextObjTransform, const Vector2<int>& CursorPosition) {
   Font font = GetFont();
+
+  Vector2D textObjPos = TextObjTransform->GetGlobalPosition();
+  Vector2D textObjSize = TextObjTransform->GetGlobalSize();
 
   float widthMultiplier{};
 
@@ -128,9 +135,12 @@ void UI::ECS::TextBox::RenderCursor(EntityManager& Manager, const Vector2D& Text
   if (charSpacing & 1) charSpacing += 1; // Round to nearest even number
 
   Vector2D finalCursorPosition {
-    TextObjPos.x + (font.size.x * CursorPosition.x) + xOffset + (CursorPosition.x * charSpacing),
-    TextObjPos.y + (font.size.y * CursorPosition.y) + (CursorPosition.y * LINE_SPACING)
+    textObjPos.x + (font.size.x * CursorPosition.x) + xOffset + (CursorPosition.x * charSpacing),
+    textObjPos.y + (font.size.y * CursorPosition.y) + (CursorPosition.y * LINE_SPACING)
   };
+
+  finalCursorPosition.x -= textObjSize.x / 2.f - font.size.x;
+  finalCursorPosition.y -= textObjSize.y / 2.f - font.size.y;
 
   Manager.GetRenderer().lock()->DrawRect(
       Rect2D{ static_cast<int32_t>(finalCursorPosition.x), static_cast<int32_t>(finalCursorPosition.y),
@@ -138,91 +148,28 @@ void UI::ECS::TextBox::RenderCursor(EntityManager& Manager, const Vector2D& Text
       m_drawDepth, GetCursorColour());
 }
 
-void UI::ECS::TextBox::Render(EntityManager& Manager, const Transform* Transform) {
-  // calculate size of each character based on font
-  Font font = GetFont();
-  Vector2D textObjPos = Transform->GetPixelPosition();
-  Vector2D fontAtlasSize {64.f, 2.f};
-  std::string content = GetContent();
+void UI::ECS::TextBox::Render(EntityManager& Manager, Transform* Transform) {
+  Vector2<int> cursorPosition{};
 
-  int charsPerLine = int(Transform->GetPixelSize().x) / font.size.x;
-  // create a rect for each character
-  int linePosition = 0;
-  int lineCount = 0;
+  TextHelper::TextRenderSettings settings {
+    .Spacing = {
+      .TabWidth = 4,
+      .CharSpacing = 0,
+      .LineSpacing = 8
+    },
+    .Font = GetFont(),
+    .Content = GetContent(),
+    .DrawDepth = m_drawDepth,
+    .WordWrap = GetWordWrap()
+  };
 
-  int cursorIndexPosition = GetCursorPosition();
-  Vector2<int> cursorPosition;
-
-  for (size_t i = 0; i < content.size(); i++) {
-    if (cursorIndexPosition == i)
-      cursorPosition = { linePosition, lineCount };
-
-    switch (content[i]) {
-    case '\n':
-      lineCount++;
-      linePosition = 0;
-      continue;
-    case '\t':
-      linePosition += TAB_WIDTH;
-      if (GetWordWrap()) {
-        if (linePosition > charsPerLine) { 
-          lineCount++;
-          linePosition = 0;
-        }
-      }
-      continue;
-    case ' ':
-      linePosition++;
-      continue;
-    }
-
-    int32_t charSpacing{CHAR_SPACING};
-
-    // If not an even number integer division causes spacing to be handled incorrectly
-    if (charSpacing & 1) charSpacing += 1; // Round to nearest even number
-
-    Vector2D charPosition {
-      textObjPos.x + (font.size.x * linePosition) + (linePosition * charSpacing),
-      textObjPos.y + (lineCount * font.size.y) + (lineCount * LINE_SPACING)
-    };
-
-    linePosition++;
-
-    if (GetWordWrap()) {
-      if (linePosition > charsPerLine) { 
-        lineCount++;
-        linePosition = 0;
-      }
-    }
-
-    Colour textColour = font.colour;
-    if (cursorIndexPosition == i && m_cursor.Type == TextCursorType::BLOCK) {
-      textColour.r = 1.f - textColour.r;
-      textColour.g = 1.f - textColour.g;
-      textColour.b = 1.f - textColour.b;
-    }
-    auto imageIndex = Manager.GetRenderer().lock()->GetImageIndexFromName(font.familyName);
-    if (imageIndex < 0) Errors::ExitWithError("No image with that name found", -35);
-
-    ClipRect clipRect {};
-    if (!Manager.GetClipStack().empty())
-      clipRect = Manager.GetClipStack().top();
-
-    Manager.GetRenderer().lock()->DrawTexturedRectEx(
-        Rect2D{ static_cast<int32_t>(charPosition.x), static_cast<int32_t>(charPosition.y),
-                static_cast<uint32_t>(font.size.x), static_cast<uint32_t>(font.size.y) },
-        CalculateCharUV(fontAtlasSize, content[i]), m_drawDepth + 1, imageIndex, clipRect,
-        textColour);
-  }
+  TextHelper::RenderText(Manager, Transform, settings, &m_cursor, &cursorPosition);
 
   if (GetSelectionState()) {
-    RenderSelection(Manager, textObjPos);
+    RenderSelection(Manager, Transform);
   }
 
-  if (cursorIndexPosition == GetContent().size())
-    cursorPosition = { linePosition, lineCount };
-
-  RenderCursor(Manager, textObjPos, cursorPosition);
+  RenderCursor(Manager, Transform, cursorPosition);
 }
 
 char UI::ECS::TextBox::Index(unsigned Position) {

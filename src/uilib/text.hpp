@@ -100,7 +100,7 @@ public:
 #endif // _DEBUG
 };
 
-UVRect2D CalculateCharUV(Vector2<float> FontAtlasSize, char Character);
+UVRect2D CalculateCharUV(Vector2D FontAtlasSize, char Character);
 
 } // namespace UI
 

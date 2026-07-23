@@ -19,7 +19,7 @@ public:
     m_wordWrap = WordWrap;
   }
 
-  void Render(EntityManager& Manager, const Transform* Transform) override;
+  void Render(EntityManager& Manager, Transform* Transform) override;
 
   std::string GetContent() override;
   std::string GetContent() const override;
