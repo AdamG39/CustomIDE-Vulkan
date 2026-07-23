@@ -89,17 +89,17 @@ Vector2D UI::ECS::Transform::CalculateGlobalSize() const {
 }
 
 UI::ECS::Transform::Transform(const Vector2D& Size, const Vector2D& Position, Transform* ParentTransform)
-  : m_size(Size), m_position(Position), m_parentTransform(ParentTransform) {
+  : m_size(Size), m_position(Position), m_parentTransform(ParentTransform), m_recalculateGlobalRect({true, true}) {
   SetAnchorPreset(AnchorPresets::CENTER_CENTER);
 }
 
 UI::ECS::Transform::Transform(const Vector4D& Padding, const Vector2D& Position, Transform* ParentTransform)
-  : m_padding(Padding), m_position(Position), m_parentTransform(ParentTransform) {
+  : m_padding(Padding), m_position(Position), m_parentTransform(ParentTransform), m_recalculateGlobalRect({true, true}) {
   SetAnchorPreset(AnchorPresets::CENTER_CENTER);
 }
 
 UI::ECS::Transform::Transform(const Vector4D& Padding, const Vector2D& Size, const Vector2D& Position, Transform* ParentTransform)
-  : m_padding(Padding), m_size(Size), m_position(Position), m_parentTransform(ParentTransform) {
+  : m_padding(Padding), m_size(Size), m_position(Position), m_parentTransform(ParentTransform), m_recalculateGlobalRect({true, true}) {
   SetAnchorPreset(AnchorPresets::CENTER_CENTER);
 }
 

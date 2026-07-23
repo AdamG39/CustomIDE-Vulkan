@@ -210,11 +210,11 @@ void Application::CreateElements() {
   titleBar.AddComponent<UI::ECS::Image>(THEME_DARK_COLOUR_1);
 
   titleBar.AddChild(UI::ECS::Entity(Vector2D{50.f, 40.f},
-                                    Vector2D{-25.f, 20.f}));
+                                    Vector2D{-25.f, 0.f}));
 
   std::shared_ptr closeButton = titleBar.GetLastChild();
 
-  closeButton->GetComponent<UI::ECS::Transform>()->SetAnchorPreset(UI::AnchorPresets::TOP_RIGHT);
+  closeButton->GetComponent<UI::ECS::Transform>()->SetAnchorPreset(UI::AnchorPresets::CENTER_RIGHT);
 
   closeButton->AddComponent<UI::ECS::Image>(Colour(0xe81123, 1.f));
   closeButton->AddComponent<UI::ECS::Button>();
@@ -228,7 +228,7 @@ void Application::CreateElements() {
 
   std::shared_ptr closeButtonCross = closeButton->GetLastChild();
 
-  closeButtonCross->AddComponent<UI::ECS::Image>(COLOUR_WHITE, 2);
+  closeButtonCross->AddComponent<UI::ECS::Image>(COLOUR_WHITE, m_renderer->GetImageIndexFromName("cross"));
 
   titleBar.AddChild(UI::ECS::Entity(Vector2D{600.f, 40.f}, Vector2D{315.f, 13.f}));
 
