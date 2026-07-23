@@ -84,8 +84,8 @@ void UI::ECS::TextBox::RenderSelection(EntityManager& Manager, Transform* TextOb
 
   // Render all selection rects
   for (auto rect : selectionRects) {
-    rect.xOffset += textObjPos.x - (textObjSize.x / 2.f - font.size.x);
-    rect.yOffset += textObjPos.y - (textObjSize.y / 2.f - font.size.y);
+    rect.xOffset += textObjPos.x - ((textObjSize.x / 2.f) - (font.size.x / 2.f));
+    rect.yOffset += textObjPos.y - ((textObjSize.y / 2.f) - (font.size.y / 2.f));
     Manager.GetRenderer().lock()->DrawRect(
         rect,
         m_drawDepth, Colour(0x90D5FF, 0.5f));
@@ -139,8 +139,8 @@ void UI::ECS::TextBox::RenderCursor(EntityManager& Manager, Transform* TextObjTr
     textObjPos.y + (font.size.y * CursorPosition.y) + (CursorPosition.y * LINE_SPACING)
   };
 
-  finalCursorPosition.x -= textObjSize.x / 2.f - font.size.x;
-  finalCursorPosition.y -= textObjSize.y / 2.f - font.size.y;
+  finalCursorPosition.x -= (textObjSize.x / 2.f) - (font.size.x / 2.f);
+  finalCursorPosition.y -= (textObjSize.y / 2.f) - (font.size.y / 2.f);
 
   Manager.GetRenderer().lock()->DrawRect(
       Rect2D{ static_cast<int32_t>(finalCursorPosition.x), static_cast<int32_t>(finalCursorPosition.y),

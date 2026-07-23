@@ -49,8 +49,8 @@ void TextHelper::RenderText(UI::ECS::EntityManager& Manager, UI::ECS::Transform*
     };
 
     // Adjust to upper left corner instead of center of text element
-    charPosition.x -= textObjSize.x / 2.f - Settings.Font.size.x;
-    charPosition.y -= textObjSize.y / 2.f - Settings.Font.size.y;
+    charPosition.x -= (textObjSize.x / 2.f) - (Settings.Font.size.x / 2.f);
+    charPosition.y -= (textObjSize.y / 2.f) - (Settings.Font.size.y / 2.f);
 
     linePosition++;
 

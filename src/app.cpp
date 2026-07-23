@@ -230,11 +230,11 @@ void Application::CreateElements() {
 
   closeButtonCross->AddComponent<UI::ECS::Image>(COLOUR_WHITE, 2);
 
-  titleBar.AddChild(UI::ECS::Entity(Vector2D{600.f, 40.f}, Vector2D{305.f, 25.f}));
+  titleBar.AddChild(UI::ECS::Entity(Vector2D{600.f, 40.f}, Vector2D{315.f, 13.f}));
 
   std::shared_ptr titleLabel = titleBar.GetLastChild();
 
-  titleLabel->GetComponent<UI::ECS::Transform>()->SetAnchorPreset(UI::AnchorPresets::TOP_LEFT);
+  titleLabel->GetComponent<UI::ECS::Transform>()->SetAnchorPreset(UI::AnchorPresets::CENTER_LEFT);
 
   UI::Font font = CreateFont("../assets/unscii-alt-font-16.png", Colour(0xD4D6DE, 1.f));
 
@@ -263,7 +263,7 @@ void Application::CreateElements() {
   m_eventManager->RegisterEventListener(textBox.get(), EventSystem::EventType::Keyboard | EventSystem::EventType::Character | EventSystem::EventType::Mouse);
 
   textBox->AddComponent<UI::ECS::Mask>(ClipRect{.clippingEnabled = true,
-      .rect = {.xOffset = 1280, .yOffset = 716, .width = 2534, .height = 1322}});
+      .rect = {.xOffset = 1280, .yOffset = 716, .width = 2540, .height = 1336}});
 
   RecalculateElements();
 }
