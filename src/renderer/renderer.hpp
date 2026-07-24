@@ -47,7 +47,7 @@ public:
 
   void LoadImage(const std::string& Filepath, bool UpdateDescriptors = false);
 
-  long long GetImageIndexFromName(const std::string& FileName) const {
+  CustomIDE::TextureID GetImageIndexFromName(const std::string& FileName) const {
     auto pos = m_textures.Contains(FileName);
     return (pos != m_textures.Size()) ? pos : -1;
   }
