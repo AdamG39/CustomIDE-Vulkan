@@ -730,8 +730,6 @@ void Vulkan::Renderer::CreateSyncObjects() {
   }
 }
 
-#include <stdio.h>
-
 void Vulkan::Renderer::DrawFrame() {
   vkWaitForFences(m_device, 1, &m_inFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
   vkResetFences(m_device, 1, &m_inFlightFences[m_currentFrame]);
@@ -766,8 +764,6 @@ void Vulkan::Renderer::DrawFrame() {
 
   VkSubmitInfo submitInfo{};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-  //printf("imageIndex: %d, currentFrame: %d\n", imageIndex, m_currentFrame);
 
   VkSemaphore waitSemaphores[] = { m_imageAvailableSemaphores[imageIndex] };
   VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
