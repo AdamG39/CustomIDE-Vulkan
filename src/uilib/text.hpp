@@ -21,6 +21,8 @@ struct Font {
   TextType type = Normal;
 };
 
+Font CreateFont(const std::string& Filepath, const Colour& FontColour);
+
 enum class TextCursorType {
   DEFAULT,
   BLOCK,

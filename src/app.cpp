@@ -2,6 +2,7 @@
 #include "io/io.hpp"
 #include "helpers/errors/errors.hpp"
 #include "renderer/vulkanCore.hpp"
+#include "uilib/uiFactory.hpp"
 #include <GLFW/glfw3.h>
 #include <chrono>
 
@@ -48,6 +49,10 @@ void Application::InitApplication() {
   glfwSetWindowIcon(m_renderer->GetWindow(), appIcon.size(), appIcon.data());
   framebufferWidth = m_windowWidth;
   framebufferHeight = m_windowHeight;
+
+  UIFactory::SetEntityManager(m_entityManager);
+  UIFactory::SetEventManager(m_eventManager);
+  UIFactory::SetRenderer(m_renderer);
 
   CreateElements();
 
@@ -202,39 +207,11 @@ void Application::HandleDragging() {
 }*/
 
 void Application::CreateElements() {
-  UI::ECS::Entity& titleBar = m_entityManager->AddEntity(Vector2D({1.0f, 40.0f}),
-                                                         Vector2D({0.0f, 20.0f}));
+  UIFactory::TopBarSettings topBarSettings = UIFactory::DefaultTopBarSettings();
+  UIFactory::SetTopBarTitleSettings(topBarSettings.TitleSettings, "CustomIDE");
+  UIFactory::CreateTopBar(topBarSettings);
 
-  titleBar.GetComponent<UI::ECS::Transform>()->SetAnchorPreset(UI::AnchorPresets::STRETCH_TOP);
-
-  titleBar.AddComponent<UI::ECS::Image>(THEME_DARK_COLOUR_1);
-
-  titleBar.AddChild(UI::ECS::Entity(Vector2D{50.f, 40.f},
-                                    Vector2D{-25.f, 0.f}));
-
-  std::shared_ptr closeButton = titleBar.GetLastChild();
-
-  closeButton->GetComponent<UI::ECS::Transform>()->SetAnchorPreset(UI::AnchorPresets::CENTER_RIGHT);
-
-  closeButton->AddComponent<UI::ECS::Image>(Colour(0xe81123, 1.f));
-  closeButton->AddComponent<UI::ECS::Button>();
-  closeButton->GetComponent<UI::ECS::Button>()->SetOnRelease(&glfwSetWindowShouldClose, m_renderer->GetWindow(), GLFW_TRUE);
-
-  // TODO: find a better solution for registering buttons for mouse events
-  m_eventManager->RegisterEventListener(closeButton.get(), EventSystem::EventType::Mouse);
-
-  closeButton->AddChild(UI::ECS::Entity(Vector2D{10.f, 10.f},
-                                        Vector2D{0.f, 0.f}));
-
-  std::shared_ptr closeButtonCross = closeButton->GetLastChild();
-
-  closeButtonCross->AddComponent<UI::ECS::Image>(COLOUR_WHITE, m_renderer->GetImageIndexFromName("cross"));
-
-  titleBar.AddChild(UI::ECS::Entity(Vector2D{600.f, 40.f}, Vector2D{315.f, 13.f}));
-
-  std::shared_ptr titleLabel = titleBar.GetLastChild();
-
-  titleLabel->GetComponent<UI::ECS::Transform>()->SetAnchorPreset(UI::AnchorPresets::CENTER_LEFT);
+  /*
 
   UI::Font font = CreateFont("../assets/unscii-alt-font-16.png", Colour(0xD4D6DE, 1.f));
 
@@ -264,6 +241,7 @@ void Application::CreateElements() {
 
   textBox->AddComponent<UI::ECS::Mask>(ClipRect{.clippingEnabled = true,
       .rect = {.xOffset = 1280, .yOffset = 716, .width = 2540, .height = 1336}});
+*/
 
   RecalculateElements();
 }

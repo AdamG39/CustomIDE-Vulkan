@@ -285,8 +285,6 @@ private:
   void HandleDragging();
 };
 
-UI::Font CreateFont(const std::string& Filepath, const Colour& FontColour);
-
 } // namespace CustomIDE
 
 #endif
