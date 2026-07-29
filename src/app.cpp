@@ -364,20 +364,5 @@ void CharacterCallback(GLFWwindow *Window, unsigned int Codepoint) {
   Application::GetInstance()->GetEventManager().lock()->AddEvent(EventSystem::EventType::Character, &info);
 }
 
-UI::Font CreateFont(const std::string& Filepath, const Colour& FontColour) {
-  UI::Font font;
-
-  font.colour = FontColour;
-
-  auto renderer = Application::GetInstance()->GetRenderer().lock();
-  renderer->LoadImage(Filepath, true);
-  std::string fileName = Vulkan::GetFileNameFromPath(Filepath);
-  Vector2<int> dimensions = renderer->GetImageDimensions(renderer->GetImageIndexFromName(fileName));
-  font.size = { dimensions.x / 64, dimensions.y / 2 };
-  font.familyName = fileName;
-
-  return font;
-}
-
 } // namespace CustomIDE
 
