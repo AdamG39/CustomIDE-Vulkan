@@ -2,6 +2,7 @@
 #define CUSTOM_UI_H
 
 #include <utility>
+#include "../renderer/shapes.hpp"
 
 namespace CustomIDE::UI {
 

@@ -1,6 +1,6 @@
 #include "uiFactory.hpp"
+#include "text.hpp"
 #include <GLFW/glfw3.h>
-#include <variant>
 
 namespace CustomIDE {
 
@@ -28,7 +28,7 @@ namespace UIFactory {
     return {
       .Size = Vector2D{ DEFAULT_TOP_BAR_BUTTON_WIDTH, DEFAULT_TOP_BAR_HEIGHT },
       .ButtonColour = DefaultColourPalette.AccentColour1,
-      .ImageSettings = std::optional<ImageSettings>(std::in_place, ImageSettings{
+      ._ImageSettings = std::optional<ImageSettings>(std::in_place, ImageSettings{
         .ImageIndex = Renderer->GetImageIndexFromName("closeButtonCross"),
         .ImageSize = DEFAULT_TOP_BAR_BUTTON_IMAGE_SIZE,
         .ImageColour = COLOUR_WHITE

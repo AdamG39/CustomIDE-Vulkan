@@ -44,7 +44,7 @@ struct ImageSettings {
 struct ButtonSettings {
   Vector2D Size;
   Colour ButtonColour;
-  std::optional<ImageSettings> ImageSettings;
+  std::optional<ImageSettings> _ImageSettings;
 };
 
 struct TopBarButtonSettings {
