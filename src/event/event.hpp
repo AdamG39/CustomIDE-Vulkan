@@ -1,23 +1,49 @@
 #ifndef CUSTOM_EVENT_H
 #define CUSTOM_EVENT_H
 
+#include "../helpers/generic.hpp"
 #include "../renderer/shapes.hpp"
 #include "../uilib/ecs.hpp"
 #include <cmath>
 
 namespace CustomIDE::EventSystem {
 
-enum EventType : int {
-  Mouse       = (1u << 0),
-  Window      = (1u << 1),
-  Keyboard    = (1u << 2),
-  Character   = (1u << 3),
+enum class EventType : unsigned {
+  Undefined   = 0u,
+  Mouse       = 1u << 0,
+  Window      = 1u << 1,
+  Keyboard    = 1u << 2,
+  Character   = 1u << 3
 };
+constexpr EventType operator|(EventType ET1, EventType ET2) {
+  return static_cast<EventType>(to_underlying(ET1) | to_underlying(ET2));
+}
+constexpr EventType operator&(EventType ET1, EventType ET2) {
+  return static_cast<EventType>(to_underlying(ET1) & to_underlying(ET2));
+}
+constexpr EventType operator^(EventType ET1, EventType ET2) {
+  return static_cast<EventType>(to_underlying(ET1) ^ to_underlying(ET2));
+}
+constexpr EventType operator~(EventType ET) {
+  return static_cast<EventType>(~to_underlying(ET));
+}
+constexpr EventType& operator|=(EventType& LHS, EventType RHS) {
+  LHS = LHS | RHS;
+  return LHS;
+}
+constexpr EventType& operator&=(EventType& LHS, EventType RHS) {
+  LHS = LHS & RHS;
+  return LHS;
+}
+constexpr EventType& operator^=(EventType& LHS, EventType RHS) {
+  LHS = LHS ^ RHS;
+  return LHS;
+}
 
 static constexpr int EventTypeCount = 4;
 
 constexpr int EventTypeEnumToIndex(EventType Type) {
-  return std::log2<int>(Type);
+  return std::log2<int>(to_underlying(Type));
 }
 
 struct MouseEventInfo {

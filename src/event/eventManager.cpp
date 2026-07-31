@@ -1,3 +1,4 @@
+#include "../helpers/errors/errors.hpp"
 #include "eventManager.hpp"
 #include "../uilib/components/transform.hpp"
 #include "../uilib/components/textBox.hpp"
@@ -181,14 +182,17 @@ bool EventSystem::EventHandler::HandleCharacterEvent(const EventInfo& Info) {
 
 bool EventSystem::EventHandler::HandleEvent(const Event& Event) {
   switch (Event.Type) {
-    case Mouse:
+    case EventType::Mouse:
       return HandleMouseEvent(Event.Info);
-    case Window:
+    case EventType::Window:
       return HandleWindowEvent(Event.Info);
-    case Keyboard:
+    case EventType::Keyboard:
       return HandleKeyboardEvent(Event.Info);
-    case Character:
+    case EventType::Character:
       return HandleCharacterEvent(Event.Info);
+    case EventType::Undefined:
+      Errors::ExitWithError("Undefined event was triggered", -20);
+      break;
   }
 
   return false;
@@ -231,25 +235,25 @@ void EventSystem::EventManager::HandleEvents() {
   }
 }
 
-void EventSystem::EventManager::RegisterEventListener(UI::ECS::Entity* Object, int Channels) {
+void EventSystem::EventManager::RegisterEventListener(UI::ECS::Entity* Object, EventType Channels) {
   EventListenerHandle handle {
     .Object = Object,
     .Expired = false
   };
 
-  if (Channels & EventType::Mouse) {
+  if ((Channels & EventType::Mouse) != EventType::Undefined) {
     m_eventChannels[EventTypeEnumToIndex(EventType::Mouse)].push_back(handle);
   }
 
-  if (Channels & EventType::Window) {
+  if ((Channels & EventType::Window) != EventType::Undefined) {
     m_eventChannels[EventTypeEnumToIndex(EventType::Window)].push_back(handle);
   }
 
-  if (Channels & EventType::Keyboard) {
+  if ((Channels & EventType::Keyboard) != EventType::Undefined) {
     m_eventChannels[EventTypeEnumToIndex(EventType::Keyboard)].push_back(handle);
   }
 
-  if (Channels & EventType::Character) {
+  if ((Channels & EventType::Character) != EventType::Undefined) {
     m_eventChannels[EventTypeEnumToIndex(EventType::Character)].push_back(handle);
   }
 }

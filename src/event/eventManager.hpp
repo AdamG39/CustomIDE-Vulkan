@@ -50,7 +50,7 @@ public:
 
   void HandleEvents();
 
-  void RegisterEventListener(UI::ECS::Entity* Object, int Channels);
+  void RegisterEventListener(UI::ECS::Entity* Object, EventType Channels);
 
   void ExpireEventListener(UI::ECS::Entity* Object);
 
