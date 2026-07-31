@@ -15,8 +15,8 @@ public:
   static int TypeValue() { return TypeImage; }
   int GetType() override;
 
-  Image(const Colour& _Colour = Colour(), int TextureCoords = -1)
-  : m_colour(_Colour), m_textureIndex(TextureCoords) {}
+  Image(const Colour& _Colour = Colour(), int TextureIndex = -1)
+  : m_colour(_Colour), m_textureIndex(TextureIndex) {}
 
   void Render(EntityManager& Manager, Transform* Transform) override;
 
