@@ -355,7 +355,7 @@ void Vulkan::Renderer::CreateGraphicsPipeline() {
   std::vector<std::string> filePaths = {
     "../assets/textures/pngTest.png",
     "../assets/textures/test.bmp",
-    "../assets/textures/cross.png",
+    "../assets/textures/closeButtonImage.png",
     "../assets/unscii-alt-font.png",
     "../assets/unscii-alt-font-32.png"
   };
