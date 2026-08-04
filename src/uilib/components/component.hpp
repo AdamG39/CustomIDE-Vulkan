@@ -39,9 +39,11 @@ private:
   std::unordered_map<std::string, std::function<void()>> m_actions;
 
 public:
-  template <typename... Params, typename... Args>
-  void AddAction(std::string ActionName, void(*Function)(Params... params), Args... Arguments) {
-    m_actions[ActionName] = [=] () { Function(Arguments...); };
+  template <typename Func, typename... Args>
+  void AddAction(std::string ActionName, Func&& Function, Args&&... Arguments) {
+    m_actions[ActionName] = [=] () {
+      std::invoke(std::bind(Function, Arguments...));
+    };
   }
 
   bool RemoveAction(std::string ActionName) {
