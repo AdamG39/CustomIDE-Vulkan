@@ -12,8 +12,12 @@ void UI::ECS::Button::OnRelease() {
   ExecAction("OnRelease");
 }
 
-void UI::ECS::Button::OnHover() {
-  ExecAction("OnHover");
+void UI::ECS::Button::OnHoverEnter() {
+  ExecAction("OnHoverEnter");
+}
+
+void UI::ECS::Button::OnHoverExit() {
+  ExecAction("OnHoverExit");
 }
 
 } // namespace CustomIDE

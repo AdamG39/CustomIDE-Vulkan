@@ -12,26 +12,33 @@ public:
 
   Button() = default;
 
-  template <typename... FnParams, typename... FnArgs>
-  void SetOnPress(void(*Function)(FnParams... Parameters), FnArgs... Arguments) {
+  template <typename Func, typename... Args>
+  void SetOnPress(Func&& Function, Args&&... Arguments) {
     AddAction("OnPress", Function, Arguments...);
   }
 
-  template <typename... FnParams, typename... FnArgs>
-  void SetOnRelease(void(*Function)(FnParams... Parameters), FnArgs... Arguments) {
+  template <typename Func, typename... Args>
+  void SetOnRelease(Func&& Function, Args&&... Arguments) {
     AddAction("OnRelease", Function, Arguments...);
   }
 
-  template <typename... FnParams, typename... FnArgs>
-  void SetOnHover(void(*Function)(FnParams... Parameters), FnArgs... Arguments) {
-    AddAction("OnHover", Function, Arguments...);
+  template <typename Func, typename... Args>
+  void SetOnHoverEnter(Func&& Function, Args&&... Arguments) {
+    AddAction("OnHoverEnter", Function, Arguments...);
+  }
+
+  template <typename Func, typename... Args>
+  void SetOnHoverExit(Func&& Function, Args&&... Arguments) {
+    AddAction("OnHoverExit", Function, Arguments...);
   }
 
   void OnPress();
 
   void OnRelease();
 
-  void OnHover();
+  void OnHoverEnter();
+
+  void OnHoverExit();
 };
 
 } // namespace UI::ECS
