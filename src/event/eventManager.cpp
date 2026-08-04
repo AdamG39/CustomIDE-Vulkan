@@ -40,6 +40,48 @@ bool EventSystem::EventHandler::HandleMouseEvent(const EventInfo& Info) {
       }
     }
   }
+  else if (Info.MouseInfo.Button < 0) {
+    bool foundSuitableEntity = false;
+    for (auto& handler : m_eventChannels[EventTypeEnumToIndex(EventType::Mouse)]) {
+      if (!handler.IsValid()) continue;
+
+      auto entity = handler.Object;
+
+      UI::ECS::Transform* transform = entity->GetComponent<UI::ECS::Transform>();
+      UI::ECS::IInteractable* button = entity->GetInteractableComponent();
+
+      if (transform == nullptr || button == nullptr) continue;
+
+      if (CursorOverlap(Info.MouseInfo.Position, transform->GetGlobalSize(), transform->GetGlobalPosition())) {
+        foundSuitableEntity = true;
+        if (entity != m_hoveredEntity) {
+          if (m_hoveredEntity != nullptr) {
+            auto* previousEntityInteractable = m_hoveredEntity->GetInteractableComponent();
+
+            if (previousEntityInteractable && previousEntityInteractable->HasAction("OnHoverExit")) {
+              previousEntityInteractable->ExecAction("OnHoverExit");
+            }
+          }
+
+          if (button->HasAction("OnHoverEnter")) button->ExecAction("OnHoverEnter");
+
+          m_hoveredEntity = entity;
+        }
+      }
+    }
+
+    if (!foundSuitableEntity) {
+      if (m_hoveredEntity != nullptr) {
+        auto* previousEntityInteractable = m_hoveredEntity->GetInteractableComponent();
+
+        if (previousEntityInteractable && previousEntityInteractable->HasAction("OnHoverExit")) {
+          previousEntityInteractable->ExecAction("OnHoverExit");
+        }
+      }
+
+      m_hoveredEntity = nullptr;
+    }
+  }
 
   return true;
 }

@@ -20,6 +20,7 @@ using EventChannel = std::list<EventListenerHandle>;
 class EventHandler {
 private:
   std::array<EventChannel, EventTypeCount>& m_eventChannels;
+  UI::ECS::Entity* m_hoveredEntity = nullptr;
 
   bool HandleMouseEvent(const EventInfo& Info);
   bool HandleWindowEvent(const EventInfo& Info);

@@ -299,6 +299,19 @@ void FramebufferResizeCallback(GLFWwindow* Window, int Width, int Height) {
 }
 
 void CursorPositionCallback(GLFWwindow* Window, double xpos, double ypos) {
+  Vector2D cursorPos = Vector2D((float)xpos, (float)ypos);
+  Vector2D windowScale = Application::GetInstance()->GetRenderer().lock()->GetWindowContentScale();
+
+  EventSystem::EventInfo info {
+    .Manager = Application::GetInstance()->GetEntityManager().lock(),
+    .MouseInfo = {
+      .Position = cursorPos * windowScale,
+      .Button = -1,
+      .Action = -1,
+      .Modifications = NULL
+    },
+  };
+  Application::GetInstance()->GetEventManager().lock()->AddEvent(EventSystem::EventType::Mouse, &info);
   // Check if mouse is at window border
   // Change cursor to horizonal/vertical resizers
   // Start resizing if at the border and left click is pressed
