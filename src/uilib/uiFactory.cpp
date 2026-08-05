@@ -11,6 +11,8 @@ namespace CustomIDE {
 #define DEFAULT_TOP_BAR_BUTTON_WIDTH 50
 #define DEFAULT_TOP_BAR_BUTTON_IMAGE_SIZE Vector2D{ 10.f, 10.f }
 #define DEFAULT_FONT_FILEPATH "../assets/unscii-alt-font-16.png"
+#define DEFAULT_CLOSE_BUTTON_COLOUR Colour(0x000000, 0.0f) /* Transparent colour */
+#define DEFAULT_CLOSE_BUTTON_HOVER_COLOUR Colour(0xe81123, 1.0f)
 
 namespace UIFactory {
   std::shared_ptr<UI::ECS::EntityManager> EntityManager;
@@ -18,8 +20,8 @@ namespace UIFactory {
   std::shared_ptr<Vulkan::Renderer> Renderer;
 
   ColourPalette DefaultColourPalette {
-    .BackgroundColour = {},
-    .AccentColour1 = {},
+    .BackgroundColour = THEME_DARK_COLOUR_0,
+    .AccentColour1 = THEME_DARK_COLOUR_1,
     .AccentColour2 = {},
     .TextColour = {}
   };
@@ -27,13 +29,62 @@ namespace UIFactory {
   ButtonSettings DefaultCloseButtonSettings() {
     return {
       .Size = Vector2D{ DEFAULT_TOP_BAR_BUTTON_WIDTH, DEFAULT_TOP_BAR_HEIGHT },
-      .ButtonColour = DefaultColourPalette.AccentColour1,
+      .ButtonColour = DEFAULT_CLOSE_BUTTON_COLOUR,
       ._ImageSettings = std::optional<ImageSettings>(std::in_place, ImageSettings{
-        .ImageIndex = Renderer->GetImageIndexFromName("closeButtonCross"),
+        .ImageIndex = Renderer->GetImageIndexFromName("closeButtonImage"),
         .ImageSize = DEFAULT_TOP_BAR_BUTTON_IMAGE_SIZE,
         .ImageColour = COLOUR_WHITE
+      }),
+      .Callbacks = std::optional<ButtonCallbacks>(std::in_place, ButtonCallbacks{
+        .OnPressCallback = nullptr,
+        .OnReleaseCallback = [=]() { glfwSetWindowShouldClose(Renderer->GetWindow(), GLFW_TRUE); },
+        .OnHoverEnterCallback = nullptr,
+        .OnHoverExitCallback = nullptr
       })
     };
+  }
+
+  void CreateCloseButton(UI::ECS::Entity& TopBarEntity, const ButtonSettings& Settings, const TopBarButtonAlignment& Alignment) {
+    Vector2D closeButtonPosition{
+      0.0f, UNUSED_PROPERTY
+    };
+
+    float closeButtonHalfWidth = Settings.Size.x / 2;
+
+    switch (Alignment) {
+    case TopBarButtonAlignment::LEFT:
+      closeButtonPosition.x += closeButtonHalfWidth;
+      break;
+    case TopBarButtonAlignment::RIGHT:
+      closeButtonPosition.x -= closeButtonHalfWidth;
+      break;
+    }
+
+    UI::ECS::IRenderable* topBarRenderable = TopBarEntity.GetRenderableComponent();
+    TopBarEntity.AddChild(CreateButton(false, Settings, closeButtonPosition, (topBarRenderable ? topBarRenderable->GetDrawDepth() : -1)));
+    auto closeButton = TopBarEntity.GetLastChild();
+    closeButton->GetComponent<UI::ECS::Transform>()->SetAnchorPreset(
+      Alignment == TopBarButtonAlignment::LEFT
+        ? UI::AnchorPresets::CENTER_LEFT
+        : UI::AnchorPresets::CENTER_RIGHT
+    );
+
+    auto* buttonComponent = closeButton->GetComponent<UI::ECS::Button>();
+
+    if (buttonComponent && Settings.Callbacks.has_value()) {
+      auto callbacks = Settings.Callbacks.value();
+      if (!callbacks.OnHoverEnterCallback) {
+        buttonComponent->SetOnHoverEnter([Entity = closeButton]() { 
+          Entity->GetComponent<UI::ECS::Image>()->SetColour(DEFAULT_CLOSE_BUTTON_HOVER_COLOUR);
+        });
+      }
+
+      if (!callbacks.OnHoverExitCallback) {
+        buttonComponent->SetOnHoverExit([Entity = closeButton]() { 
+          Entity->GetComponent<UI::ECS::Image>()->SetColour(DEFAULT_CLOSE_BUTTON_COLOUR);
+        });
+      }
+    }
   }
 } // namespace UIFactory
 
@@ -124,28 +175,17 @@ std::shared_ptr<UI::ECS::Entity> UIFactory::CreateButton(bool AddToTree, const B
 
 UI::ECS::Entity& UIFactory::CreateTopBar(const UIFactory::TopBarSettings& Settings) {
   // Create titlebar
-  UI::ECS::Entity& titleBar = EntityManager->AddEntity(Vector2D({UNUSED_PROPERTY, Settings.BarHeight}),
+  UI::ECS::Entity& topBar = EntityManager->AddEntity(Vector2D({UNUSED_PROPERTY, Settings.BarHeight}),
                                                        Vector2D({UNUSED_PROPERTY, Settings.BarHeight / 2.0f}));
 
-  titleBar.GetComponent<UI::ECS::Transform>()->SetAnchorPreset(UI::AnchorPresets::STRETCH_TOP);
-  titleBar.AddComponent<UI::ECS::Image>(Settings.BackgroundColour);
+  topBar.GetComponent<UI::ECS::Transform>()->SetAnchorPreset(UI::AnchorPresets::STRETCH_TOP);
+  topBar.AddComponent<UI::ECS::Image>(Settings.BackgroundColour);
 
-  // Create close button if settings are provided
   if (Settings.ButtonSettings.CloseButton.has_value()) {
-    auto closeButtonSettings = Settings.ButtonSettings.CloseButton.value();
-    Vector2D closeButtonPosition{
-      0.0f, 0.0f
-    };
-
-    switch (Settings.ButtonSettings.Alignment) {
-    case TopBarButtonAlignment::LEFT:
-      closeButtonPosition.x ;
-      break;
-    }
-
-    titleBar.AddChild(CreateButton(closeButtonSettings, closeButtonPosition));
+    CreateCloseButton(topBar, Settings.ButtonSettings.CloseButton.value(), Settings.ButtonSettings.Alignment);
   }
 
+  /*
   std::shared_ptr closeButton = titleBar.GetLastChild();
 
   closeButton->GetComponent<UI::ECS::Transform>()->SetAnchorPreset(UI::AnchorPresets::CENTER_RIGHT);
@@ -169,8 +209,9 @@ UI::ECS::Entity& UIFactory::CreateTopBar(const UIFactory::TopBarSettings& Settin
   std::shared_ptr titleLabel = titleBar.GetLastChild();
 
   titleLabel->GetComponent<UI::ECS::Transform>()->SetAnchorPreset(UI::AnchorPresets::CENTER_LEFT);
+  */
 
-  return titleBar;
+  return topBar;
 }
 
 } // namespace CustomIDE
