@@ -14,6 +14,10 @@ std::vector<std::shared_ptr<UI::ECS::Entity>>& UI::ECS::EntityManager::GetEntity
   return m_entityTree;
 }
 
+std::shared_ptr<UI::ECS::Entity> UI::ECS::EntityManager::GetLastEntity() const {
+  return m_entityTree.back();
+}
+
 const std::list<std::shared_ptr<UI::ECS::Entity>> UI::ECS::EntityManager::GetAllEntities() const {
   std::list<std::shared_ptr<Entity>> result;
 

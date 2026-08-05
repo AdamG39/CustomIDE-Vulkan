@@ -22,6 +22,8 @@ public:
 
   std::vector<std::shared_ptr<Entity>>& GetEntityTree();
 
+  std::shared_ptr<Entity> GetLastEntity() const;
+
   const std::list<std::shared_ptr<Entity>> GetAllEntities() const;
 
   std::stack<ClipRect>& GetClipStack();
