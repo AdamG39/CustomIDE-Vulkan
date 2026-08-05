@@ -10,6 +10,41 @@ UI::ECS::Entity::Entity(Vector2D Size, Vector2D Position, Vector4D Padding, Enti
   AddComponent<Transform>(Padding, Size, Position, ((Parent != nullptr) ? Parent->GetComponent<Transform>() : nullptr));
 }
 
+UI::ECS::Entity::Entity(const Entity& Other) {
+  m_components = Other.m_components;
+  m_children = Other.m_children;
+  m_parent = Other.m_parent;
+}
+
+UI::ECS::Entity& UI::ECS::Entity::operator=(UI::ECS::Entity& Other) {
+  m_components = Other.m_components;
+  m_children = Other.m_children;
+  m_parent = Other.m_parent;
+
+  return *this;
+}
+
+UI::ECS::Entity::Entity(Entity&& Other) {
+  m_components = std::move(Other.m_components);
+  m_children = std::move(Other.m_children);
+  m_parent = Other.m_parent;
+}
+
+UI::ECS::Entity& UI::ECS::Entity::operator=(UI::ECS::Entity&& Other) {
+  m_components = std::move(Other.m_components);
+  m_children = std::move(Other.m_children);
+  m_parent = Other.m_parent;
+
+  return *this;
+}
+
+UI::ECS::Entity::~Entity() {
+  // Child entity is non-owning of parent so dont delete it
+  m_parent = nullptr;
+
+  // Everything else is automatically cleaned up
+}
+
 void UI::ECS::Entity::RenderEntity(EntityManager& Manager, Transform* Transform, IRenderable* Renderable) {
   if (Transform == nullptr || Renderable == nullptr)
     return;

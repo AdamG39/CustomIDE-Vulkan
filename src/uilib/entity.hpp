@@ -33,6 +33,11 @@ private:
 
 public:
   Entity(Vector2D Size = {}, Vector2D Position = {}, Vector4D Padding = {}, Entity* Parent = nullptr);
+  Entity(const Entity& Other);
+  Entity& operator=(Entity& Other);
+  Entity(Entity&& Other);
+  Entity& operator=(Entity&& Other);
+  ~Entity();
 
   template <class ComponentType, typename... Args>
   void AddComponent(Args&&... Parameters) {
