@@ -46,9 +46,11 @@ UI::ECS::Entity& UI::ECS::EntityManager::AddEntity() {
 }
 
 UI::ECS::Entity& UI::ECS::EntityManager::AddEntity(const Vector2D& Size, const Vector2D& Position, const Vector4D& Padding) {
-  m_entityTree.emplace_back(std::make_shared<Entity>(Size, Position, Padding));
+  return *m_entityTree.emplace_back(std::make_shared<Entity>(Size, Position, Padding));
+}
 
-  return *m_entityTree.back();
+UI::ECS::Entity& UI::ECS::EntityManager::AddEntity(const UI::ECS::Entity& _Entity) {
+  return *m_entityTree.emplace_back(std::make_shared<Entity>(_Entity));
 }
 
 void UI::ECS::EntityManager::RemoveEntity(const size_t Index) {

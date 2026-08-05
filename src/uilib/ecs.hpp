@@ -32,6 +32,8 @@ public:
 
   Entity& AddEntity(const Vector2D& Size, const Vector2D& Position, const Vector4D& Padding = {});
 
+  Entity& AddEntity(const Entity& _Entity);
+
   void RemoveEntity(size_t Index);
 
   void RenderTree();
