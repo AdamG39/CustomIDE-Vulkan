@@ -6,6 +6,7 @@
 #include "../event/eventManager.hpp"
 #include <optional>
 #include <memory>
+#include <functional>
 
 namespace CustomIDE::UIFactory {
 
@@ -39,12 +40,21 @@ struct ImageSettings {
   TextureID ImageIndex;
   Vector2D ImageSize;
   Colour ImageColour;
+  int ImageZIndex;
+};
+
+struct ButtonCallbacks {
+  std::function<void()> OnPressCallback;
+  std::function<void()> OnReleaseCallback;
+  std::function<void()> OnHoverEnterCallback;
+  std::function<void()> OnHoverExitCallback;
 };
 
 struct ButtonSettings {
   Vector2D Size;
-  Colour ButtonColour;
+  std::optional<Colour> ButtonColour;
   std::optional<ImageSettings> _ImageSettings;
+  std::optional<ButtonCallbacks> Callbacks;
 };
 
 struct TopBarButtonSettings {
@@ -73,7 +83,7 @@ struct TopBarSettings {
 TopBarSettings DefaultTopBarSettings();
 void SetTopBarTitleSettings(std::optional<TopBarLabelSettings>& Settings, std::string Title, TopBarLabelAlignment Alignment = TopBarLabelAlignment::LEFT, UI::Font Font = DefaultFont());
 
-UI::ECS::Entity& CreateButton(const ButtonSettings& Settings, const Vector2D& Position);
+std::shared_ptr<UI::ECS::Entity> CreateButton(bool AddToTree, const ButtonSettings& Settings, const Vector2D& Position, int ZIndex = -1);
 
 UI::ECS::Entity& CreateTopBar(const TopBarSettings& Settings);
 

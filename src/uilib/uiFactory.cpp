@@ -79,10 +79,47 @@ void UIFactory::SetTopBarTitleSettings(std::optional<UIFactory::TopBarLabelSetti
   });
 }
 
-UI::ECS::Entity& UIFactory::CreateButton(const ButtonSettings& Settings, const Vector2D& Position) {
-  UI::ECS::Entity& closeButton = EntityManager->AddEntity(Settings.Size, Position);
+std::shared_ptr<UI::ECS::Entity> UIFactory::CreateButton(bool AddToTree, const ButtonSettings& Settings, const Vector2D& Position, int ZIndex) {
+  std::shared_ptr<UI::ECS::Entity> button = (AddToTree)
+  ? EntityManager->AddEntity(UI::ECS::Entity(Settings.Size, Position)), EntityManager->GetLastEntity() // Add entity then get ptr to it
+  : std::make_shared<UI::ECS::Entity>(Settings.Size, Position);
 
-  return closeButton;
+  if (Settings.ButtonColour.has_value()) {
+    button->AddComponent<UI::ECS::Image>(Settings.ButtonColour.value());
+  }
+
+  if (Settings._ImageSettings.has_value()) {
+    auto imageSettings = Settings._ImageSettings.value();
+    button->AddChild(UI::ECS::Entity(imageSettings.ImageSize, Vector2D{ 0.0f, 0.0f }));
+    auto image = button->GetLastChild();
+    image->AddComponent<UI::ECS::Image>(imageSettings.ImageColour, imageSettings.ImageIndex);
+    auto* parentRenderable = button->GetRenderableComponent();
+    if (parentRenderable) {
+      image->GetComponent<UI::ECS::Image>()->SetDrawDepth(parentRenderable->GetDrawDepth() + 1);
+    }
+  }
+
+  button->AddComponent<UI::ECS::Button>();
+
+  if (Settings.Callbacks.has_value()) {
+    auto callbacks = Settings.Callbacks.value();
+    auto* buttonComponent = button->GetComponent<UI::ECS::Button>();
+    if (callbacks.OnPressCallback)
+      buttonComponent->SetOnPress(callbacks.OnPressCallback);
+
+    if (callbacks.OnReleaseCallback)
+      buttonComponent->SetOnRelease(callbacks.OnReleaseCallback);
+
+    if (callbacks.OnHoverEnterCallback)
+      buttonComponent->SetOnHoverEnter(callbacks.OnHoverEnterCallback);
+
+    if (callbacks.OnHoverExitCallback)
+      buttonComponent->SetOnHoverExit(callbacks.OnHoverExitCallback);
+  }
+
+  EventManager->RegisterEventListener(button.get(), EventSystem::EventType::Mouse);
+
+  return button;
 }
 
 UI::ECS::Entity& UIFactory::CreateTopBar(const UIFactory::TopBarSettings& Settings) {
