@@ -55,6 +55,8 @@ public:
   UI::Anchor GetAnchor() const;
   void SetAnchorPreset(const AnchorPresets::PresetID& Preset);
   void SetCustomAnchor(const UI::Anchor& Anchor);
+
+  void SetParentTransform(Transform* ParentTransform);
 };
 
 } // namespace UI::ECS

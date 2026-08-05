@@ -178,5 +178,9 @@ void UI::ECS::Transform::SetCustomAnchor(const UI::Anchor& Anchor) {
   m_anchor = Anchor;
 }
 
+void UI::ECS::Transform::SetParentTransform(UI::ECS::Transform* ParentTransform) {
+  m_parentTransform = ParentTransform;
+}
+
 } // namespace CustomIDE
 
