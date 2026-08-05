@@ -149,7 +149,17 @@ public:
     Transform* transform = child->GetComponent<Transform>();
     Transform* parentTransform = GetComponent<Transform>();
 
-    child->ReplaceComponent<Transform, Transform>(transform->GetPadding(), transform->GetLocalSize(), transform->GetLocalPosition(), parentTransform);
+    transform->SetParentTransform(parentTransform);
+  }
+
+  void AddChild(std::shared_ptr<UI::ECS::Entity> ChildPtr) {
+    m_children.push_back(ChildPtr);
+    auto child = m_children.back();
+    child->SetParent(this);
+    Transform* transform = child->GetComponent<Transform>();
+    Transform* parentTransform = GetComponent<Transform>();
+
+    transform->SetParentTransform(parentTransform);
   }
 
   void RemoveChild(size_t Index) {
