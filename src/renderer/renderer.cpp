@@ -32,6 +32,7 @@ void Vulkan::Renderer::CreateWindow() {
   glfwSetMouseButtonCallback(m_window, CustomIDE::MouseButtonCallback);
   glfwSetFramebufferSizeCallback(m_window, CustomIDE::FramebufferResizeCallback);
   glfwSetCursorPosCallback(m_window, CustomIDE::CursorPositionCallback);
+  glfwSetWindowMaximizeCallback(m_window, CustomIDE::MaximiseCallback);
   glfwSetKeyCallback(m_window, CustomIDE::KeyCallback);
   glfwSetCharCallback(m_window, CustomIDE::CharacterCallback);
 

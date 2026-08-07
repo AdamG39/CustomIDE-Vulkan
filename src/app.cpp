@@ -326,28 +326,13 @@ void CursorPositionCallback(GLFWwindow* Window, double xpos, double ypos) {
   }
 }
 
-// FIXME transition from old uimanager to new ecs manager
-/*
-void ToggleMaximiseCallback(GLFWwindow* Window) {
-  if (glfwGetWindowAttrib(Window, GLFW_MAXIMIZED)) {
-    // Un-maximise window if already maximised
-    glfwRestoreWindow(Window);
-    maximisedState = false;
-    if (Application::s_instance) {
-      Application::s_instance->GetUIManager()->AddEvent(std::make_shared<UIEvent>(UIEvent(UIEventType::WINDOW_RESTORE)));
-    }
-  } else {
-    // Maximise window if already un-maximised
-    glfwMaximizeWindow(Window);
+void MaximiseCallback(GLFWwindow* Window, int Maximised) {
+  // Set maximised state
+  if (Maximised) {
     maximisedState = true;
-    if (Application::s_instance) {
-      Application::s_instance->GetUIManager()->AddEvent(std::make_shared<UIEvent>(UIEvent(UIEventType::WINDOW_MAXIMISE)));
-    }
+  } else {
+    maximisedState = false;
   }
-}*/
-
-void MinimiseCallback(GLFWwindow* Window) {
-  glfwIconifyWindow(Window);
 }
 
 void KeyCallback(GLFWwindow* Window, int Key, int Scancode, int Action, int Mods) {

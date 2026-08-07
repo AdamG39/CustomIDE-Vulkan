@@ -79,9 +79,7 @@ void FramebufferResizeCallback(GLFWwindow* Window, int Width, int Height);
 
 void CursorPositionCallback(GLFWwindow* Window, double xpos, double ypos);
 
-void ToggleMaximiseCallback(GLFWwindow* Window);
-
-void MinimiseCallback(GLFWwindow* Window);
+void MaximiseCallback(GLFWwindow* Window, int Maximised);
 
 void KeyCallback(GLFWwindow* Window, int Key, int Scancode, int Action, int Mods);
 
