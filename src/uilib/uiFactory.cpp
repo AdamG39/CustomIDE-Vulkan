@@ -15,6 +15,8 @@ namespace CustomIDE {
 #define DEFAULT_CLOSE_BUTTON_FOCUSED_COLOUR Colour(0xE81123, 1.0f)
 #define DEFAULT_MAXIMISE_BUTTON_FOCUSED_COLOUR Colour(0xFFFFFF, 0.01f)
 #define DEFAULT_MINIMISE_BUTTON_FOCUSED_COLOUR Colour(0xFFFFFF, 0.01f)
+#define DEFAULT_TOP_BAR_BUTTON_IMAGE_FOCUSED_COLOUR Colour(0xFFFFFF, 1.0f)
+#define DEFAULT_TOP_BAR_BUTTON_IMAGE_UNFOCUSED_COLOUR Colour(0x79797b, 1.0f)
 
 namespace UIFactory {
   std::shared_ptr<UI::ECS::EntityManager> EntityManager;
@@ -78,6 +80,28 @@ namespace UIFactory {
     };
   }
 
+  ButtonSettings DefaultMinimiseButtonSettings() {
+    return {
+      .Size = Vector2D{ DEFAULT_TOP_BAR_BUTTON_WIDTH, DEFAULT_TOP_BAR_HEIGHT },
+      .ButtonColours = {
+        .UnfocusedColour = std::optional<Colour>(std::in_place, DEFAULT_TOP_BAR_BUTTON_COLOUR),
+        .FocusedColour = std::optional<Colour>(std::in_place, DEFAULT_MINIMISE_BUTTON_FOCUSED_COLOUR)
+      },
+      ._ImageSettings = std::optional<ImageSettings>(std::in_place, ImageSettings{
+        .ImageIndex = Renderer->GetImageIndexFromName("minimiseButtonImage"),
+        .ImageSize = DEFAULT_TOP_BAR_BUTTON_IMAGE_SIZE,
+        .ImageColour = DEFAULT_TOP_BAR_BUTTON_IMAGE_UNFOCUSED_COLOUR
+      }),
+      .Callbacks = std::optional<ButtonCallbacks>(std::in_place, ButtonCallbacks{
+        .OnPressCallback = nullptr,
+        .OnReleaseCallback = [=]() { glfwIconifyWindow(Renderer->GetWindow()); },
+        .OnHoverEnterCallback = nullptr,
+        .OnHoverExitCallback = nullptr
+      })
+    };
+  }
+
+  void CreateTopBarButton(UI::ECS::Entity& TopBarEntity, const ButtonSettings& Settings, const TopBarButtonAlignment& Alignment) {
     Vector2D buttonPosition{
       0.0f, UNUSED_PROPERTY
     };
@@ -167,7 +191,7 @@ UIFactory::TopBarSettings UIFactory::DefaultTopBarSettings() {
     .ButtonSettings = {
       .CloseButton = DefaultCloseButtonSettings(),
       .MaximiseButton = DefaultMaximiseButtonSettings(),
-      .MinimiseButton = {},
+      .MinimiseButton = DefaultMinimiseButtonSettings(),
       .Alignment = TopBarButtonAlignment::RIGHT
     },
     .TitleSettings = std::nullopt
@@ -231,7 +255,7 @@ std::shared_ptr<UI::ECS::Entity> UIFactory::CreateButton(bool AddToTree, const B
 UI::ECS::Entity& UIFactory::CreateTopBar(const UIFactory::TopBarSettings& Settings) {
   // Create titlebar
   UI::ECS::Entity& topBar = EntityManager->AddEntity(Vector2D({UNUSED_PROPERTY, Settings.BarHeight}),
-                                                       Vector2D({UNUSED_PROPERTY, Settings.BarHeight / 2.0f}));
+                                                     Vector2D({UNUSED_PROPERTY, Settings.BarHeight / 2.0f}));
 
   topBar.GetComponent<UI::ECS::Transform>()->SetAnchorPreset(UI::AnchorPresets::STRETCH_TOP);
   topBar.AddComponent<UI::ECS::Image>(Settings.BackgroundColour);
@@ -254,6 +278,21 @@ UI::ECS::Entity& UIFactory::CreateTopBar(const UIFactory::TopBarSettings& Settin
     });
   }
 
+  if (Settings.ButtonSettings.MinimiseButton.has_value()) {
+    CreateTopBarButton(topBar, Settings.ButtonSettings.MinimiseButton.value(), Settings.ButtonSettings.Alignment);
+    float offsetAmount = abs(topBar.GetLastChild()->GetComponent<UI::ECS::Transform>()->GetLocalPosition().x);
+    if (Settings.ButtonSettings.CloseButton.has_value())
+      offsetAmount += Settings.ButtonSettings.CloseButton.value().Size.x;
+    if (Settings.ButtonSettings.MaximiseButton.has_value())
+      offsetAmount += Settings.ButtonSettings.MaximiseButton.value().Size.x;
+    
+    topBar.GetLastChild()->GetComponent<UI::ECS::Transform>()->SetLocalPosition({
+      (Settings.ButtonSettings.Alignment == TopBarButtonAlignment::LEFT
+        ? offsetAmount
+        : -offsetAmount
+      ), 0.0f
+    });
+  }
 
   /*
   std::shared_ptr closeButton = titleBar.GetLastChild();
@@ -265,7 +304,7 @@ UI::ECS::Entity& UIFactory::CreateTopBar(const UIFactory::TopBarSettings& Settin
 
   // TODO: find a better solution for registering buttons for mouse events
   EventManager->RegisterEventListener(closeButton.get(), EventSystem::EventType::Mouse);
-
+  
 
   closeButton->AddChild(UI::ECS::Entity(Vector2D{10.f, 10.f},
                                         Vector2D{0.f, 0.f}));
