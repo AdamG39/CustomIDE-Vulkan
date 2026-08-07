@@ -76,9 +76,7 @@ void UI::ECS::Entity::RecalculateEntity() {
   if (transform) transform->RecalculateTransform();
 
   for (auto& entity : m_children) {
-    transform = entity->GetComponent<Transform>();
-
-    if (transform) transform->RecalculateTransform();
+    entity->RecalculateEntity();
   }
 }
 
