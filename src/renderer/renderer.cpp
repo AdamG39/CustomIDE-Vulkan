@@ -355,6 +355,7 @@ void Vulkan::Renderer::LoadImages(const std::vector<std::string>& Filepaths) {
 void Vulkan::Renderer::CreateGraphicsPipeline() {
   std::vector<std::string> filePaths = {
     "../assets/textures/closeButtonImage.png",
+    "../assets/textures/maximiseButtonImage.png",
     "../assets/unscii-alt-font.png",
     "../assets/unscii-alt-font-32.png"
   };

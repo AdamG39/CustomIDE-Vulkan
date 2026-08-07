@@ -13,6 +13,8 @@ namespace CustomIDE {
 #define DEFAULT_FONT_FILEPATH "../assets/unscii-alt-font-16.png"
 #define DEFAULT_TOP_BAR_BUTTON_COLOUR Colour(0x000000, 0.0f) /* Transparent colour */
 #define DEFAULT_CLOSE_BUTTON_FOCUSED_COLOUR Colour(0xE81123, 1.0f)
+#define DEFAULT_MAXIMISE_BUTTON_FOCUSED_COLOUR Colour(0xFFFFFF, 0.01f)
+#define DEFAULT_MINIMISE_BUTTON_FOCUSED_COLOUR Colour(0xFFFFFF, 0.01f)
 
 namespace UIFactory {
   std::shared_ptr<UI::ECS::EntityManager> EntityManager;
@@ -41,6 +43,35 @@ namespace UIFactory {
       .Callbacks = std::optional<ButtonCallbacks>(std::in_place, ButtonCallbacks{
         .OnPressCallback = nullptr,
         .OnReleaseCallback = [=]() { glfwSetWindowShouldClose(Renderer->GetWindow(), GLFW_TRUE); },
+        .OnHoverEnterCallback = nullptr,
+        .OnHoverExitCallback = nullptr
+      })
+    };
+  }
+
+  ButtonSettings DefaultMaximiseButtonSettings() {
+    return {
+      .Size = Vector2D{ DEFAULT_TOP_BAR_BUTTON_WIDTH, DEFAULT_TOP_BAR_HEIGHT },
+      .ButtonColours = {
+        .UnfocusedColour = std::optional<Colour>(std::in_place, DEFAULT_TOP_BAR_BUTTON_COLOUR),
+        .FocusedColour = std::optional<Colour>(std::in_place, DEFAULT_MAXIMISE_BUTTON_FOCUSED_COLOUR)
+      },
+      ._ImageSettings = std::optional<ImageSettings>(std::in_place, ImageSettings{
+        .ImageIndex = Renderer->GetImageIndexFromName("maximiseButtonImage"),
+        .ImageSize = DEFAULT_TOP_BAR_BUTTON_IMAGE_SIZE,
+        .ImageColour = DEFAULT_TOP_BAR_BUTTON_IMAGE_UNFOCUSED_COLOUR
+      }),
+      .Callbacks = std::optional<ButtonCallbacks>(std::in_place, ButtonCallbacks{
+        .OnPressCallback = nullptr,
+        .OnReleaseCallback = [Window = Renderer->GetWindow()]() {
+          if (glfwGetWindowAttrib(Window, GLFW_MAXIMIZED)) {
+            // Un-maximise window if already maximised
+            glfwRestoreWindow(Window);
+          } else {
+            // Maximise window if already un-maximised
+            glfwMaximizeWindow(Window);
+          }
+        },
         .OnHoverEnterCallback = nullptr,
         .OnHoverExitCallback = nullptr
       })
@@ -135,7 +166,7 @@ UIFactory::TopBarSettings UIFactory::DefaultTopBarSettings() {
     .BarHeight = DEFAULT_TOP_BAR_HEIGHT,
     .ButtonSettings = {
       .CloseButton = DefaultCloseButtonSettings(),
-      .MaximiseButton = {},
+      .MaximiseButton = DefaultMaximiseButtonSettings(),
       .MinimiseButton = {},
       .Alignment = TopBarButtonAlignment::RIGHT
     },
@@ -208,6 +239,21 @@ UI::ECS::Entity& UIFactory::CreateTopBar(const UIFactory::TopBarSettings& Settin
   if (Settings.ButtonSettings.CloseButton.has_value()) {
     CreateTopBarButton(topBar, Settings.ButtonSettings.CloseButton.value(), Settings.ButtonSettings.Alignment);
   }
+
+  if (Settings.ButtonSettings.MaximiseButton.has_value()) {
+    CreateTopBarButton(topBar, Settings.ButtonSettings.MaximiseButton.value(), Settings.ButtonSettings.Alignment);
+    float offsetAmount = abs(topBar.GetLastChild()->GetComponent<UI::ECS::Transform>()->GetLocalPosition().x);
+    if (Settings.ButtonSettings.CloseButton.has_value())
+      offsetAmount += Settings.ButtonSettings.CloseButton.value().Size.x;
+    
+    topBar.GetLastChild()->GetComponent<UI::ECS::Transform>()->SetLocalPosition({
+      (Settings.ButtonSettings.Alignment == TopBarButtonAlignment::LEFT
+        ? offsetAmount
+        : -offsetAmount
+      ), 0.0f
+    });
+  }
+
 
   /*
   std::shared_ptr closeButton = titleBar.GetLastChild();
