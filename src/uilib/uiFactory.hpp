@@ -36,6 +36,11 @@ enum class TopBarLabelAlignment {
   RIGHT
 };
 
+struct ButtonColours {
+  std::optional<Colour> UnfocusedColour;
+  std::optional<Colour> FocusedColour;
+};
+
 struct ImageSettings {
   TextureID ImageIndex;
   Vector2D ImageSize;
@@ -52,7 +57,7 @@ struct ButtonCallbacks {
 
 struct ButtonSettings {
   Vector2D Size;
-  std::optional<Colour> ButtonColour;
+  ButtonColours ButtonColours;
   std::optional<ImageSettings> _ImageSettings;
   std::optional<ButtonCallbacks> Callbacks;
 };
