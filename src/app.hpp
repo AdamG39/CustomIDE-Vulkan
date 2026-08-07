@@ -253,7 +253,7 @@ public:
 private:
   static Application* s_instance;
 
-  std::string m_applicationName;
+  std::string m_applicationName = "CustomIDE";
 
   const int MIN_WIDTH = 800;
   const int MIN_HEIGHT = 600;
