@@ -18,6 +18,16 @@ namespace CustomIDE {
 #define DEFAULT_TOP_BAR_BUTTON_IMAGE_FOCUSED_COLOUR Colour(0xFFFFFF, 1.0f)
 #define DEFAULT_TOP_BAR_BUTTON_IMAGE_UNFOCUSED_COLOUR Colour(0x79797b, 1.0f)
 
+#define DEFAULT_BUTTON_HOVER_LAMBDA(entity, backgroundColour, imageColour)  \
+[Entity = entity, bc = backgroundColour, ic = imageColour]() {              \
+  Entity->GetComponent<UI::ECS::Image>()->SetColour(bc);                    \
+  auto child = Entity->GetLastChild();                                      \
+  if (!child) return;                                                       \
+  auto* imageComponent = child->GetComponent<UI::ECS::Image>();             \
+  if (imageComponent == nullptr) return;                                    \
+  imageComponent->SetColour(ic);                                            \
+}
+
 namespace UIFactory {
   std::shared_ptr<UI::ECS::EntityManager> EntityManager;
   std::shared_ptr<EventSystem::EventManager> EventManager;
@@ -131,33 +141,13 @@ namespace UIFactory {
     if (buttonComponent && Settings.Callbacks.has_value()) {
       auto callbacks = Settings.Callbacks.value();
       if (!callbacks.OnHoverEnterCallback) {
-        auto focusedColour = (Settings.ButtonColours.FocusedColour.has_value()
-          ? Settings.ButtonColours.FocusedColour.value()
-          : DEFAULT_TOP_BAR_BUTTON_COLOUR
-        );
-        buttonComponent->SetOnHoverEnter([Entity = button, focusedColour]() { 
-          Entity->GetComponent<UI::ECS::Image>()->SetColour(focusedColour);
-          auto child = Entity->GetLastChild();
-          if (!child) return;
-          auto* imageComponent = child->GetComponent<UI::ECS::Image>();
-          if (imageComponent == nullptr) return;
-          imageComponent->SetColour(DEFAULT_TOP_BAR_BUTTON_IMAGE_FOCUSED_COLOUR);
-        });
+        auto focusedColour = Settings.ButtonColours.UnfocusedColour.value_or(DEFAULT_TOP_BAR_BUTTON_COLOUR);
+        buttonComponent->SetOnHoverEnter(DEFAULT_BUTTON_HOVER_LAMBDA(button, focusedColour, DEFAULT_TOP_BAR_BUTTON_IMAGE_FOCUSED_COLOUR));
       }
 
       if (!callbacks.OnHoverExitCallback) {
-        auto unfocusedColour = (Settings.ButtonColours.UnfocusedColour.has_value()
-          ? Settings.ButtonColours.UnfocusedColour.value()
-          : DEFAULT_TOP_BAR_BUTTON_COLOUR
-        );
-        buttonComponent->SetOnHoverExit([Entity = button, unfocusedColour]() { 
-          Entity->GetComponent<UI::ECS::Image>()->SetColour(unfocusedColour);
-          auto child = Entity->GetLastChild();
-          if (!child) return;
-          auto* imageComponent = child->GetComponent<UI::ECS::Image>();
-          if (imageComponent == nullptr) return;
-          imageComponent->SetColour(DEFAULT_TOP_BAR_BUTTON_IMAGE_UNFOCUSED_COLOUR);
-        });
+        auto unfocusedColour = Settings.ButtonColours.UnfocusedColour.value_or(DEFAULT_TOP_BAR_BUTTON_COLOUR);
+        buttonComponent->SetOnHoverExit(DEFAULT_BUTTON_HOVER_LAMBDA(button, unfocusedColour, DEFAULT_TOP_BAR_BUTTON_IMAGE_UNFOCUSED_COLOUR));
       }
     }
   }
@@ -211,12 +201,7 @@ std::shared_ptr<UI::ECS::Entity> UIFactory::CreateButton(bool AddToTree, const B
   ? EntityManager->AddEntity(UI::ECS::Entity(Settings.Size, Position)), EntityManager->GetLastEntity() // Add entity then get ptr to it
   : std::make_shared<UI::ECS::Entity>(Settings.Size, Position);
 
-  if (Settings.ButtonColours.UnfocusedColour.has_value()) {
-    button->AddComponent<UI::ECS::Image>((Settings.ButtonColours.UnfocusedColour.has_value()
-      ? Settings.ButtonColours.UnfocusedColour.value()
-      : DEFAULT_TOP_BAR_BUTTON_COLOUR
-    ));
-  }
+  button->AddComponent<UI::ECS::Image>(Settings.ButtonColours.UnfocusedColour.value_or(DEFAULT_TOP_BAR_BUTTON_COLOUR));
 
   if (Settings._ImageSettings.has_value()) {
     auto imageSettings = Settings._ImageSettings.value();

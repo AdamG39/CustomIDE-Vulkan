@@ -59,6 +59,7 @@ struct ButtonSettings {
   Vector2D Size;
   ButtonColours ButtonColours;
   std::optional<ImageSettings> _ImageSettings;
+  std::optional<Colour> ImageHoverColour;
   std::optional<ButtonCallbacks> Callbacks;
 };
 

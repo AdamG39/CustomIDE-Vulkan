@@ -81,6 +81,27 @@ void Application::RunApplication() {
 
     m_eventManager->HandleEvents();
 
+    /*
+    if (framebufferResized) {
+      framebufferResized = false;
+      while (framebufferWidth == 0 || framebufferHeight == 0) {
+        glfwWaitEvents();
+        glfwGetFramebufferSize(m_renderer->GetWindow(), &framebufferWidth, &framebufferHeight);
+      }
+      m_renderer->RecreateSwapChain();
+      
+      m_windowWidth = framebufferWidth;
+      m_windowHeight = framebufferHeight;
+      
+      RecalculateElements();
+    }*/
+    
+    glfwGetFramebufferSize(m_renderer->GetWindow(), &framebufferWidth, &framebufferHeight);
+    while (framebufferWidth == 0 || framebufferHeight == 0) {
+      glfwWaitEvents();
+      glfwGetFramebufferSize(m_renderer->GetWindow(), &framebufferWidth, &framebufferHeight);
+    }
+
     m_entityManager->RenderTree();
 
     m_renderer->DrawFrame();
@@ -165,7 +186,7 @@ void Application::HandleResizing() {
     m_windowWidth = framebufferWidth;
     m_windowHeight = framebufferHeight;
 
-    //m_root->RecalculateUILayout(framebufferWidth, framebufferHeight);
+    RecalculateElements();
   }
 }
 
@@ -296,6 +317,7 @@ void FramebufferResizeCallback(GLFWwindow* Window, int Width, int Height) {
   framebufferResized = true;
   framebufferWidth = Width;
   framebufferHeight = Height;
+  Application::GetInstance()->RecalculateElements();
 }
 
 void CursorPositionCallback(GLFWwindow* Window, double xpos, double ypos) {
